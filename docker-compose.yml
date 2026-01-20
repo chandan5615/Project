@@ -1,5 +1,14 @@
+# Sentinel Agent - Docker Compose
+# 
+# Smart Ollama Detection:
+# - If Ollama is running on host (port 11434), uses that
+# - If not, starts Ollama in Docker automatically
+#
+# Usage: ./start.sh (recommended) or docker compose up -d
+
 services:
-  # Ollama LLM Server (runs locally)
+  # Ollama LLM Server (only starts if host Ollama is not available)
+  # The sentinel-agent entrypoint checks for host Ollama first
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -8,7 +17,9 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    # For GPU support, uncomment the following:
+    profiles:
+      - with-ollama
+    # For GPU support, uncomment:
     # deploy:
     #   resources:
     #     reservations:
@@ -23,18 +34,18 @@ services:
       retries: 5
       start_period: 60s
 
-  # Model Puller - Downloads the LLM model on first run
+  # Model Puller - Downloads LLM model (only with ollama profile)
   ollama-pull:
     image: ollama/ollama:latest
     container_name: ollama-pull
     depends_on:
       ollama:
         condition: service_healthy
+    profiles:
+      - with-ollama
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        echo "Waiting for Ollama server..."
-        sleep 5
         echo "Pulling LLM model: $${OLLAMA_MODEL:-llama3:8b}..."
         OLLAMA_HOST=http://ollama:11434 ollama pull $${OLLAMA_MODEL:-llama3:8b}
         echo "Model pull complete!"
@@ -52,9 +63,6 @@ services:
     restart: unless-stopped
     privileged: true
     network_mode: host
-    depends_on:
-      ollama-pull:
-        condition: service_completed_successfully
     environment:
       - OLLAMA_BASE_URL=http://127.0.0.1:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b}

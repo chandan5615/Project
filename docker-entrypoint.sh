@@ -1,5 +1,6 @@
 #!/bin/bash
 # Sentinel Agent - Docker Entrypoint Script
+# Automatically detects Ollama on host or Docker
 
 set -e
 
@@ -7,40 +8,91 @@ echo "=========================================="
 echo "Sentinel Agent - Container Starting"
 echo "=========================================="
 
-# Check Ollama connection
+# Ollama connection settings
 OLLAMA_URL="${OLLAMA_BASE_URL:-http://127.0.0.1:11434}"
-echo "Checking Ollama connection at: $OLLAMA_URL"
+OLLAMA_MODEL_NAME="${OLLAMA_MODEL:-llama3:8b}"
 
-MAX_RETRIES=30
+echo ""
+echo "Detecting Ollama server..."
+
+# Function to check Ollama connection
+check_ollama() {
+    local url="$1"
+    curl -s "${url}/api/tags" > /dev/null 2>&1
+}
+
+# Function to check if model exists
+check_model() {
+    local url="$1"
+    local model="$2"
+    curl -s "${url}/api/tags" 2>/dev/null | grep -q "$model"
+}
+
+# Try to connect to Ollama
+MAX_RETRIES=60
 RETRY_COUNT=0
+OLLAMA_FOUND=false
+
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -s "${OLLAMA_URL}/api/tags" > /dev/null 2>&1; then
-        echo "✅ Ollama server is reachable"
+    # Check host Ollama (127.0.0.1:11434)
+    if check_ollama "http://127.0.0.1:11434"; then
+        OLLAMA_URL="http://127.0.0.1:11434"
+        OLLAMA_FOUND=true
+        echo "✅ Found Ollama on host at ${OLLAMA_URL}"
         break
     fi
+    
+    # Check Docker Ollama (ollama:11434 - for bridge network)
+    if check_ollama "http://ollama:11434"; then
+        OLLAMA_URL="http://ollama:11434"
+        OLLAMA_FOUND=true
+        echo "✅ Found Ollama in Docker at ${OLLAMA_URL}"
+        break
+    fi
+    
     RETRY_COUNT=$((RETRY_COUNT + 1))
-    echo "Waiting for Ollama server... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+    if [ $((RETRY_COUNT % 10)) -eq 0 ]; then
+        echo "Waiting for Ollama server... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+    fi
     sleep 2
 done
 
-if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo "⚠️  WARNING: Could not connect to Ollama server at $OLLAMA_URL"
-    echo "   Make sure Ollama is running and accessible"
+if [ "$OLLAMA_FOUND" = false ]; then
+    echo "⚠️  WARNING: Could not connect to Ollama server"
+    echo "   Tried: http://127.0.0.1:11434 and http://ollama:11434"
+    echo ""
+    echo "   To fix this, either:"
+    echo "   1. Install Ollama on host: curl -fsSL https://ollama.ai/install.sh | sh"
+    echo "   2. Or run with Docker Ollama: ./start.sh"
+    echo ""
     echo "   Continuing anyway - the agent may fail to process events"
+    OLLAMA_URL="http://127.0.0.1:11434"
+else
+    # Check if model is available
+    echo "Checking for model: ${OLLAMA_MODEL_NAME}..."
+    if check_model "$OLLAMA_URL" "$OLLAMA_MODEL_NAME"; then
+        echo "✅ Model ${OLLAMA_MODEL_NAME} is available"
+    else
+        echo "⚠️  Model ${OLLAMA_MODEL_NAME} not found"
+        echo "   Please pull it: ollama pull ${OLLAMA_MODEL_NAME}"
+    fi
 fi
 
-# Display model info
-echo "Using Ollama model: ${OLLAMA_MODEL:-llama3:8b}"
+# Export the detected URL for the Python application
+export OLLAMA_BASE_URL="$OLLAMA_URL"
 
 # Check if log files exist (warn if not)
+echo ""
 if [ ! -f "${AUTH_LOG_PATH:-/var/log/auth.log}" ]; then
-    echo "⚠️  WARNING: Auth log file not found: ${AUTH_LOG_PATH:-/var/log/auth.log}"
-    echo "   The container will monitor for it, but it may not exist yet"
+    echo "⚠️  Auth log not found: ${AUTH_LOG_PATH:-/var/log/auth.log}"
+else
+    echo "✅ Auth log found: ${AUTH_LOG_PATH:-/var/log/auth.log}"
 fi
 
 if [ ! -f "${WEB_LOG_PATH:-/var/log/apache2/access.log}" ]; then
-    echo "⚠️  WARNING: Web log file not found: ${WEB_LOG_PATH:-/var/log/apache2/access.log}"
-    echo "   The container will monitor for it, but it may not exist yet"
+    echo "⚠️  Web log not found: ${WEB_LOG_PATH:-/var/log/apache2/access.log}"
+else
+    echo "✅ Web log found: ${WEB_LOG_PATH:-/var/log/apache2/access.log}"
 fi
 
 # Create data directory if it doesn't exist
@@ -57,17 +109,17 @@ fi
 
 # Display configuration
 echo ""
+echo "=========================================="
 echo "Configuration:"
 echo "  Ollama URL: $OLLAMA_URL"
-echo "  Ollama Model: ${OLLAMA_MODEL:-llama3:8b}"
+echo "  Ollama Model: ${OLLAMA_MODEL_NAME}"
 echo "  Auth Log: ${AUTH_LOG_PATH:-/var/log/auth.log}"
 echo "  Web Log: ${WEB_LOG_PATH:-/var/log/apache2/access.log}"
 echo "  Data Directory: /app/data"
-echo "  Logs Directory: /app/logs"
+echo "=========================================="
 echo ""
-echo "=========================================="
 echo "Starting Sentinel Agent..."
-echo "=========================================="
+echo ""
 
 # Execute the main command
 exec "$@"
