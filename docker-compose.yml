@@ -8,20 +8,18 @@ services:
     container_name: sentinel-agent
     user: root
     restart: unless-stopped
-    privileged: true  # Required for iptables
-    network_mode: host  # Required to access host log files
+    privileged: true
+    network_mode: host 
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OLLAMA_BASE_URL=http://127.0.0.1:11434
       - AUTH_LOG_PATH=${AUTH_LOG_PATH:-/var/log/auth.log}
       - WEB_LOG_PATH=${WEB_LOG_PATH:-/var/log/apache2/access.log}
       - PYTHONUNBUFFERED=1
     volumes:
-      # Mount host log files
       - /var/log:/var/log:ro
-      # Mount attack records and data
       - ./data:/app/data
       - ./logs:/app/logs
-      # Mount .env if exists
       - ./.env:/app/.env:ro
     entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
     command: >

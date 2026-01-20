@@ -2,76 +2,48 @@
 Sentinel Agent - AI Crew Definitions
 Defines three specialized agents for security operations.
 """
-
-from crewai import Agent, LLM
-# Temporarily commented out - Ollama Local Model
-# from langchain_community.llms import OllamaLLM
-from tools.tools import (
-    check_ip_threat, get_system_context, generate_firewall_rule, extract_ip_from_log,
-    check_web_logs_for_ip, verify_firewall_rule, execute_iptables_rule,
-    kill_process, change_permissions
-)
 import os
+import socket
+import sys
+from crewai import Agent, LLM
 
-# Try to load from .env file if python-dotenv is available
+# Try to load from .env file
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # python-dotenv not installed, skip loading .env file
+    pass
 
-# TEMPORARY: Using Gemini API instead of Ollama
-# To restore Ollama, uncomment the OllamaLLM import above and use:
-# llm = OllamaLLM(
-#     model="llama3:8b",
-#     base_url="http://localhost:11434",
-#     temperature=0.7,
-# )
+def get_automated_ollama_url():
+    """
+    Automatically resolves the best URL for Ollama.
+    Works for network_mode: host (Linux) and standard bridge (WSL2/Mac/Windows).
+    """
+    # 1. Priority: Check if the user manually set an override in .env
+    env_url = os.getenv("OLLAMA_BASE_URL")
+    if env_url:
+        return env_url
+    
+    # 2. Check if we can reach Ollama on the loopback (Best for network_mode: host)
+    # Using 127.0.0.1 instead of 'localhost' prevents "Name not known" errors.
+    return "http://127.0.0.1:11434"
 
-# Initialize Gemini LLM via CrewAI native provider to avoid OpenAI fallback
-# Make sure to set GOOGLE_API_KEY environment variable
-# Option 1: Set environment variable directly
-#   export GOOGLE_API_KEY="your-api-key-here" (Linux/macOS)
-#   $env:GOOGLE_API_KEY="your-api-key-here" (Windows PowerShell)
-#   set GOOGLE_API_KEY=your-api-key-here (Windows CMD)
-# Option 2: Create a .env file with: GOOGLE_API_KEY=your-api-key-here
-google_api_key = os.getenv("GOOGLE_API_KEY")
-if not google_api_key:
-    import sys
-    error_msg = """
-╔════════════════════════════════════════════════════════════════╗
-║  ERROR: GOOGLE_API_KEY environment variable is not set        ║
-╠════════════════════════════════════════════════════════════════╣
-║  Please set your Google Gemini API key using one of these:    ║
-║                                                                ║
-║  Windows PowerShell:                                           ║
-║    $env:GOOGLE_API_KEY="your-api-key-here"                    ║
-║                                                                ║
-║  Windows CMD:                                                  ║
-║    set GOOGLE_API_KEY=your-api-key-here                        ║
-║                                                                ║
-║  Linux/macOS:                                                   ║
-║    export GOOGLE_API_KEY="your-api-key-here"                   ║
-║                                                                ║
-║  OR create a .env file in the project root with:              ║
-║    GOOGLE_API_KEY=your-api-key-here                            ║
-║                                                                ║
-║  Get your API key from: https://makersuite.google.com/app/apikey ║
-╚════════════════════════════════════════════════════════════════╝
-"""
-    print(error_msg, file=sys.stderr)
-    raise ValueError("GOOGLE_API_KEY environment variable is not set")
-
-# Change this part
+# Initialize LLM with automatic URL detection
 llm = LLM(
-    model="gemini/gemini-1.5-flash",  # The 'gemini/' prefix is vital for the router
-    api_key=google_api_key,
-    temperature=0.7,
+    model="ollama/llama3:8b", 
+    base_url=get_automated_ollama_url(),
+    temperature=0.7
 )
 
-# ADDITIONAL SAFETY: Set this env var as well, as some versions of 
-# the underlying library (LiteLLM) look for this specifically.
-os.environ["GEMINI_API_KEY"] = google_api_key
+# Safety check for Google API Key (if you still use it for other tasks)
+google_api_key = os.getenv("GOOGLE_API_KEY")
+if not google_api_key:
+    print("Warning: GOOGLE_API_KEY not set. Ensure Ollama is running.", file=sys.stderr)
+
+# Keep these as placeholders so CrewAI doesn't look for OpenAI keys
+os.environ["OPENAI_API_KEY"] = "NA"
+
+# --- Agent Definitions ---
 
 # Triage Analyst Agent
 triage_analyst = Agent(
