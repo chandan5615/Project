@@ -23,9 +23,10 @@ Complete guide for deploying Sentinel Agent using Docker and Docker Compose on L
 - **Operating System**: Linux (Ubuntu 20.04+, Debian 10+, CentOS 7+, or similar)
 - **Docker**: Version 20.10 or higher
 - **Docker Compose**: Version 1.29 or higher (or Docker Compose V2)
-- **Disk Space**: At least 2GB free space
-- **Memory**: Minimum 2GB RAM recommended
+- **Disk Space**: At least 10GB free space (for LLM model)
+- **Memory**: Minimum 8GB RAM recommended (16GB for larger models)
 - **Permissions**: Root or sudo access
+- **Optional**: NVIDIA GPU for faster inference
 
 ### Install Docker and Docker Compose
 
@@ -110,12 +111,15 @@ cd Sentinel-Agent
 cd /path/to/Sentinel-Agent
 ```
 
-### 2. Set Up Environment Variables
+### 2. Set Up Environment Variables (Optional)
 
 ```bash
-# Create .env file
+# Create .env file (optional - defaults work out of the box)
 cat > .env << EOF
-GOOGLE_API_KEY=your-api-key-here
+# Ollama model (default: llama3:8b)
+OLLAMA_MODEL=llama3:8b
+
+# Log paths (defaults shown)
 AUTH_LOG_PATH=/var/log/auth.log
 WEB_LOG_PATH=/var/log/apache2/access.log
 EOF
@@ -155,21 +159,23 @@ cp -r /path/to/Sentinel-Agent/* .
 mkdir -p data logs
 ```
 
-### Step 2: Create Environment File
+### Step 2: Create Environment File (Optional)
 
 ```bash
-# Create .env file
+# Create .env file (optional - defaults work out of the box)
 cat > .env << EOF
-# Google Gemini API Key (Required)
-GOOGLE_API_KEY=your-api-key-here
+# Ollama model to use (default: llama3:8b)
+# Smaller: llama3.2:3b (faster, less RAM)
+# Larger: llama3:70b (slower, more accurate)
+OLLAMA_MODEL=llama3:8b
 
 # Log file paths (adjust based on your system)
 AUTH_LOG_PATH=/var/log/auth.log
 WEB_LOG_PATH=/var/log/apache2/access.log
 
-# Optional: Custom paths
-# AUTH_LOG_PATH=/var/log/secure
-# WEB_LOG_PATH=/var/log/nginx/access.log
+# Optional: Custom paths for different distributions
+# AUTH_LOG_PATH=/var/log/secure          # CentOS/RHEL
+# WEB_LOG_PATH=/var/log/nginx/access.log # Nginx
 EOF
 
 # Secure the file
@@ -195,17 +201,17 @@ docker images | grep sentinel-agent
 
 ### Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (optional):
 
 ```bash
-# Required
-GOOGLE_API_KEY=your-api-key-here
+# Ollama model (default: llama3:8b)
+OLLAMA_MODEL=llama3:8b
 
-# Optional - Log paths (defaults shown)
+# Log paths (defaults shown)
 AUTH_LOG_PATH=/var/log/auth.log
 WEB_LOG_PATH=/var/log/apache2/access.log
 
-# Optional - For Nginx
+# For Nginx
 # WEB_LOG_PATH=/var/log/nginx/access.log
 ```
 
@@ -217,7 +223,8 @@ Edit `docker-compose.yml` to customize:
 services:
   sentinel-agent:
     environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OLLAMA_BASE_URL=http://127.0.0.1:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b}
       - AUTH_LOG_PATH=${AUTH_LOG_PATH:-/var/log/auth.log}
       - WEB_LOG_PATH=${WEB_LOG_PATH:-/var/log/apache2/access.log}
     volumes:
@@ -329,13 +336,16 @@ docker build -t sentinel-agent:v1.0.0 .
 
 ### Run Container
 
+**Note:** It's recommended to use `docker compose` as it manages both Ollama and Sentinel Agent together.
+
 ```bash
-# Basic run
+# Basic run (requires Ollama running separately on host)
 docker run -d \
   --name sentinel-agent \
   --privileged \
   --network host \
-  -e GOOGLE_API_KEY="your-api-key-here" \
+  -e OLLAMA_BASE_URL="http://127.0.0.1:11434" \
+  -e OLLAMA_MODEL="llama3:8b" \
   -e AUTH_LOG_PATH="/var/log/auth.log" \
   -e WEB_LOG_PATH="/var/log/apache2/access.log" \
   -v /var/log:/var/log:ro \
@@ -403,9 +413,9 @@ sudo chown -R $USER:$USER /opt/sentinel-agent
 # Copy all project files
 cp -r /path/to/Sentinel-Agent/* /opt/sentinel-agent/
 
-# Create .env file
+# Create .env file (optional)
 cat > /opt/sentinel-agent/.env << EOF
-GOOGLE_API_KEY=your-production-api-key
+OLLAMA_MODEL=llama3:8b
 AUTH_LOG_PATH=/var/log/auth.log
 WEB_LOG_PATH=/var/log/apache2/access.log
 EOF
@@ -564,27 +574,32 @@ user: "0:0"  # Run as root (not recommended for production)
 sudo chmod 644 /var/log/auth.log
 ```
 
-### Issue 3: API Key Not Found
+### Issue 3: Ollama Connection Failed
 
 **Symptoms:**
 ```
-ValueError: GOOGLE_API_KEY environment variable is not set
+Cannot reach Ollama server at http://127.0.0.1:11434
 ```
 
 **Solutions:**
 ```bash
-# Check .env file exists
-ls -la .env
+# Check if Ollama container is running
+docker compose ps ollama
 
-# Check .env file content (don't expose key)
-cat .env | grep GOOGLE_API_KEY
+# Check Ollama logs
+docker compose logs ollama
 
-# Verify environment variable in container
-docker compose exec sentinel-agent env | grep GOOGLE_API_KEY
+# Test Ollama API
+curl http://localhost:11434/api/tags
 
-# Recreate container with environment
-docker compose down
-docker compose up -d
+# Restart Ollama container
+docker compose restart ollama
+
+# Check if model is downloaded
+docker compose exec ollama ollama list
+
+# Pull model manually if needed
+docker compose exec ollama ollama pull llama3:8b
 ```
 
 ### Issue 4: iptables Not Working
@@ -753,12 +768,11 @@ docker system prune -a --volumes
 
 ## Security Considerations
 
-### 1. API Key Security
+### 1. Local LLM Security
 
-- **Never commit .env files** to version control
-- Use Docker secrets for production
-- Rotate API keys regularly
-- Restrict file permissions: `chmod 600 .env`
+- Ollama runs locally - no API keys or external calls needed
+- Model data is stored in Docker volume
+- No sensitive data leaves your network
 
 ### 2. Container Security
 

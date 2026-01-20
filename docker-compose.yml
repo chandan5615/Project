@@ -1,6 +1,46 @@
 version: '3.8'
 
 services:
+  # Ollama LLM Server (runs locally)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    # For GPU support, uncomment the following:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Model Puller - Downloads the LLM model on first run
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Pulling LLM model: $${OLLAMA_MODEL:-llama3:8b}..."
+        ollama pull $${OLLAMA_MODEL:-llama3:8b}
+        echo "Model pull complete!"
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    restart: "no"
+
+  # Sentinel Agent - Security Monitoring
   sentinel-agent:
     build:
       context: .
@@ -9,10 +49,15 @@ services:
     user: root
     restart: unless-stopped
     privileged: true
-    network_mode: host 
+    network_mode: host
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
     environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - OLLAMA_BASE_URL=http://127.0.0.1:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b}
       - AUTH_LOG_PATH=${AUTH_LOG_PATH:-/var/log/auth.log}
       - WEB_LOG_PATH=${WEB_LOG_PATH:-/var/log/apache2/access.log}
       - PYTHONUNBUFFERED=1
@@ -20,7 +65,6 @@ services:
       - /var/log:/var/log:ro
       - ./data:/app/data
       - ./logs:/app/logs
-      - ./.env:/app/.env:ro
     entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
     command: >
       python main.py
@@ -36,16 +80,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
 
-  # Optional: Web interface for viewing attacks (if you create one)
-  # sentinel-viewer:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.viewer
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - ./data:/app/data:ro
-  #   depends_on:
-  #     - sentinel-agent
+volumes:
+  ollama_data:
