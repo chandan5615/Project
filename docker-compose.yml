@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  sentinel-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinel-agent
+    restart: unless-stopped
+    privileged: true  # Required for iptables
+    network_mode: host  # Required to access host log files
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - AUTH_LOG_PATH=${AUTH_LOG_PATH:-/var/log/auth.log}
+      - WEB_LOG_PATH=${WEB_LOG_PATH:-/var/log/apache2/access.log}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount host log files
+      - /var/log:/var/log:ro
+      # Mount attack records and data
+      - ./data:/app/data
+      - ./logs:/app/logs
+      # Mount .env if exists
+      - ./.env:/app/.env:ro
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    command: >
+      python main.py
+      --auth-log ${AUTH_LOG_PATH:-/var/log/auth.log}
+      --web-log ${WEB_LOG_PATH:-/var/log/apache2/access.log}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/app/data/attack_records.json') else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Web interface for viewing attacks (if you create one)
+  # sentinel-viewer:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.viewer
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./data:/app/data:ro
+  #   depends_on:
+  #     - sentinel-agent

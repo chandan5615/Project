@@ -1,0 +1,474 @@
+"""
+Sentinel Agent - Security Tools Module
+Provides CrewAI tools for threat intelligence, system context, and firewall management.
+"""
+
+import subprocess
+import re
+from typing import Optional
+from pathlib import Path
+try:
+    from crewai_tools import tool
+except ImportError:
+    # Fallback for different CrewAI versions
+    from crewai.tools import tool
+import requests
+import json
+
+
+@tool("Check IP Threat")
+def check_ip_threat(ip: str) -> str:
+    """
+    Check the reputation of an IP address using threat intelligence APIs.
+    
+    Args:
+        ip: IP address to check
+        
+    Returns:
+        JSON string with threat intelligence data
+    """
+    result = {
+        "ip": ip,
+        "threat_level": "unknown",
+        "details": {},
+        "sources": []
+    }
+    
+    # Try AbuseIPDB API (requires API key in environment)
+    # For demo purposes, we'll simulate the check
+    try:
+        # In production, you would use: requests.get(f"https://api.abuseipdb.com/api/v2/check?ipAddress={ip}")
+        # For now, we'll do a basic check
+        result["details"]["checked"] = True
+        result["sources"].append("AbuseIPDB (simulated)")
+        
+        # Simulate threat check - in production, parse actual API response
+        # For demo: assume private IPs are low risk
+        if ip.startswith(("10.", "172.16.", "192.168.", "127.")):
+            result["threat_level"] = "low"
+            result["details"]["reason"] = "Private IP address"
+        else:
+            result["threat_level"] = "medium"
+            result["details"]["reason"] = "Public IP - requires further investigation"
+            
+    except Exception as e:
+        result["details"]["error"] = str(e)
+        result["threat_level"] = "unknown"
+    
+    return json.dumps(result, indent=2)
+
+
+@tool("Get System Context")
+def get_system_context() -> str:
+    """
+    Gather current system context including logged-in users and recent login history.
+    
+    Returns:
+        JSON string with system context information
+    """
+    context = {
+        "current_users": [],
+        "recent_logins": [],
+        "system_info": {}
+    }
+    
+    try:
+        # Get current logged-in users
+        who_result = subprocess.run(
+            ["who"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if who_result.returncode == 0:
+            context["current_users"] = who_result.stdout.strip().split("\n")
+        
+        # Get recent login history
+        last_result = subprocess.run(
+            ["last", "-n", "5"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if last_result.returncode == 0:
+            context["recent_logins"] = last_result.stdout.strip().split("\n")[:5]
+        
+        # Get system uptime
+        uptime_result = subprocess.run(
+            ["uptime"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if uptime_result.returncode == 0:
+            context["system_info"]["uptime"] = uptime_result.stdout.strip()
+            
+    except subprocess.TimeoutExpired:
+        context["error"] = "Command timeout"
+    except FileNotFoundError:
+        context["error"] = "Command not found (may not be on Linux system)"
+    except Exception as e:
+        context["error"] = str(e)
+    
+    return json.dumps(context, indent=2)
+
+
+@tool("Generate Firewall Rule")
+def generate_firewall_rule(ip: str, protocol: str = "tcp", port: str = "all") -> str:
+    """
+    Generate the exact iptables command string needed to block an IP address.
+    
+    Args:
+        ip: IP address to block
+        protocol: Protocol to block (tcp, udp, or all)
+        port: Port to block (specific port number or "all")
+        
+    Returns:
+        JSON string with firewall rule details
+    """
+    rule = {
+        "ip": ip,
+        "protocol": protocol,
+        "port": port,
+        "iptables_command": "",
+        "ufw_command": "",
+        "description": f"Block IP {ip} for security incident"
+    }
+    
+    # Generate iptables command
+    if port == "all":
+        rule["iptables_command"] = f"iptables -A INPUT -s {ip} -j DROP"
+    else:
+        rule["iptables_command"] = f"iptables -A INPUT -s {ip} -p {protocol} --dport {port} -j DROP"
+    
+    # Generate ufw command (alternative)
+    rule["ufw_command"] = f"ufw deny from {ip}"
+    
+    # Add comment for tracking
+    rule["iptables_command"] += f" -m comment --comment \"Sentinel Agent: Blocked {ip}\""
+    
+    return json.dumps(rule, indent=2)
+
+
+@tool("Extract IP from Log Line")
+def extract_ip_from_log(log_line: str) -> Optional[str]:
+    """
+    Extract IP address from a log line using regex patterns.
+    
+    Args:
+        log_line: Log line to parse
+        
+    Returns:
+        IP address if found, None otherwise
+    """
+    # Common IP patterns in auth.log
+    ip_patterns = [
+        r'\b(?:\d{1,3}\.){3}\d{1,3}\b',  # Standard IPv4
+        r'from\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',  # "from IP" pattern
+        r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',  # Any IPv4
+    ]
+    
+    for pattern in ip_patterns:
+        match = re.search(pattern, log_line)
+        if match:
+            ip = match.group(1) if match.groups() else match.group(0)
+            # Validate IP format
+            parts = ip.split('.')
+            if len(parts) == 4 and all(0 <= int(p) <= 255 for p in parts if p.isdigit()):
+                return ip
+    
+    return None
+
+
+@tool("Check Web Logs for IP")
+def check_web_logs_for_ip(ip: str, log_path: str = "/var/log/apache2/access.log") -> str:
+    """
+    Check if an IP address appears in web access logs (cross-correlation).
+    
+    Args:
+        ip: IP address to search for
+        log_path: Path to web access log file (Apache or Nginx)
+        
+    Returns:
+        JSON string with search results
+    """
+    result = {
+        "ip": ip,
+        "found": False,
+        "occurrences": 0,
+        "recent_entries": [],
+        "log_path": log_path
+    }
+    
+    try:
+        log_file = Path(log_path)
+        if not log_file.exists():
+            result["error"] = f"Log file {log_path} does not exist"
+            return json.dumps(result, indent=2)
+        
+        # Read last 1000 lines for performance
+        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+            # Check last 1000 lines
+            recent_lines = lines[-1000:] if len(lines) > 1000 else lines
+            
+            for line in recent_lines:
+                if ip in line:
+                    result["found"] = True
+                    result["occurrences"] += 1
+                    if len(result["recent_entries"]) < 10:  # Keep last 10 entries
+                        result["recent_entries"].append(line.strip())
+        
+    except PermissionError:
+        result["error"] = "Permission denied reading log file"
+    except Exception as e:
+        result["error"] = str(e)
+    
+    return json.dumps(result, indent=2)
+
+
+@tool("Verify Firewall Rule")
+def verify_firewall_rule(ip: str) -> str:
+    """
+    Verify if a firewall rule exists for blocking an IP address.
+    
+    Args:
+        ip: IP address to check
+        
+    Returns:
+        JSON string with verification results
+    """
+    result = {
+        "ip": ip,
+        "rule_exists": False,
+        "rule_details": None,
+        "method": "iptables"
+    }
+    
+    try:
+        # Check iptables rules
+        check_cmd = ["iptables", "-L", "INPUT", "-n", "-v"]
+        check_result = subprocess.run(
+            check_cmd,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        
+        if check_result.returncode == 0:
+            # Look for the IP in the output
+            for line in check_result.stdout.split('\n'):
+                if ip in line and "DROP" in line:
+                    result["rule_exists"] = True
+                    result["rule_details"] = line.strip()
+                    break
+        
+        # If iptables not found, try ufw
+        if not result["rule_exists"]:
+            ufw_check = subprocess.run(
+                ["ufw", "status", "numbered"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if ufw_check.returncode == 0 and ip in ufw_check.stdout:
+                result["rule_exists"] = True
+                result["method"] = "ufw"
+                result["rule_details"] = "Found in ufw rules"
+                
+    except FileNotFoundError:
+        result["error"] = "iptables/ufw command not found"
+    except subprocess.TimeoutExpired:
+        result["error"] = "Command timeout"
+    except Exception as e:
+        result["error"] = str(e)
+    
+    return json.dumps(result, indent=2)
+
+
+@tool("Execute Iptables Rule with Resilience")
+def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
+    """
+    Execute an iptables rule to block an IP with resilience loop.
+    Verifies the rule was added and retries if necessary.
+    
+    Args:
+        ip: IP address to block
+        max_attempts: Maximum number of attempts (default: 3)
+        
+    Returns:
+        JSON string with execution results
+    """
+    result = {
+        "ip": ip,
+        "success": False,
+        "attempts": 0,
+        "final_rule": None,
+        "errors": []
+    }
+    
+    # Different command variations to try
+    commands = [
+        f"iptables -A INPUT -s {ip} -j DROP -m comment --comment \"Sentinel Agent: Blocked {ip}\"",
+        f"iptables -I INPUT 1 -s {ip} -j DROP -m comment --comment \"Sentinel Agent: Blocked {ip}\"",
+        f"iptables -A INPUT -s {ip} -j DROP",
+    ]
+    
+    for attempt in range(max_attempts):
+        result["attempts"] = attempt + 1
+        cmd = commands[attempt % len(commands)]
+        
+        try:
+            # Execute the command
+            exec_result = subprocess.run(
+                cmd.split(),
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if exec_result.returncode == 0:
+                # Verify the rule was added
+                verify_result = verify_firewall_rule(ip)
+                verify_data = json.loads(verify_result)
+                
+                if verify_data.get("rule_exists"):
+                    result["success"] = True
+                    result["final_rule"] = cmd
+                    break
+                else:
+                    result["errors"].append(f"Attempt {attempt + 1}: Rule executed but not found in firewall table")
+            else:
+                result["errors"].append(f"Attempt {attempt + 1}: {exec_result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            result["errors"].append(f"Attempt {attempt + 1}: Command timeout")
+        except Exception as e:
+            result["errors"].append(f"Attempt {attempt + 1}: {str(e)}")
+    
+    return json.dumps(result, indent=2)
+
+
+@tool("Kill Process by Name or PID")
+def kill_process(process_name: str = None, pid: int = None, signal: str = "TERM") -> str:
+    """
+    Kill a process using systemctl or kill command.
+    
+    Args:
+        process_name: Name of the process/service to kill
+        pid: Process ID to kill
+        signal: Signal to send (TERM, KILL, etc.)
+        
+    Returns:
+        JSON string with execution results
+    """
+    result = {
+        "success": False,
+        "method": None,
+        "output": None,
+        "error": None
+    }
+    
+    try:
+        if process_name:
+            # Try systemctl first (for services)
+            systemctl_result = subprocess.run(
+                ["systemctl", "kill", f"--signal={signal}", process_name],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if systemctl_result.returncode == 0:
+                result["success"] = True
+                result["method"] = "systemctl"
+                result["output"] = systemctl_result.stdout
+            else:
+                # Fallback to pkill
+                pkill_result = subprocess.run(
+                    ["pkill", f"-{signal}", process_name],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if pkill_result.returncode == 0:
+                    result["success"] = True
+                    result["method"] = "pkill"
+                    result["output"] = pkill_result.stdout
+                else:
+                    result["error"] = pkill_result.stderr
+                    
+        elif pid:
+            # Use kill command
+            kill_result = subprocess.run(
+                ["kill", f"-{signal}", str(pid)],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if kill_result.returncode == 0:
+                result["success"] = True
+                result["method"] = "kill"
+                result["output"] = kill_result.stdout
+            else:
+                result["error"] = kill_result.stderr
+        else:
+            result["error"] = "Either process_name or pid must be provided"
+            
+    except FileNotFoundError:
+        result["error"] = "Command not found (may not be on Linux system)"
+    except subprocess.TimeoutExpired:
+        result["error"] = "Command timeout"
+    except Exception as e:
+        result["error"] = str(e)
+    
+    return json.dumps(result, indent=2)
+
+
+@tool("Change File Permissions")
+def change_permissions(file_path: str, permissions: str, recursive: bool = False) -> str:
+    """
+    Change file or directory permissions using chmod.
+    
+    Args:
+        file_path: Path to file or directory
+        permissions: Permissions in octal (e.g., "755") or symbolic (e.g., "u+x")
+        recursive: If True, apply recursively (for directories)
+        
+    Returns:
+        JSON string with execution results
+    """
+    result = {
+        "file_path": file_path,
+        "permissions": permissions,
+        "success": False,
+        "error": None
+    }
+    
+    try:
+        cmd = ["chmod"]
+        if recursive:
+            cmd.append("-R")
+        cmd.extend([permissions, file_path])
+        
+        chmod_result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        
+        if chmod_result.returncode == 0:
+            result["success"] = True
+        else:
+            result["error"] = chmod_result.stderr
+            
+    except FileNotFoundError:
+        result["error"] = "chmod command not found"
+    except subprocess.TimeoutExpired:
+        result["error"] = "Command timeout"
+    except Exception as e:
+        result["error"] = str(e)
+    
+    return json.dumps(result, indent=2)
