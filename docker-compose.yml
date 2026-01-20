@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: sentinel-agent
+    user: root
     restart: unless-stopped
     privileged: true  # Required for iptables
     network_mode: host  # Required to access host log files

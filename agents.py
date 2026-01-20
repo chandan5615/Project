@@ -64,7 +64,7 @@ if not google_api_key:
 
 llm = LLM(
     provider="google",
-    model="gemini-1.5-flash",
+    model="gemini/gemini-1.5-flash",
     temperature=0.7,
     api_key=google_api_key,
 )
