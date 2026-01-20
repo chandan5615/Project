@@ -310,7 +310,7 @@ class SentinelAgent:
         logger.info("🚀 Starting Sentinel Defense Module...")
         logger.info(f"📁 Monitoring auth log: {self.auth_log_path}")
         logger.info(f"📁 Monitoring web log: {self.web_log_path}")
-        logger.info("🤖 AI Crew ready with Google Gemini API (gemini-pro)")
+        logger.info("🤖 AI Crew ready with Ollama Local LLM")
         logger.info("🛡️  Multi-Vector Ingestion: Active")
         logger.info("="*80)
         

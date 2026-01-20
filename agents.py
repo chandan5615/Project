@@ -1,49 +1,88 @@
 """
 Sentinel Agent - AI Crew Definitions
 Defines three specialized agents for security operations.
+Uses Ollama for local LLM inference.
 """
 import os
 import socket
 import sys
 from crewai import Agent, LLM
+from tools.tools import (
+    check_ip_threat, get_system_context, generate_firewall_rule, extract_ip_from_log,
+    check_web_logs_for_ip, verify_firewall_rule, execute_iptables_rule,
+    kill_process, change_permissions
+)
 
-# Try to load from .env file
+# Try to load from .env file if python-dotenv is available
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
 
-def get_automated_ollama_url():
+
+def get_ollama_url():
     """
-    Automatically resolves the best URL for Ollama.
-    Works for network_mode: host (Linux) and standard bridge (WSL2/Mac/Windows).
+    Get the Ollama server URL.
+    Checks environment variable first, then defaults to localhost.
+    
+    For Docker containers, set OLLAMA_BASE_URL appropriately:
+    - Linux with network_mode: host -> http://127.0.0.1:11434
+    - Docker bridge network -> http://host.docker.internal:11434
+    - Remote server -> http://<server-ip>:11434
     """
-    # 1. Priority: Check if the user manually set an override in .env
     env_url = os.getenv("OLLAMA_BASE_URL")
     if env_url:
         return env_url
     
-    # 2. Check if we can reach Ollama on the loopback (Best for network_mode: host)
-    # Using 127.0.0.1 instead of 'localhost' prevents "Name not known" errors.
+    # Default to localhost - works for Linux native and network_mode: host
     return "http://127.0.0.1:11434"
 
-# Initialize LLM with automatic URL detection
+
+def check_ollama_connection():
+    """
+    Check if Ollama server is reachable and print helpful error message if not.
+    """
+    import urllib.request
+    import urllib.error
+    
+    url = get_ollama_url()
+    try:
+        # Try to connect to Ollama's API endpoint
+        req = urllib.request.Request(f"{url}/api/tags", method='GET')
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status == 200:
+                print(f"✅ Ollama server is reachable at {url}", file=sys.stderr)
+                return True
+    except urllib.error.URLError as e:
+        print(f"⚠️  Warning: Cannot reach Ollama server at {url}", file=sys.stderr)
+        print(f"   Error: {e.reason}", file=sys.stderr)
+        print(f"   Make sure Ollama is running: ollama serve", file=sys.stderr)
+        print(f"   Or set OLLAMA_BASE_URL environment variable", file=sys.stderr)
+    except Exception as e:
+        print(f"⚠️  Warning: Error checking Ollama connection: {e}", file=sys.stderr)
+    
+    return False
+
+
+# Check Ollama connection at startup
+check_ollama_connection()
+
+# Get Ollama model from environment or use default
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3:8b")
+
+# Initialize LLM with Ollama
 llm = LLM(
-    model="ollama/llama3:8b", 
-    base_url=get_automated_ollama_url(),
+    model=f"ollama/{OLLAMA_MODEL}",
+    base_url=get_ollama_url(),
     temperature=0.7
 )
-
-# Safety check for Google API Key (if you still use it for other tasks)
-google_api_key = os.getenv("GOOGLE_API_KEY")
-if not google_api_key:
-    print("Warning: GOOGLE_API_KEY not set. Ensure Ollama is running.", file=sys.stderr)
 
 # Keep these as placeholders so CrewAI doesn't look for OpenAI keys
 os.environ["OPENAI_API_KEY"] = "NA"
 
 # --- Agent Definitions ---
+# (Your triage_analyst, threat_intel_researcher, etc. remain the same)
 
 # Triage Analyst Agent
 triage_analyst = Agent(

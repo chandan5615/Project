@@ -1,104 +1,136 @@
-# Gemini API Setup Guide (Temporary Configuration)
+# Ollama Setup Guide
 
-This project is temporarily configured to use Google Gemini API instead of Ollama. Follow these steps to set up:
+This project uses **Ollama** for local LLM inference. Follow these steps to set up:
 
-## Step 1: Get Your API Key
+## Step 1: Install Ollama
 
-1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy your API key
-
-## Step 2: Set the API Key
-
-### Option A: Environment Variable (Recommended)
-
-**Linux/macOS:**
+### Linux
 ```bash
-export GOOGLE_API_KEY="your-api-key-here"
+curl -fsSL https://ollama.ai/install.sh | sh
 ```
 
-**Windows PowerShell:**
-```powershell
-$env:GOOGLE_API_KEY="your-api-key-here"
+### macOS
+```bash
+brew install ollama
 ```
 
-**Windows CMD:**
-```cmd
-set GOOGLE_API_KEY=your-api-key-here
+### Windows
+Download from [https://ollama.ai/download](https://ollama.ai/download)
+
+## Step 2: Pull the LLM Model
+
+The default model is `llama3:8b`. Pull it with:
+
+```bash
+ollama pull llama3:8b
 ```
 
-### Option B: .env File
+### Alternative Models
+You can use other models by setting the `OLLAMA_MODEL` environment variable:
 
-1. Create a `.env` file in the project root:
-   ```
-   GOOGLE_API_KEY=your-api-key-here
-   ```
+```bash
+# Smaller model (faster, less accurate)
+ollama pull llama3.2:3b
+export OLLAMA_MODEL="llama3.2:3b"
 
-2. The code will automatically load it if `python-dotenv` is installed (already included in requirements)
+# Larger model (slower, more accurate)
+ollama pull llama3:70b
+export OLLAMA_MODEL="llama3:70b"
 
-## Step 3: Verify Setup
+# Code-focused model
+ollama pull codellama:7b
+export OLLAMA_MODEL="codellama:7b"
+```
 
-Run a quick test:
+## Step 3: Start Ollama Server
+
+```bash
+ollama serve
+```
+
+The server runs on `http://127.0.0.1:11434` by default.
+
+## Step 4: Verify Setup
+
+```bash
+# Check if Ollama is running
+curl http://127.0.0.1:11434/api/tags
+
+# Test a simple prompt
+ollama run llama3:8b "Hello, respond with 'Ollama is working!'"
+```
+
+## Step 5: Configure Environment (Optional)
+
+Create a `.env` file in the project root for custom settings:
+
+```env
+# Custom Ollama server URL (default: http://127.0.0.1:11434)
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+
+# Custom model (default: llama3:8b)
+OLLAMA_MODEL=llama3:8b
+```
+
+## Step 6: Run Sentinel Agent
+
 ```bash
 # Activate virtual environment first
-.\venv\Scripts\Activate.ps1  # Windows PowerShell
-# or
 source venv/bin/activate     # Linux/macOS
+# or
+.\venv\Scripts\Activate.ps1  # Windows PowerShell
 
-# Test the API key
-python -c "import os; print('API Key set!' if os.getenv('GOOGLE_API_KEY') else 'API Key NOT set!')"
-```
-
-## Step 4: Run Sentinel Agent
-
-```bash
+# Run the agent
 python main.py
 ```
 
-## Switching Back to Ollama
+## Docker Configuration
 
-To restore Ollama configuration:
+When running in Docker, configure the Ollama URL based on your setup:
 
-1. **Edit `agents.py`:**
-   - Uncomment the Ollama import: `from langchain_community.llms import OllamaLLM`
-   - Comment out the Gemini import: `# from langchain_google_genai import ChatGoogleGenerativeAI`
-   - Replace the `llm` initialization with:
-     ```python
-     llm = OllamaLLM(
-         model="llama3:8b",
-         base_url="http://localhost:11434",
-         temperature=0.7,
-     )
-     ```
+### Linux with `network_mode: host`
+```env
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+```
 
-2. **Edit `requirements.txt`:**
-   - Uncomment: `ollama>=0.1.0`
-   - Comment out: `# langchain-google-genai>=1.0.0`
+### Docker bridge network (default)
+```env
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+```
 
-3. **Install Ollama:**
-   ```bash
-   ollama pull llama3:8b
-   ```
-
-4. **Verify Ollama is running:**
-   ```bash
-   curl http://localhost:11434/api/tags
-   ```
+### Remote Ollama server
+```env
+OLLAMA_BASE_URL=http://<server-ip>:11434
+```
 
 ## Troubleshooting
 
-### "GOOGLE_API_KEY environment variable is not set"
-- Make sure you've set the environment variable or created a `.env` file
-- Restart your terminal after setting the environment variable
-- Verify with: `echo $GOOGLE_API_KEY` (Linux/macOS) or `echo $env:GOOGLE_API_KEY` (Windows PowerShell)
+### "Cannot reach Ollama server"
+1. Make sure Ollama is running: `ollama serve`
+2. Check if the port is accessible: `curl http://127.0.0.1:11434/api/tags`
+3. Verify the `OLLAMA_BASE_URL` environment variable is correct
 
-### API Key Invalid
-- Double-check you copied the entire API key
-- Ensure there are no extra spaces or quotes
-- Regenerate the key if needed from Google AI Studio
+### "Model not found"
+1. Pull the model first: `ollama pull llama3:8b`
+2. List available models: `ollama list`
+3. Check you're using the correct model name
 
-### Rate Limits
-- Gemini API has rate limits based on your plan
-- Free tier: 60 requests per minute
-- If you hit limits, consider switching back to Ollama for unlimited local usage
+### Slow responses
+- Use a smaller model like `llama3.2:3b`
+- Ensure you have enough RAM (8GB+ recommended)
+- Consider using GPU acceleration if available
+
+### Connection refused in Docker
+- Use `host.docker.internal` instead of `localhost`
+- Or use `network_mode: host` in docker-compose.yml (Linux only)
+
+## GPU Acceleration
+
+Ollama automatically uses NVIDIA GPUs if available. Verify with:
+
+```bash
+ollama run llama3:8b --verbose
+# Look for "GPU" in the output
+```
+
+For AMD GPUs or troubleshooting, see [Ollama GPU documentation](https://github.com/ollama/ollama/blob/main/docs/gpu.md).

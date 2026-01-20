@@ -1,11 +1,10 @@
-crewai>=1.0.0
-crewai-tools>=0.1.0
-litellm[proxy]
-fastapi
+crewai==0.100.1
+litellm==1.60.2
+fastapi==0.115.8
 ollama>=0.1.0
 python-dotenv
 requests>=2.31.0
-watchdog>=3.0.0
 langchain>=0.1.0
 langchain-community>=0.0.20
-langchain-google-genai>=1.0.0
+watchdog>=3.0.0
+crewai-tools>=0.1.0
