@@ -62,13 +62,16 @@ if not google_api_key:
     print(error_msg, file=sys.stderr)
     raise ValueError("GOOGLE_API_KEY environment variable is not set")
 
+# Change this part
 llm = LLM(
-    provider="google",
-    model="gemini/gemini-1.5-flash",
-    temperature=0.7,
+    model="gemini/gemini-1.5-flash",  # The 'gemini/' prefix is vital for the router
     api_key=google_api_key,
+    temperature=0.7,
 )
 
+# ADDITIONAL SAFETY: Set this env var as well, as some versions of 
+# the underlying library (LiteLLM) look for this specifically.
+os.environ["GEMINI_API_KEY"] = google_api_key
 
 # Triage Analyst Agent
 triage_analyst = Agent(
