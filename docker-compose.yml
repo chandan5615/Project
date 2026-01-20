@@ -1,11 +1,11 @@
-version: '3.8'
-
 services:
   # Ollama LLM Server (runs locally)
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
+    ports:
+      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     # For GPU support, uncomment the following:
@@ -17,11 +17,11 @@ services:
     #           count: all
     #           capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   # Model Puller - Downloads the LLM model on first run
   ollama-pull:
@@ -33,11 +33,13 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        echo "Waiting for Ollama server..."
+        sleep 5
         echo "Pulling LLM model: $${OLLAMA_MODEL:-llama3:8b}..."
-        ollama pull $${OLLAMA_MODEL:-llama3:8b}
+        OLLAMA_HOST=http://ollama:11434 ollama pull $${OLLAMA_MODEL:-llama3:8b}
         echo "Model pull complete!"
     environment:
-      - OLLAMA_HOST=ollama:11434
+      - OLLAMA_HOST=http://ollama:11434
     restart: "no"
 
   # Sentinel Agent - Security Monitoring
@@ -51,8 +53,6 @@ services:
     privileged: true
     network_mode: host
     depends_on:
-      ollama:
-        condition: service_healthy
       ollama-pull:
         condition: service_completed_successfully
     environment:
