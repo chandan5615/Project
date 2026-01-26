@@ -21,7 +21,7 @@ except ImportError:
     pass
 
 
-def get_ollama_url():
+def get_ollama_url() -> str:
     """
     Get the Ollama server URL.
     Checks environment variable first, then defaults to localhost.

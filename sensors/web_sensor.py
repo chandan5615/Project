@@ -37,6 +37,7 @@ class WebLogHandler(FileSystemEventHandler):
         self.callback = callback
         self.log_path = Path(log_path)
         self.last_position = 0
+        self._last_inode = None  # Track file inode for rotation detection
         self.attack_detector = AttackDetector()
         
         # Initialize last position if file exists
@@ -54,6 +55,17 @@ class WebLogHandler(FileSystemEventHandler):
             if not self.log_path.exists():
                 logger.warning(f"Log file {self.log_path} does not exist")
                 return
+            
+            # Check if file was rotated (inode changed)
+            current_stat = self.log_path.stat()
+            current_inode = current_stat.st_ino
+            
+            if self._last_inode is not None and current_inode != self._last_inode:
+                # File was rotated, reset position
+                logger.info(f"Log file rotated. Starting from beginning.")
+                self.last_position = 0
+            
+            self._last_inode = current_inode
             
             with open(self.log_path, 'r', encoding='utf-8', errors='ignore') as f:
                 # Seek to last known position
@@ -108,7 +120,7 @@ class WebLogHandler(FileSystemEventHandler):
                 # Validate IP format
                 try:
                     parts = ip.split('.')
-                    if len(parts) == 4 and all(0 <= int(p) <= 255 for p in parts if p.isdigit()):
+                    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
                         return ip
                 except ValueError:
                     continue

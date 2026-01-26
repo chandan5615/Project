@@ -3,12 +3,13 @@ Sentinel Agent - Security Playbooks (Tasks)
 Defines the workflow tasks for the AI crew.
 """
 
+from typing import List
 from crewai import Task
 from agents import triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent
 import json
 
 
-def create_security_incident_tasks(ip_address: str, log_line: str, attack_type: str = "unknown", severity: str = "medium") -> list[Task]:
+def create_security_incident_tasks(ip_address: str, log_line: str, attack_type: str = "unknown", severity: str = "medium") -> List[Task]:
     """
     Create a sequence of tasks for handling a security incident.
     

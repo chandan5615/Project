@@ -187,22 +187,33 @@ class SentinelAgent:
         else:
             result_str = str(result)
         
-        # Look for JSON in the result
+        # Look for JSON in the result using proper brace counting
         try:
-            # Find the last task's output (incident responder)
-            json_match = re.search(r'\{[^{}]*"action_required"[^{}]*\}', result_str, re.DOTALL)
-            if json_match:
-                parsed = json.loads(json_match.group(0))
-                report.update(parsed)
+            json_start = result_str.find('{')
+            if json_start == -1:
+                # No JSON found, use raw response
+                report["raw_response"] = result_str
             else:
-                # Try to find any JSON
-                json_start = result_str.find('{')
-                json_end = result_str.rfind('}') + 1
-                if json_start != -1 and json_end > json_start:
-                    parsed = json.loads(result_str[json_start:json_end])
+                # Count braces to find the matching closing brace
+                brace_count = 0
+                json_end = json_start
+                for i in range(json_start, len(result_str)):
+                    if result_str[i] == '{':
+                        brace_count += 1
+                    elif result_str[i] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_end = i + 1
+                            break
+                
+                if json_end > json_start:
+                    json_str = result_str[json_start:json_end]
+                    parsed = json.loads(json_str)
                     report.update(parsed)
-        except (json.JSONDecodeError, AttributeError):
-            logger.warning("Could not parse structured JSON from agent response")
+                else:
+                    report["raw_response"] = result_str
+        except json.JSONDecodeError as e:
+            logger.warning(f"Could not parse JSON from agent response: {e}")
             report["raw_response"] = result_str
         
         # Extract firewall rule if present
