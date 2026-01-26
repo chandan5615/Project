@@ -14,6 +14,7 @@ from sensors.web_sensor import WebSensor
 from tasks import create_security_incident_tasks, parse_agent_response
 from defense.attack_logger import AttackLogger
 from defense.attack_detector import AttackDetector
+from output_formatter import OutputFormatter, print_alert, print_report, print_success, print_error
 import logging
 
 logging.basicConfig(
@@ -74,10 +75,14 @@ class SentinelAgent:
             description=attack_info.get("description", "Suspicious activity")
         )
         
-        logger.info(f"🚨 {attack_info.get('description', 'Security event')}: IP {ip_address} (Source: {source})")
-        logger.info(f"   Attack Type: {attack_info.get('attack_type', 'unknown')}")
-        logger.info(f"   Severity: {attack_info.get('severity', 'medium')}")
-        logger.info(f"   Log line: {log_line}")
+        # Display professional alert
+        print(OutputFormatter.alert_event(
+            ip_address=ip_address,
+            attack_type=attack_info.get("attack_type", "unknown"),
+            severity=attack_info.get("severity", "medium"),
+            source=source,
+            log_line=log_line
+        ))
         
         # Track IP across multiple vectors
         if ip_address not in self.ip_tracking:
@@ -116,15 +121,12 @@ class SentinelAgent:
                 verbose=True
             )
             
-            logger.info("🤖 Starting AI crew analysis...")
+            print(OutputFormatter.crew_kickoff())
+            print(OutputFormatter.analysis_started(ip_address, attack_info.get("attack_type", "unknown")))
+            
             result = crew.kickoff()
             
             # Parse and display results
-            logger.info("\n" + "="*80)
-            logger.info("📊 ANALYSIS RESULTS")
-            logger.info("="*80)
-            
-            # Try to extract structured data from the result
             final_report = self._extract_final_report(result, ip_address, log_line)
             
             # Store incident
@@ -153,9 +155,10 @@ class SentinelAgent:
             if final_report.get("action_required", False):
                 self._handle_remediation(final_report, ip_address)
             else:
-                logger.info("ℹ️  No immediate action required. Monitoring recommended.")
-            
-            logger.info("="*80 + "\n")
+                print(OutputFormatter.info_message(
+                    "MONITORING MODE ACTIVE",
+                    ["No immediate action required.", "System is monitoring for additional indicators."]
+                ))
             
         except Exception as e:
             logger.error(f"Error processing security event: {e}", exc_info=True)
@@ -246,21 +249,22 @@ class SentinelAgent:
         logger.info(f"\nProposed Firewall Rule:")
         logger.info(f"  {firewall_rule}")
         
-        # Human-in-the-loop approval
-        print("\n" + "="*80)
-        print("🛡️  SECURITY ACTION REQUIRES APPROVAL")
-        print("="*80)
-        print(f"IP to block: {ip_address}")
-        print(f"Command: {firewall_rule}")
-        print("\nThis action will block the IP address using iptables.")
-        print("="*80)
+        # Human-in-the-loop approval with professional formatting
+        print(OutputFormatter.subheader("SECURITY ACTION REQUIRES APPROVAL"))
+        print(f"  Target IP Address    : {ip_address}")
+        print(f"  Firewall Command     : {firewall_rule}")
+        print(f"\n  This action will block the IP address using iptables rules.")
+        print(f"\n{OutputFormatter.SEPARATOR_MAIN}\n")
         
-        response = input("\nDo you want to execute this firewall rule? (yes/no): ").strip().lower()
+        response = input("  Execute this firewall rule? (yes/no): ").strip().lower()
         
         if response in ['yes', 'y']:
             self._execute_firewall_rule(firewall_rule, ip_address)
         else:
-            logger.info("❌ Action cancelled by user")
+            print(OutputFormatter.info_message(
+                "ACTION CANCELLED",
+                ["The firewall rule has been cancelled by user.", "System continues monitoring."]
+            ))
     
     def _execute_firewall_rule(self, rule: str, ip_address: str):
         """
@@ -272,20 +276,27 @@ class SentinelAgent:
         """
         # Extract just the iptables command (safety check)
         if not rule.startswith("iptables"):
-            logger.error(f"Invalid firewall rule format: {rule}")
+            print(OutputFormatter.error_message(
+                "INVALID FIREWALL RULE",
+                "The firewall rule format is invalid. Operation cancelled."
+            ))
             return
         
         # Final confirmation
-        print(f"\n⚠️  FINAL CONFIRMATION")
-        print(f"About to execute: {rule}")
-        final_confirm = input("Type 'EXECUTE' to proceed, or anything else to cancel: ").strip()
+        print(OutputFormatter.subheader("FINAL CONFIRMATION REQUIRED"))
+        print(f"  Firewall Command: {rule}\n")
+        final_confirm = input("  Type 'EXECUTE' to proceed, or anything else to cancel: ").strip()
         
         if final_confirm != "EXECUTE":
-            logger.info("❌ Execution cancelled")
+            print(OutputFormatter.info_message(
+                "EXECUTION CANCELLED",
+                ["Operation was cancelled by user."]
+            ))
             return
         
         try:
-            logger.info(f"🔒 Executing firewall rule: {rule}")
+            print(OutputFormatter.section("EXECUTING FIREWALL RULE"))
+            print(f"  Status: Processing...\n")
             
             # Execute the command
             result = subprocess.run(
@@ -296,20 +307,40 @@ class SentinelAgent:
             )
             
             if result.returncode == 0:
-                logger.info(f"✅ Successfully blocked IP: {ip_address}")
-                logger.info(f"Command output: {result.stdout}")
+                print(OutputFormatter.success_message(
+                    "FIREWALL RULE SUCCESSFULLY APPLIED",
+                    [
+                        f"Blocked IP Address: {ip_address}",
+                        f"Rule Command: {rule}",
+                        f"Status: Active and Verified"
+                    ]
+                ))
             else:
-                logger.error(f"❌ Failed to execute firewall rule")
-                logger.error(f"Error: {result.stderr}")
+                print(OutputFormatter.error_message(
+                    "FIREWALL RULE EXECUTION FAILED",
+                    f"Error output: {result.stderr}"
+                ))
                 
         except subprocess.TimeoutExpired:
-            logger.error("❌ Command execution timeout")
+            print(OutputFormatter.error_message(
+                "COMMAND EXECUTION TIMEOUT",
+                "The firewall command timed out after 10 seconds."
+            ))
         except FileNotFoundError:
-            logger.error("❌ iptables command not found. Ensure you're on a Linux system with iptables installed.")
+            print(OutputFormatter.error_message(
+                "IPTABLES NOT FOUND",
+                "Ensure you are on a Linux system with iptables installed and available in PATH."
+            ))
         except PermissionError:
-            logger.error("❌ Permission denied. Run with sudo privileges.")
+            print(OutputFormatter.error_message(
+                "PERMISSION DENIED",
+                "This operation requires sudo privileges. Please run with: sudo python main.py"
+            ))
         except Exception as e:
-            logger.error(f"❌ Error executing firewall rule: {e}")
+            print(OutputFormatter.error_message(
+                "UNEXPECTED ERROR",
+                f"Error executing firewall rule: {str(e)}"
+            ))
     
     def _get_timestamp(self) -> str:
         """Get current timestamp as string."""
@@ -318,12 +349,15 @@ class SentinelAgent:
     
     def start(self):
         """Start the Sentinel Defense Module with multi-vector monitoring."""
-        logger.info("🚀 Starting Sentinel Defense Module...")
-        logger.info(f"📁 Monitoring auth log: {self.auth_log_path}")
-        logger.info(f"📁 Monitoring web log: {self.web_log_path}")
-        logger.info("🤖 AI Crew ready with Ollama Local LLM")
-        logger.info("🛡️  Multi-Vector Ingestion: Active")
-        logger.info("="*80)
+        print(OutputFormatter.header("SENTINEL AGENT v2.0 INITIALIZATION"))
+        print(OutputFormatter.section("SYSTEM CONFIGURATION"))
+        print(f"  Authentication Log   : {self.auth_log_path}")
+        print(f"  Web Access Log       : {self.web_log_path}")
+        print(f"  AI Engine            : Ollama Local LLM (llama3:8b)")
+        print(f"  Analysis Mode        : Multi-Agent AI Investigation")
+        print(f"  Multi-Vector Support : Enabled")
+        print(f"  Human-in-Loop        : Enabled")
+        print("")
         
         # Initialize and start both sensors
         self.auth_sensor = AuthSensor(
