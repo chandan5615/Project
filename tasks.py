@@ -30,13 +30,18 @@ def create_security_incident_tasks(ip_address: str, log_line: str, attack_type: 
         - Detected Attack Type: {attack_type}
         - Initial Severity Assessment: {severity}
         
+        IMPORTANT: When using tools, pass parameters as simple values (strings, not dicts):
+        - To extract an IP, call the tool with just the log line string
+        - To get system context, call the tool with no parameters
+        
         Your tasks:
         1. Examine the log line for patterns indicating malicious activity
-        2. Use get_system_context() to understand current system state
-        3. Analyze the detected attack type: {attack_type}
-        4. Determine the severity of this event (Low/Medium/High/Critical)
-        5. Assess if this could be legitimate admin activity or clearly malicious
-        6. Provide a structured JSON report with:
+        2. Use get_system_context tool to understand current system state
+        3. Use extract_ip_from_log tool with the log line to verify the IP address
+        4. Analyze the detected attack type: {attack_type}
+        5. Determine the severity of this event (Low/Medium/High/Critical)
+        6. Assess if this could be legitimate admin activity or clearly malicious
+        7. Provide a structured JSON report with:
            - severity: string
            - attack_type: string (confirmed attack type)
            - analysis: string
@@ -54,10 +59,14 @@ def create_security_incident_tasks(ip_address: str, log_line: str, attack_type: 
         description=f"""
         Research the threat intelligence for IP address: {ip_address} and perform cross-correlation.
         
+        IMPORTANT: Use the available tools correctly:
+        - When using a tool, pass ONLY the required parameters as simple values
+        - For check_ip_threat: use only the IP address string "{ip_address}"
+        - For check_web_logs_for_ip: use the IP address and log path separately
+        
         Your tasks:
-        1. Use check_ip_threat() to gather threat intelligence on this IP
-        2. CRITICAL CROSS-CORRELATION: Use check_web_logs_for_ip() to check if this IP that is 
-           brute-forcing SSH also appears in web access logs. This indicates a multi-vector attack.
+        1. Use check_ip_threat tool with IP "{ip_address}" to gather threat intelligence
+        2. CRITICAL CROSS-CORRELATION: Use check_web_logs_for_ip tool with IP "{ip_address}" to check if this IP appears in web access logs (indicates multi-vector attack)
         3. Analyze the results and determine if this IP is known malicious
         4. Check if this IP appears in any threat databases
         5. Assess the threat level based on intelligence gathered
@@ -84,11 +93,16 @@ def create_security_incident_tasks(ip_address: str, log_line: str, attack_type: 
         description=f"""
         Create an incident response plan for the security event involving IP: {ip_address}
         
+        IMPORTANT: When using tools:
+        - Pass tool parameters as simple string values, not as complex objects
+        - For generate_firewall_rule: pass IP address as string "{ip_address}"
+        - Do NOT wrap parameters in extra dicts or metadata objects
+        
         Based on the triage analysis and threat intelligence gathered:
         1. Review the severity and threat level assessments
         2. Consider the cross-correlation results - if this is a multi-vector attack, 
            the response should be more aggressive
-        3. Use generate_firewall_rule() to create the appropriate blocking rule
+        3. Use generate_firewall_rule tool with IP "{ip_address}" to create the appropriate blocking rule
         4. Determine if immediate action is required or if monitoring is sufficient
         5. Create a comprehensive remediation plan
         6. Provide a structured JSON report with:
@@ -111,10 +125,15 @@ def create_security_incident_tasks(ip_address: str, log_line: str, attack_type: 
         description=f"""
         Execute the security enforcement actions for IP: {ip_address} with resilience verification.
         
+        IMPORTANT: When using tools, pass parameters correctly:
+        - For execute_iptables_rule: pass the exact iptables command string
+        - For verify_firewall_rule: pass IP address as string "{ip_address}"
+        - Always pass parameters as simple values, never as complex dicts
+        
         Based on the incident response plan:
-        1. If action_required is true, use execute_iptables_rule() to block the IP
-        2. CRITICAL RESILIENCE LOOP: After executing the firewall rule, use verify_firewall_rule() 
-           to check if the rule was successfully added to the firewall table
+        1. If action_required is true, use execute_iptables_rule tool to block the IP with the provided command
+        2. CRITICAL RESILIENCE LOOP: After executing the firewall rule, use verify_firewall_rule tool 
+           to check if the rule was successfully added to the firewall table with IP "{ip_address}"
         3. If verification fails, the execute_iptables_rule tool will automatically retry with 
            alternative command variations (up to 3 attempts)
         4. Verify the rule exists after each attempt
