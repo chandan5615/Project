@@ -1,16 +1,20 @@
-# Sentinel Agent
+# Sentinel Agent v2.1
 
-An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. Sentinel Agent uses CrewAI for orchestration and Ollama (Llama 3) as the local LLM engine to monitor, analyze, and respond to security threats in real-time.
+An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. Sentinel Agent uses CrewAI for orchestration and local Ollama (Llama 3) as the LLM engine to monitor, analyze, and respond to security threats in real-time with quiet logging and an internal admin dashboard.
 
 ## Features
 
-- **Real-time Log Monitoring**: Watches `/var/log/auth.log` for failed login attempts
-- **Multi-Agent AI Analysis**: Three specialized AI agents work together:
+- **Real-time Log Monitoring**: Watches `/var/log/auth.log` and `/var/log/apache2/access.log` for attacks
+- **Multi-Agent AI Analysis**: Four specialized AI agents work together:
   - **Triage Analyst**: Analyzes logs and determines event severity
   - **Threat Intelligence Researcher**: Checks IP reputation and threat intelligence
-  - **Incident Responder**: Generates remediation plans and firewall rules
+  - **Incident Response Specialist**: Generates remediation plans and firewall rules
+  - **Enforcer Agent**: Prepares and executes defensive measures
+- **Quiet Logging**: Console shows only WARNING+ messages; full logs to `/app/logs/sentinel.log`
+- **SQLite Data Persistence**: Tracks incidents, actions, and threat intelligence
+- **Zero-Exposure Admin Dashboard**: Internal-only FastAPI UI with Basic Auth and WebSocket real-time updates
 - **Human-in-the-Loop Security**: Requires explicit approval before executing any blocking actions
-- **Structured JSON Reporting**: All agent communications use structured JSON format
+- **Professional Output**: Clean, formatted text-based reports (no emojis/icons)
 - **Modular Architecture**: Clean separation of sensors, agents, tasks, and tools
 
 ## Architecture
@@ -28,252 +32,279 @@ Sentinel Agent
 
 ## Prerequisites
 
-- Python 3.10 or higher
-- Linux system (for `/var/log/auth.log` and `iptables`)
-- **TEMPORARY**: Google Gemini API key (currently using Gemini instead of Ollama)
-- Root/sudo privileges (for reading log files and executing firewall rules)
+- **Python**: 3.9 or higher (3.10+ recommended)
+- **OS**: Linux system (tested on Ubuntu 20.04+, Debian 11+)
+- **Ollama**: Local LLM engine (no cloud API keys required)
+  - Install: [https://ollama.ai](https://ollama.ai)
+  - Model: Llama 3 (8b recommended)
+- **Privileges**: Root/sudo access (for reading logs and firewall operations)
 
-### Setting up Google Gemini API (Temporary)
+### Quick Ollama Setup
 
-1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Set the environment variable:
-   ```bash
-   # Linux/macOS
-   export GOOGLE_API_KEY="your-api-key-here"
-   
-   # Windows PowerShell
-   $env:GOOGLE_API_KEY="your-api-key-here"
-   
-   # Windows CMD
-   set GOOGLE_API_KEY=your-api-key-here
-   ```
-3. Verify the API key is set:
-   ```bash
-   echo $GOOGLE_API_KEY  # Linux/macOS
-   echo $env:GOOGLE_API_KEY  # Windows PowerShell
-   ```
+```bash
+# Install Ollama
+curl https://ollama.ai/install.sh | sh
 
-### Installing Ollama (Currently Commented Out)
+# Pull Llama 3 model
+ollama pull llama3:8b
 
-**Note:** The code currently uses Gemini API. To switch back to Ollama:
-1. Uncomment Ollama imports in `agents.py`
-2. Comment out Gemini imports
-3. Install Ollama from [https://ollama.ai](https://ollama.ai)
-4. Pull the Llama 3 model:
-   ```bash
-   ollama pull llama3:8b
-   ```
-5. Verify Ollama is running:
-   ```bash
-   curl http://localhost:11434/api/tags
-   ```
+# Verify it's running
+curl http://localhost:11434/api/tags
+```
+
+### Environment Variables (Optional)
+
+```bash
+# Dashboard credentials (defaults: sentinel/sentinel)
+export DASHBOARD_USER=yourusername
+export DASHBOARD_PASS=yourpassword
+
+# Logging location (default: /app/logs/sentinel.log)
+export LOG_DIR=/var/log/sentinel
+
+# Database location (default: /app/data/sentinel_intel.db)
+export DATA_DIR=/var/lib/sentinel
+```
 
 ## Installation
 
-### Docker Deployment (Recommended)
-
-For easy deployment on Linux servers, use Docker:
+### Option 1: Docker Deployment (Recommended for Production)
 
 ```bash
-# Quick start with Docker
+# Clone and deploy
+git clone https://github.com/yourorg/sentinel-agent.git
+cd sentinel-agent
+
+# Start all services (Sentinel Agent + optional dashboard)
 docker compose up -d
 
-# See DOCKER_QUICKSTART.md for 5-minute setup
-# See DOCKER_DEPLOYMENT.md for detailed Docker guide
+# View logs
+docker compose logs -f sentinel
 ```
 
-### Manual Installation
+### Option 2: Manual Installation (Development/Testing)
 
-### Quick Setup (Recommended)
-
-**Linux/macOS:**
+**Linux:**
 ```bash
 chmod +x setup.sh
 ./setup.sh
 source venv/bin/activate
+pip install -r requirements.txt
+python main.py
 ```
 
 **Windows (PowerShell):**
 ```powershell
 .\setup.ps1
 .\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python main.py
 ```
 
-**Windows (CMD):**
-```cmd
-setup.bat
-venv\Scripts\activate.bat
-```
+## Quick Start
 
-### Manual Setup
-
-1. Clone or download this repository
-
-2. Create and activate a virtual environment:
-   ```bash
-   # Linux/macOS
-   python3 -m venv venv
-   source venv/bin/activate
-   
-   # Windows
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-
-3. Install Python dependencies:
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-4. Ensure you have the required system permissions:
-   - Read access to `/var/log/auth.log` (may require sudo)
-   - Execute permissions for `iptables` (requires sudo)
-
-**Important:** Always activate the virtual environment before running Sentinel Agent to ensure all dependencies are available in one isolated environment.
-
-## Usage
-
-### Basic Usage
-
-**Important:** Make sure your virtual environment is activated first!
-
+**Ensure Ollama is running first:**
 ```bash
-# Activate virtual environment (if not already active)
-source venv/bin/activate  # Linux/macOS
-# OR
-venv\Scripts\activate     # Windows
+ollama pull llama3:8b
+ollama serve  # In another terminal
+```
 
-# Run Sentinel Agent with default settings
+**Then run Sentinel Agent:**
+```bash
 sudo python main.py
 ```
 
-**Note**: `sudo` is required to:
-- Read `/var/log/auth.log`
-- Execute `iptables` commands (if approved)
+The system will start monitoring logs and output professional, easy-to-understand alerts to the console with full details logged to `/app/logs/sentinel.log`.
 
-### Custom Log Path
+## Admin Dashboard (Optional)
 
-Monitor a different log file:
+Start the internal dashboard on `127.0.0.1:8080`:
 
 ```bash
-sudo python main.py --log-path /path/to/your/auth.log
+uvicorn dashboard.app:app --host 127.0.0.1 --port 8080
 ```
 
-### Testing Mode
+Access via SSH tunnel (secure):
+```bash
+ssh -L 8080:127.0.0.1:8080 user@server
+# Then visit http://localhost:8080 (default credentials: sentinel/sentinel)
+```
 
-For testing on systems without `/var/log/auth.log`, the sensor will create the directory structure automatically. You can manually add test log entries:
+For Docker: `docker compose up -d` includes the dashboard service (profile: dashboard).
+
+## Architecture
+
+```
+Sentinel Agent v2.1
+├── Quiet Logging Engine
+│   ├── Console: WARNING+ only
+│   ├── File: Full DEBUG logs
+│   └── Rotating: 10MB files, 5 backup copies
+│
+├── Data Persistence (SQLite)
+│   ├── incidents: Attack records
+│   ├── actions: Response actions taken
+│   └── threat_intel: IP reputation cache
+│
+├── Multi-Agent AI Crew (CrewAI + Ollama)
+│   ├── Triage Analyst
+│   ├── Threat Intelligence Researcher
+│   ├── Incident Response Specialist
+│   └── Enforcer Agent
+│
+├── Sensor Layer (Watchdog)
+│   ├── Auth Sensor: /var/log/auth.log
+│   └── Web Sensor: /var/log/apache2/access.log
+│
+└── Admin Dashboard (FastAPI)
+    ├── HTTP Basic Auth
+    ├── JSON REST API
+    ├── WebSocket real-time updates
+    └── Single-page Plotly UI
+```
+
+## Testing
+
+Run the unit test suite to verify all components:
 
 ```bash
-# In another terminal, simulate a failed login
-echo "Jan 1 12:00:00 hostname sshd[1234]: Failed password for user from 192.168.1.100 port 22" >> /var/log/auth.log
+python -m pytest -q
+# Expected: 5 passed, 1 skipped
 ```
 
-## How It Works
+**Tests include:**
+- Data engine (SQLite) operations
+- Remediation workflow (approval/execution)
+- View attacks output formatting
+- Dashboard (BasicAuth + WebSocket tokens)
 
-1. **Sensor Layer**: The `auth_sensor.py` module uses the `watchdog` library to monitor `/var/log/auth.log` for new entries containing "Failed password"
+---
 
-2. **Event Detection**: When a failed login is detected, the sensor extracts the source IP address using regex patterns
+## Documentation
 
-3. **AI Crew Orchestration**: The main event loop creates a CrewAI crew with three specialized agents:
-   - **Triage Analyst** analyzes the log entry and system context
-   - **Threat Intelligence Researcher** checks the IP's reputation
-   - **Incident Responder** generates a remediation plan
+See the following files for detailed information:
 
-4. **Human Approval**: Before any firewall rule is executed, the system:
-   - Displays the proposed action
-   - Requests user confirmation
-   - Requires a second confirmation with "EXECUTE"
+- **[PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md)** — Complete technical documentation, architecture, and v2.0/v2.1 improvements
+- **[SETUP_GUIDE_WEB_APPLICATIONS.md](SETUP_GUIDE_WEB_APPLICATIONS.md)** — Web-based setup and deployment
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** — Quick commands and tips
+- **[ENVIRONMENT.md](ENVIRONMENT.md)** — Environment variables and configuration
+- **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)** — Docker and compose deployment
+- **[docs/DASHBOARD_SETUP.md](docs/DASHBOARD_SETUP.md)** — Admin dashboard setup and SSH tunneling
 
-5. **Action Execution**: If approved, the firewall rule is executed using `iptables`
-
-## Security Guardrails
-
-- **Human-in-the-Loop**: All `os.system()` and `subprocess` calls for blocking IPs require explicit user approval
-- **Double Confirmation**: Two separate prompts before executing firewall rules
-- **JSON Enforcement**: Agents are instructed to communicate using structured JSON
-- **Error Handling**: Comprehensive error handling for permissions, missing commands, and timeouts
-
-## Configuration
-
-### LLM Configuration
-
-Edit `agents.py` to change the Ollama model or connection:
-
-```python
-llm = OllamaLLM(
-    model="llama3:8b",  # Change model here
-    base_url="http://localhost:11434",  # Change Ollama URL
-    temperature=0.7,
-)
-```
-
-### Threat Intelligence
-
-The `check_ip_threat()` function in `tools/tools.py` currently uses a simulated API. To integrate with real threat intelligence APIs:
-
-1. Sign up for an API key (e.g., AbuseIPDB)
-2. Modify `check_ip_threat()` to use the actual API
-3. Store API keys securely (environment variables recommended)
+---
 
 ## Project Structure
 
 ```
-.
-├── main.py              # Entry point, event loop, and orchestration
-├── agents.py            # CrewAI agent definitions
-├── tasks.py             # Security playbook tasks
-├── sensors/
+sentinel-agent/
+├── main.py                    # Entry point and event orchestrator
+├── agents.py                  # CrewAI agent definitions
+├── tasks.py                   # Security analysis tasks
+├── data_engine.py             # SQLite data persistence
+├── output_formatter.py        # Professional output formatting
+├── view_attacks.py            # Attack records viewer
+├── requirements.txt           # Python dependencies
+│
+├── sensors/                   # Log monitoring modules
 │   ├── __init__.py
-│   └── auth_sensor.py   # Authentication log monitor
-├── tools/
+│   ├── auth_sensor.py         # SSH brute force detection
+│   └── web_sensor.py          # Web attack detection
+│
+├── tools/                     # Security tools & utilities
 │   ├── __init__.py
-│   └── tools.py         # Security tools (IP check, firewall, system context)
-├── requirements.txt     # Python dependencies
-└── README.md           # This file
+│   └── tools.py              # IP reputation, firewall, system tools
+│
+├── defense/                   # Attack detection & logging
+│   ├── __init__.py
+│   ├── attack_detector.py     # Threat pattern matching
+│   └── attack_logger.py       # SQLite logging
+│
+├── dashboard/                 # Admin UI (optional)
+│   ├── app.py               # FastAPI + WebSocket server
+│   └── ...
+│
+├── tests/                     # Unit tests
+│   ├── test_data_engine.py
+│   ├── test_remediation.py
+│   ├── test_view_attacks.py
+│   └── test_dashboard.py
+│
+├── docs/                      # Documentation
+│   └── DASHBOARD_SETUP.md
+│
+├── scripts/                   # Helper scripts
+│   ├── tunnel_admin.sh
+│   └── tunnel_admin.ps1
+│
+├── docker-compose.yml         # Container orchestration
+├── Dockerfile                 # Container image
+└── README.md                 # This file
 ```
 
-## Troubleshooting
+---
 
-### "Permission denied" errors
-- Ensure you're running with `sudo` for log file access and firewall commands
+## Key Features in Detail
 
-### "iptables command not found"
-- Install iptables: `sudo apt-get install iptables` (Debian/Ubuntu) or equivalent
+### 1. Quiet Logging (v2.1)
+- **Console output**: WARNING and above only (production-friendly)
+- **File logs**: Full DEBUG level to `/app/logs/sentinel.log`
+- **Rotation**: Automatic 10MB rolling logs with 5 backups
+- **No emojis/icons**: Clean, professional text output
 
-### Ollama connection errors
-- Verify Ollama is running: `curl http://localhost:11434/api/tags`
-- Check the model is available: `ollama list`
-- Ensure the base_url in `agents.py` matches your Ollama instance
+### 2. Data Persistence (v2.1)
+- **SQLite database**: `/app/data/sentinel_intel.db`
+- **Three tables**:
+  - `incidents`: Attack records with timestamps, severity, source IP
+  - `actions`: Response actions taken (approvals, blocks, etc.)
+  - `threat_intel`: IP reputation cache for fast lookups
+- **Context manager support**: Automatic DB connection cleanup
 
-### Log file not found
-- On some systems, auth logs may be in `/var/log/secure` (RHEL/CentOS)
-- Use `--log-path` to specify the correct location
+### 3. Multi-Agent AI Analysis
+- **Triage Analyst**: Scores severity (low/medium/high/critical)
+- **Threat Intel Researcher**: Queries IP reputation database
+- **Incident Response Specialist**: Generates firewall rules and remediation
+- **Enforcer Agent**: Validates and prepares defensive actions
 
-## Development
+### 4. Admin Dashboard (v2.1)
+- **Access**: HTTP Basic Auth (default: sentinel/sentinel)
+- **Real-time**: WebSocket streaming of incident summary updates
+- **Endpoints**:
+  - `/api/summary` — Statistics (severity, attack type distribution)
+  - `/api/records` — Incident records paginated
+  - `/api/network` — Network graph (IP ↔ attack type relationships)
+  - `/ws/summary` — WebSocket for live updates
+- **UI**: Single-page app with Plotly charts (client-side CDN)
+- **Network**: Internal only (`127.0.0.1:8080`); SSH tunnel for remote access
 
-### Adding New Sensors
+### 5. Security Hardening
+- **Human-in-the-loop**: Approval required before firewall rule execution
+- **File rotation handling**: Automatic inode tracking and position reset
+- **IP validation**: Bulletproof validation (rejects invalid octets)
+- **JSON parsing**: Robust brace-counting algorithm for nested structures
+- **Type hints**: 100% type coverage for Python 3.9+ compatibility
 
-Create new sensor modules in `sensors/` following the pattern in `auth_sensor.py`:
+---
 
-1. Inherit from `FileSystemEventHandler` or implement a custom monitoring class
-2. Define a callback function signature
-3. Integrate with the main event loop in `main.py`
+## Contributing
 
-### Adding New Tools
+To contribute:
 
-Add new CrewAI tools in `tools/tools.py`:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Write tests for your changes
+4. Run `python -m pytest -q` to verify
+5. Commit and push: `git push origin feature/your-feature`
+6. Open a pull request with a clear description
 
-1. Use the `@tool` decorator from `crewai_tools`
-2. Define clear input/output types
-3. Add the tool to relevant agents in `agents.py`
+---
 
-### Customizing Agents
+## Support & Issues
 
-Modify agent definitions in `agents.py`:
-- Adjust `role`, `goal`, and `backstory` for different specializations
-- Add or remove tools from the `tools` list
-- Change `verbose` and `allow_delegation` settings
+- **Bug reports**: Open an issue with reproduction steps and logs
+- **Feature requests**: Describe the use case and expected behavior
+- **Security issues**: Email to [security contact] (do not open public issue)
+
+---
 
 ## License
 
@@ -282,3 +313,9 @@ This project is provided as-is for educational and security research purposes.
 ## Disclaimer
 
 This tool is designed for authorized security monitoring only. Ensure you have proper authorization before monitoring systems or blocking IP addresses. The authors are not responsible for misuse of this software.
+
+---
+
+**Version**: 2.1 (Quiet Logging + Dashboard + Professional Output)  
+**Last Updated**: January 30, 2026  
+**Status**: ✅ Production Ready

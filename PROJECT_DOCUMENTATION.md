@@ -1,20 +1,21 @@
 # Sentinel Agent - Comprehensive Project Documentation
 
-**Last Updated:** January 26, 2026  
-**Version:** 2.1 (Enhanced & Fixed with Professional Output)  
-**Status:** Production Ready ✅
+**Last Updated:** January 30, 2026  
+**Version:** 2.1 (Quiet Logging + Admin Dashboard + Professional Output)  
+**Status:** ✅ Production Ready for GitHub  
+**Python Compatibility:** 3.9, 3.10, 3.11, 3.12+
 
 ## Executive Summary
 
 Sentinel Agent is an autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. It uses CrewAI for orchestration and local Ollama LLM inference to monitor, analyze, and respond to security threats in real-time. The system implements a sophisticated "Sensor-Brain-Action" pipeline that detects attacks, analyzes threats, and executes defensive measures with human oversight.
 
 ### Recent Improvements (v2.1)
-- ✅ Professional fancy output formatting (no icons)
-- ✅ Easy-to-understand clear displays
-- ✅ Enterprise-grade visual presentation
-- ✅ All information clearly organized
-- ✅ Improved user experience throughout
-- ✅ Previous v2.0 fixes still included
+- ✅ **Quiet Logging**: Console WARNING+, full DEBUG to `/app/logs/sentinel.log` with rotation
+- ✅ **SQLite Persistence**: Track incidents, actions, and threat intelligence
+- ✅ **Admin Dashboard**: Internal-only FastAPI UI with Basic Auth, WebSocket real-time updates, Plotly charts
+- ✅ **Professional Output**: Clean text-based formatting (no icons/emojis) for enterprise-grade appearance
+- ✅ **Test Suite**: Unit tests for data engine, remediation, dashboard (5 passed, 1 skipped)
+- ✅ **All v2.0 Fixes**: Type hints, IP validation, JSON parsing, file rotation, comprehensive error handling
 
 ## Version 2.0 Improvements & Bug Fixes
 
