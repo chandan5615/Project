@@ -1,3 +1,10 @@
+# Archived: OUTPUT_COMPLETION.md
+This file has been archived and moved to `archive/docs-legacy/OUTPUT_COMPLETION.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # SENTINEL AGENT V2.1 - OUTPUT ENHANCEMENT COMPLETION SUMMARY
 
 **Date**: January 26, 2026  

@@ -1,3 +1,10 @@
+# Archived: OUTPUT_COMPARISON.md
+This file has been archived and moved to `archive/docs-legacy/OUTPUT_COMPARISON.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # Sentinel Agent v2.1 - Output Visual Comparison Guide
 
 **Date**: January 26, 2026  

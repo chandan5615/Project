@@ -1,3 +1,10 @@
+# Archived: OUTPUT_FORMATTING.md
+This file has been archived and moved to `archive/docs-legacy/OUTPUT_FORMATTING.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # Sentinel Agent v2.0 - Professional Output Formatting
 
 **Version**: 2.1 (Enhanced Output)  

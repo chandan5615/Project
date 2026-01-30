@@ -6,12 +6,16 @@ Uses Ollama for local LLM inference.
 import os
 import socket
 import sys
+import logging
 from crewai import Agent, LLM
 from tools.tools import (
     check_ip_threat, get_system_context, generate_firewall_rule, extract_ip_from_log,
     check_web_logs_for_ip, verify_firewall_rule, execute_iptables_rule,
     kill_process, change_permissions
 )
+
+# Module logger
+logger = logging.getLogger(__name__) 
 
 # Try to load from .env file if python-dotenv is available
 try:
@@ -52,21 +56,22 @@ def check_ollama_connection():
         req = urllib.request.Request(f"{url}/api/tags", method='GET')
         with urllib.request.urlopen(req, timeout=5) as response:
             if response.status == 200:
-                print(f"✅ Ollama server is reachable at {url}", file=sys.stderr)
+                logger.info(f"✅ Ollama server is reachable at {url}")
                 return True
     except urllib.error.URLError as e:
-        print(f"⚠️  Warning: Cannot reach Ollama server at {url}", file=sys.stderr)
-        print(f"   Error: {e.reason}", file=sys.stderr)
-        print(f"   Make sure Ollama is running: ollama serve", file=sys.stderr)
-        print(f"   Or set OLLAMA_BASE_URL environment variable", file=sys.stderr)
+        logger.warning(f"⚠️  Warning: Cannot reach Ollama server at {url}")
+        logger.warning(f"   Error: {e.reason}")
+        logger.warning("   Make sure Ollama is running: ollama serve")
+        logger.warning("   Or set OLLAMA_BASE_URL environment variable")
     except Exception as e:
-        print(f"⚠️  Warning: Error checking Ollama connection: {e}", file=sys.stderr)
+        logger.warning(f"⚠️  Warning: Error checking Ollama connection: {e}")
     
     return False
 
 
-# Check Ollama connection at startup
-check_ollama_connection()
+# Check Ollama connection at startup (skipable via SENTINEL_SKIP_OLLAMA_CHECK=1)
+if os.getenv('SENTINEL_SKIP_OLLAMA_CHECK', '0') != '1':
+    check_ollama_connection()
 
 # Get Ollama model from environment or use default
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3:8b")

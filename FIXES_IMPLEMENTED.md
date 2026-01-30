@@ -1,3 +1,10 @@
+# Archived: FIXES_IMPLEMENTED.md
+This file has been archived and moved to `archive/docs-legacy/FIXES_IMPLEMENTED.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # ✅ FIXES IMPLEMENTED - January 26, 2026
 
 ## Summary

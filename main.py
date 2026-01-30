@@ -7,7 +7,8 @@ import json
 import sys
 import subprocess
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+import os
 from crewai import Crew, Process
 from sensors.auth_sensor import AuthSensor
 from sensors.web_sensor import WebSensor
@@ -15,12 +16,35 @@ from tasks import create_security_incident_tasks, parse_agent_response
 from defense.attack_logger import AttackLogger
 from defense.attack_detector import AttackDetector
 from output_formatter import OutputFormatter, print_alert, print_report, print_success, print_error
+from data_engine import get_engine
 import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Initialize data engine (SQLite)
+data_engine = get_engine()
+
+# Configure logging: quiet console (WARNING+) and rotating file for INFO/DEBUG
+LOG_DIR = os.getenv('SENTINEL_LOG_DIR', '/app/logs')
+LOG_FILE = os.path.join(LOG_DIR, 'sentinel.log')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# Rotating file handler captures INFO and DEBUG
+from logging.handlers import RotatingFileHandler
+file_handler = RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=5)
+file_handler.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(file_formatter)
+root_logger.addHandler(file_handler)
+
+# Console handler set to WARNING to keep terminal quiet
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.WARNING)
+console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(console_formatter)
+root_logger.addHandler(console_handler)
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,14 +99,26 @@ class SentinelAgent:
             description=attack_info.get("description", "Suspicious activity")
         )
         
-        # Display professional alert
-        print(OutputFormatter.alert_event(
+        # Display professional alert (logged to rotating file) and persist incident
+        logger.info(OutputFormatter.alert_event(
             ip_address=ip_address,
             attack_type=attack_info.get("attack_type", "unknown"),
             severity=attack_info.get("severity", "medium"),
             source=source,
             log_line=log_line
         ))
+
+        # Persist incident to SQLite
+        try:
+            incident_id = data_engine.insert_incident(
+                source_ip=ip_address,
+                attack_type=attack_info.get("attack_type", "unknown"),
+                raw_log=log_line,
+                severity=attack_info.get("severity", "medium")
+            )
+        except Exception as e:
+            logger.error(f"Error inserting incident into DB: {e}")
+            incident_id = None
         
         # Track IP across multiple vectors
         if ip_address not in self.ip_tracking:
@@ -121,9 +157,16 @@ class SentinelAgent:
                 verbose=True
             )
             
-            print(OutputFormatter.crew_kickoff())
-            print(OutputFormatter.analysis_started(ip_address, attack_info.get("attack_type", "unknown")))
-            
+            logger.info(OutputFormatter.crew_kickoff())
+            logger.info(OutputFormatter.analysis_started(ip_address, attack_info.get("attack_type", "unknown")))
+
+            # Record analysis kickoff action
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "analysis_start", "AI crew kickoff", True)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+
             result = crew.kickoff()
             
             # Parse and display results
@@ -153,12 +196,17 @@ class SentinelAgent:
             
             # Check if action is required
             if final_report.get("action_required", False):
-                self._handle_remediation(final_report, ip_address)
+                self._handle_remediation(final_report, ip_address, incident_id)
             else:
-                print(OutputFormatter.info_message(
+                logger.info(OutputFormatter.info_message(
                     "MONITORING MODE ACTIVE",
                     ["No immediate action required.", "System is monitoring for additional indicators."]
                 ))
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "monitoring", "No action required - monitoring", True)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
             
         except Exception as e:
             logger.error(f"Error processing security event: {e}", exc_info=True)
@@ -228,13 +276,14 @@ class SentinelAgent:
         
         return report
     
-    def _handle_remediation(self, report: Dict[str, Any], ip_address: str):
+    def _handle_remediation(self, report: Dict[str, Any], ip_address: str, incident_id: Optional[int] = None):
         """
         Handle remediation actions with human-in-the-loop approval.
         
         Args:
             report: The security report
             ip_address: IP address to block
+            incident_id: Optional DB incident id for logging actions
         """
         firewall_rule = report.get("firewall_rule")
         
@@ -242,61 +291,78 @@ class SentinelAgent:
             logger.warning("No firewall rule found in report")
             return
         
-        logger.info(f"\n⚠️  REMEDIATION REQUIRED")
-        logger.info(f"IP Address: {ip_address}")
-        logger.info(f"Severity: {report.get('severity', 'unknown')}")
-        logger.info(f"Threat Level: {report.get('threat_level', 'unknown')}")
-        logger.info(f"\nProposed Firewall Rule:")
-        logger.info(f"  {firewall_rule}")
-        
-        # Human-in-the-loop approval with professional formatting
-        print(OutputFormatter.subheader("SECURITY ACTION REQUIRES APPROVAL"))
-        print(f"  Target IP Address    : {ip_address}")
-        print(f"  Firewall Command     : {firewall_rule}")
-        print(f"\n  This action will block the IP address using iptables rules.")
-        print(f"\n{OutputFormatter.SEPARATOR_MAIN}\n")
-        
+        logger.warning("REMEDIATION REQUIRED")
+        logger.warning(f"IP Address: {ip_address}")
+        logger.warning(f"Severity: {report.get('severity', 'unknown')}")
+        logger.warning(f"Threat Level: {report.get('threat_level', 'unknown')}")
+        logger.warning("Proposed Firewall Rule:")
+        logger.warning(f"  {firewall_rule}")
+
+        # Log approval request and persist proposed action
+        logger.warning(OutputFormatter.subheader("SECURITY ACTION REQUIRES APPROVAL"))
+        logger.warning(f"  Target IP Address    : {ip_address}")
+        logger.warning(f"  Firewall Command     : {firewall_rule}")
+        logger.warning(f"\n  This action will block the IP address using iptables rules.")
+        logger.warning(f"\n{OutputFormatter.SEPARATOR_MAIN}\n")
+
+        if incident_id:
+            try:
+                data_engine.insert_action(incident_id, "proposed_firewall", firewall_rule, False)
+            except Exception as e:
+                logger.error(f"Error inserting action: {e}")
+
         response = input("  Execute this firewall rule? (yes/no): ").strip().lower()
-        
+
         if response in ['yes', 'y']:
-            self._execute_firewall_rule(firewall_rule, ip_address)
+            self._execute_firewall_rule(firewall_rule, ip_address, incident_id)
         else:
-            print(OutputFormatter.info_message(
+            logger.info(OutputFormatter.info_message(
                 "ACTION CANCELLED",
                 ["The firewall rule has been cancelled by user.", "System continues monitoring."]
             ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_cancelled", "User cancelled execution", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
     
-    def _execute_firewall_rule(self, rule: str, ip_address: str):
+    def _execute_firewall_rule(self, rule: str, ip_address: str, incident_id: Optional[int] = None):
         """
         Execute firewall rule with additional human confirmation.
         
         Args:
             rule: The iptables command to execute
             ip_address: IP address being blocked
+            incident_id: Optional DB incident id for logging actions
         """
         # Extract just the iptables command (safety check)
         if not rule.startswith("iptables"):
-            print(OutputFormatter.error_message(
+            logger.error(OutputFormatter.error_message(
                 "INVALID FIREWALL RULE",
                 "The firewall rule format is invalid. Operation cancelled."
             ))
             return
         
         # Final confirmation
-        print(OutputFormatter.subheader("FINAL CONFIRMATION REQUIRED"))
-        print(f"  Firewall Command: {rule}\n")
+        logger.warning(OutputFormatter.subheader("FINAL CONFIRMATION REQUIRED"))
+        logger.warning(f"  Firewall Command: {rule}\n")
         final_confirm = input("  Type 'EXECUTE' to proceed, or anything else to cancel: ").strip()
         
         if final_confirm != "EXECUTE":
-            print(OutputFormatter.info_message(
+            logger.info(OutputFormatter.info_message(
                 "EXECUTION CANCELLED",
                 ["Operation was cancelled by user."]
             ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "execution_cancelled", "User cancelled execution", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
             return
         
         try:
-            print(OutputFormatter.section("EXECUTING FIREWALL RULE"))
-            print(f"  Status: Processing...\n")
+            logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
+            logger.info(f"  Status: Processing...\n")
             
             # Execute the command
             result = subprocess.run(
@@ -306,8 +372,9 @@ class SentinelAgent:
                 timeout=10
             )
             
+            success = False
             if result.returncode == 0:
-                print(OutputFormatter.success_message(
+                logger.info(OutputFormatter.success_message(
                     "FIREWALL RULE SUCCESSFULLY APPLIED",
                     [
                         f"Blocked IP Address: {ip_address}",
@@ -315,32 +382,59 @@ class SentinelAgent:
                         f"Status: Active and Verified"
                     ]
                 ))
+                success = True
             else:
-                print(OutputFormatter.error_message(
+                logger.error(OutputFormatter.error_message(
                     "FIREWALL RULE EXECUTION FAILED",
                     f"Error output: {result.stderr}"
                 ))
                 
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", rule, success)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+                
         except subprocess.TimeoutExpired:
-            print(OutputFormatter.error_message(
+            logger.error(OutputFormatter.error_message(
                 "COMMAND EXECUTION TIMEOUT",
                 "The firewall command timed out after 10 seconds."
             ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
         except FileNotFoundError:
-            print(OutputFormatter.error_message(
+            logger.error(OutputFormatter.error_message(
                 "IPTABLES NOT FOUND",
                 "Ensure you are on a Linux system with iptables installed and available in PATH."
             ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", "iptables_not_found", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
         except PermissionError:
-            print(OutputFormatter.error_message(
+            logger.error(OutputFormatter.error_message(
                 "PERMISSION DENIED",
                 "This operation requires sudo privileges. Please run with: sudo python main.py"
             ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", "permission_denied", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
         except Exception as e:
-            print(OutputFormatter.error_message(
+            logger.error(OutputFormatter.error_message(
                 "UNEXPECTED ERROR",
                 f"Error executing firewall rule: {str(e)}"
             ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
     
     def _get_timestamp(self) -> str:
         """Get current timestamp as string."""
@@ -349,15 +443,15 @@ class SentinelAgent:
     
     def start(self):
         """Start the Sentinel Defense Module with multi-vector monitoring."""
-        print(OutputFormatter.header("SENTINEL AGENT v2.0 INITIALIZATION"))
-        print(OutputFormatter.section("SYSTEM CONFIGURATION"))
-        print(f"  Authentication Log   : {self.auth_log_path}")
-        print(f"  Web Access Log       : {self.web_log_path}")
-        print(f"  AI Engine            : Ollama Local LLM (llama3:8b)")
-        print(f"  Analysis Mode        : Multi-Agent AI Investigation")
-        print(f"  Multi-Vector Support : Enabled")
-        print(f"  Human-in-Loop        : Enabled")
-        print("")
+        logger.info(OutputFormatter.header("SENTINEL AGENT v2.0 INITIALIZATION"))
+        logger.info(OutputFormatter.section("SYSTEM CONFIGURATION"))
+        logger.info(f"  Authentication Log   : {self.auth_log_path}")
+        logger.info(f"  Web Access Log       : {self.web_log_path}")
+        logger.info(f"  AI Engine            : Ollama Local LLM (llama3:8b)")
+        logger.info(f"  Analysis Mode        : Multi-Agent AI Investigation")
+        logger.info(f"  Multi-Vector Support : Enabled")
+        logger.info(f"  Human-in-Loop        : Enabled")
+        logger.info("")
         
         # Initialize and start both sensors
         self.auth_sensor = AuthSensor(

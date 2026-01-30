@@ -1,3 +1,10 @@
+# Archived: FINAL_SUMMARY.md
+This file has been archived and moved to `archive/docs-legacy/FINAL_SUMMARY.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # ✅ SENTINEL AGENT V2.0 - FINAL COMPLETION SUMMARY
 
 **Completed Date**: January 26, 2026  

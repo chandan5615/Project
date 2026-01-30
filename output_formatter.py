@@ -336,32 +336,35 @@ class OutputFormatter:
 
 
 # Convenience functions
+import logging
+logger = logging.getLogger(__name__)
+
 def print_header(title: str) -> None:
-    """Print a professional header."""
-    print(OutputFormatter.header(title))
+    """Log a professional header (quiet mode: to file)."""
+    logger.info(OutputFormatter.header(title))
 
 
 def print_alert(ip_address: str, attack_type: str, severity: str, source: str, 
                 log_line: str = None) -> None:
-    """Print a security alert."""
-    print(OutputFormatter.alert_event(ip_address, attack_type, severity, source, log_line))
+    """Log a security alert (quiet mode)."""
+    logger.info(OutputFormatter.alert_event(ip_address, attack_type, severity, source, log_line))
 
 
 def print_report(report: Dict[str, Any], ip_address: str) -> None:
-    """Print analysis report."""
-    print(OutputFormatter.analysis_report(report, ip_address))
+    """Log analysis report (quiet mode)."""
+    logger.info(OutputFormatter.analysis_report(report, ip_address))
 
 
 def print_success(title: str, details: List[str] = None) -> None:
-    """Print success message."""
-    print(OutputFormatter.success_message(title, details))
+    """Log success message (quiet mode)."""
+    logger.info(OutputFormatter.success_message(title, details))
 
 
 def print_error(title: str, details: str = None) -> None:
-    """Print error message."""
-    print(OutputFormatter.error_message(title, details))
+    """Log error message (quiet mode)."""
+    logger.error(OutputFormatter.error_message(title, details))
 
 
 def print_info(title: str, details: List[str] = None) -> None:
-    """Print info message."""
-    print(OutputFormatter.info_message(title, details))
+    """Log info message (quiet mode)."""
+    logger.info(OutputFormatter.info_message(title, details))

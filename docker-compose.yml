@@ -90,5 +90,32 @@ services:
       retries: 3
       start_period: 60s
 
+  # Internal-only Zero-Exposure Admin Dashboard (do NOT publish ports)
+  # Start with: docker compose up -d --profile dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinel-dashboard
+    restart: unless-stopped
+    network_mode: none   # isolates the dashboard from external networks
+    environment:
+      - DASHBOARD_USER=${DASHBOARD_USER:-sentinel}
+      - DASHBOARD_PASS=${DASHBOARD_PASS:-sentinel}
+      - DASHBOARD_WS_TOKEN_TTL=${DASHBOARD_WS_TOKEN_TTL:-300}
+    volumes:
+      - ./data:/app/data:ro
+      - ./logs:/app/logs:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      uvicorn dashboard.app:app --host 127.0.0.1 --port 8080 --log-level info
+    profiles:
+      - dashboard
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
 volumes:
   ollama_data:

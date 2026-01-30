@@ -1,3 +1,10 @@
+# Archived: VERSION_2_0_SUMMARY.md
+This file has been archived and moved to `archive/docs-legacy/VERSION_2_0_SUMMARY.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # Sentinel Agent v2.0 - Complete Summary
 
 **Release Date:** January 26, 2026  

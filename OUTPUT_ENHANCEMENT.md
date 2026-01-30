@@ -1,3 +1,10 @@
+# Archived: OUTPUT_ENHANCEMENT.md
+This file has been archived and moved to `archive/docs-legacy/OUTPUT_ENHANCEMENT.md` on 2026-01-30.
+
+(If you need the original content restored, copy the archived file back into the repository root.)
+
+---
+
 # Sentinel Agent v2.1 - Enhanced Professional Output
 
 **Version**: 2.1  

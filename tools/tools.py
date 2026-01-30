@@ -9,14 +9,30 @@ from typing import Optional
 from pathlib import Path
 try:
     from crewai_tools import tool
-except ImportError:
+except Exception:
     # Fallback for different CrewAI versions
-    from crewai.tools import tool
+    try:
+        from crewai.tools import tool
+    except Exception:
+        tool = None
+
+# Ensure 'tool' is a decorator; if not available, provide a no-op decorator
+if not callable(tool):
+    def tool(*args, **kwargs):
+        def decorator(f):
+            return f
+        return decorator
 import requests
 import json
 
 
-@tool("Check IP Threat")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Check IP Threat")
+    _decor_check_ip_threat = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_check_ip_threat = (lambda f: f)
+@_decor_check_ip_threat
 def check_ip_threat(ip: str) -> str:
     """
     Check the reputation of an IP address using threat intelligence APIs.
@@ -58,7 +74,13 @@ def check_ip_threat(ip: str) -> str:
     return json.dumps(result, indent=2)
 
 
-@tool("Get System Context")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Get System Context")
+    _decor_get_system_context = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_get_system_context = (lambda f: f)
+@_decor_get_system_context
 def get_system_context() -> str:
     """
     Gather current system context including logged-in users and recent login history.
@@ -113,7 +135,13 @@ def get_system_context() -> str:
     return json.dumps(context, indent=2)
 
 
-@tool("Generate Firewall Rule")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Generate Firewall Rule")
+    _decor_generate_firewall_rule = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_generate_firewall_rule = (lambda f: f)
+@_decor_generate_firewall_rule
 def generate_firewall_rule(ip: str, protocol: str = "tcp", port: str = "all") -> str:
     """
     Generate the exact iptables command string needed to block an IP address.
@@ -150,7 +178,13 @@ def generate_firewall_rule(ip: str, protocol: str = "tcp", port: str = "all") ->
     return json.dumps(rule, indent=2)
 
 
-@tool("Extract IP from Log Line")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Extract IP from Log Line")
+    _decor_extract_ip_from_log = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_extract_ip_from_log = (lambda f: f)
+@_decor_extract_ip_from_log
 def extract_ip_from_log(log_line: str) -> Optional[str]:
     """
     Extract IP address from a log line using regex patterns.
@@ -180,7 +214,13 @@ def extract_ip_from_log(log_line: str) -> Optional[str]:
     return None
 
 
-@tool("Check Web Logs for IP")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Check Web Logs for IP")
+    _decor_check_web_logs_for_ip = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_check_web_logs_for_ip = (lambda f: f)
+@_decor_check_web_logs_for_ip
 def check_web_logs_for_ip(ip: str, log_path: str = "/var/log/apache2/access.log") -> str:
     """
     Check if an IP address appears in web access logs (cross-correlation).
@@ -227,7 +267,13 @@ def check_web_logs_for_ip(ip: str, log_path: str = "/var/log/apache2/access.log"
     return json.dumps(result, indent=2)
 
 
-@tool("Verify Firewall Rule")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Verify Firewall Rule")
+    _decor_verify_firewall_rule = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_verify_firewall_rule = (lambda f: f)
+@_decor_verify_firewall_rule
 def verify_firewall_rule(ip: str) -> str:
     """
     Verify if a firewall rule exists for blocking an IP address.
@@ -286,7 +332,13 @@ def verify_firewall_rule(ip: str) -> str:
     return json.dumps(result, indent=2)
 
 
-@tool("Execute Iptables Rule with Resilience")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Execute Iptables Rule with Resilience")
+    _decor_execute_iptables_rule = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_execute_iptables_rule = (lambda f: f)
+@_decor_execute_iptables_rule
 def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
     """
     Execute an iptables rule to block an IP with resilience loop.
@@ -349,7 +401,13 @@ def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
     return json.dumps(result, indent=2)
 
 
-@tool("Kill Process by Name or PID")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Kill Process by Name or PID")
+    _decor_kill_process = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_kill_process = (lambda f: f)
+@_decor_kill_process
 def kill_process(process_name: str = None, pid: int = None, signal: str = "TERM") -> str:
     """
     Kill a process using systemctl or kill command.
@@ -426,7 +484,13 @@ def kill_process(process_name: str = None, pid: int = None, signal: str = "TERM"
     return json.dumps(result, indent=2)
 
 
-@tool("Change File Permissions")
+# Use crewai 'tool' decorator when available; otherwise use a no-op decorator
+if callable(tool):
+    _tmp = tool("Change File Permissions")
+    _decor_change_permissions = _tmp if callable(_tmp) else (lambda f: f)
+else:
+    _decor_change_permissions = (lambda f: f)
+@_decor_change_permissions
 def change_permissions(file_path: str, permissions: str, recursive: bool = False) -> str:
     """
     Change file or directory permissions using chmod.
