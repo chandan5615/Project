@@ -13,8 +13,9 @@ Sentinel Agent is an autonomous, multi-agent AI Security Operations Center (SOC)
 - ✅ **Quiet Logging**: Console WARNING+, full DEBUG to `/app/logs/sentinel.log` with rotation
 - ✅ **SQLite Persistence**: Track incidents, actions, and threat intelligence
 - ✅ **Admin Dashboard**: Internal-only FastAPI UI with Basic Auth, WebSocket real-time updates, Plotly charts
+- ✅ **Adaptive Reporting System**: Environment-aware UI (GUI/CLI/Docker/systemd modes)
 - ✅ **Professional Output**: Clean text-based formatting (no icons/emojis) for enterprise-grade appearance
-- ✅ **Test Suite**: Unit tests for data engine, remediation, dashboard (5 passed, 1 skipped)
+- ✅ **Test Suite**: Unit tests for data engine, remediation, dashboard, adaptive system (5 passed, 1 skipped)
 - ✅ **All v2.0 Fixes**: Type hints, IP validation, JSON parsing, file rotation, comprehensive error handling
 
 ## Version 2.0 Improvements & Bug Fixes

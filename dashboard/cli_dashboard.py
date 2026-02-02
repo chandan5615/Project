@@ -1,0 +1,418 @@
+"""
+Sentinel Agent CLI Dashboard - Rich terminal UI for headless environments
+Provides formatted terminal-based monitoring of security incidents with live updates
+"""
+
+import sqlite3
+import logging
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple
+from pathlib import Path
+from rich.console import Console
+from rich.table import Table
+from rich.layout import Layout
+from rich.panel import Panel
+from rich.text import Text
+from rich.progress import BarColumn, Progress
+from rich.live import Live
+from rich.align import Align
+import time
+
+
+class CLIDashboardDataManager:
+    """Manages SQLite database access for CLI dashboard metrics"""
+    
+    def __init__(self, db_path: str = "sentinel_intel.db"):
+        self.db_path = db_path
+        self.logger = logging.getLogger(__name__)
+    
+    def get_connection(self):
+        """Get database connection"""
+        return sqlite3.connect(self.db_path)
+    
+    def get_recent_blocks(self, limit: int = 5) -> List[Dict]:
+        """Get most recent blocked IPs"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT 
+                    source_ip,
+                    threat_type,
+                    timestamp,
+                    action,
+                    COUNT(*) as count
+                FROM incidents
+                GROUP BY source_ip
+                ORDER BY MAX(timestamp) DESC
+                LIMIT ?
+            """, (limit,))
+            
+            results = cursor.fetchall()
+            conn.close()
+            
+            return [
+                {
+                    "ip": r[0],
+                    "threat_type": r[1],
+                    "timestamp": r[2],
+                    "action": r[3],
+                    "count": r[4]
+                }
+                for r in results
+            ]
+        except Exception as e:
+            self.logger.error(f"Error fetching recent blocks: {e}")
+            return []
+    
+    def get_incident_alerts(self, limit: int = 5) -> List[Dict]:
+        """Get recent incident alerts"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT 
+                    source_ip,
+                    threat_type,
+                    action,
+                    timestamp
+                FROM incidents
+                ORDER BY timestamp DESC
+                LIMIT ?
+            """, (limit,))
+            
+            results = cursor.fetchall()
+            conn.close()
+            
+            return [
+                {
+                    "source_ip": r[0],
+                    "threat_type": r[1],
+                    "action": r[2],
+                    "timestamp": r[3]
+                }
+                for r in results
+            ]
+        except Exception as e:
+            self.logger.error(f"Error fetching incident alerts: {e}")
+            return []
+    
+    def calculate_security_score(self) -> Tuple[int, str, str]:
+        """Calculate security score (0-100), status text, and color"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            # Get stats for last hour
+            cursor.execute("""
+                SELECT COUNT(*) FROM incidents 
+                WHERE timestamp > datetime('now', '-1 hour')
+            """)
+            incidents_1h = cursor.fetchone()[0] or 0
+            
+            cursor.execute("""
+                SELECT COUNT(DISTINCT source_ip) FROM incidents 
+                WHERE timestamp > datetime('now', '-1 hour')
+            """)
+            unique_sources_1h = cursor.fetchone()[0] or 0
+            
+            conn.close()
+            
+            # Score calculation
+            score = 100
+            score -= min(50, incidents_1h * 2.5)
+            score -= min(30, unique_sources_1h * 3)
+            score = max(0, min(100, score))
+            
+            # Determine status and color
+            if score >= 80:
+                status = "SECURE"
+                color = "green"
+            elif score >= 50:
+                status = "CAUTION"
+                color = "yellow"
+            else:
+                status = "CRITICAL"
+                color = "red"
+            
+            return (score, status, color)
+        except Exception as e:
+            self.logger.error(f"Error calculating security score: {e}")
+            return (100, "SECURE", "green")
+    
+    def get_threat_summary(self) -> Dict:
+        """Get summary statistics"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            # Total incidents
+            cursor.execute("SELECT COUNT(*) FROM incidents")
+            total = cursor.fetchone()[0] or 0
+            
+            # Last 24h
+            cursor.execute("""
+                SELECT COUNT(*) FROM incidents 
+                WHERE timestamp > datetime('now', '-1 day')
+            """)
+            last_24h = cursor.fetchone()[0] or 0
+            
+            # Unique sources
+            cursor.execute("SELECT COUNT(DISTINCT source_ip) FROM incidents")
+            unique = cursor.fetchone()[0] or 0
+            
+            conn.close()
+            return {
+                "total": total,
+                "last_24h": last_24h,
+                "unique": unique
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting threat summary: {e}")
+            return {"total": 0, "last_24h": 0, "unique": 0}
+
+
+class CLIDashboard:
+    """Rich CLI Dashboard renderer"""
+    
+    def __init__(self, db_path: str = "sentinel_intel.db"):
+        self.console = Console()
+        self.data_manager = CLIDashboardDataManager(db_path)
+        self.logger = logging.getLogger(__name__)
+    
+    def render_security_score(self) -> Panel:
+        """Render security score panel"""
+        score, status, color = self.data_manager.calculate_security_score()
+        
+        # Create progress bar
+        bar_width = 40
+        filled = int(bar_width * score / 100)
+        bar = "█" * filled + "░" * (bar_width - filled)
+        
+        score_text = Text()
+        score_text.append(f"Security Score: {score}%\n")
+        score_text.append(bar + "\n")
+        score_text.append(f"Status: {status}", style=color)
+        
+        return Panel(
+            score_text,
+            title="🛡️  SECURITY STATE",
+            border_style=color,
+            expand=False
+        )
+    
+    def render_recent_blocks_table(self) -> Panel:
+        """Render table of recently blocked IPs"""
+        blocks = self.data_manager.get_recent_blocks(limit=5)
+        
+        table = Table(
+            title="Recent Blocks",
+            show_header=True,
+            header_style="bold cyan",
+            show_lines=False
+        )
+        
+        table.add_column("IP Address", style="yellow")
+        table.add_column("Threat Type", style="red")
+        table.add_column("Count", style="white", justify="right")
+        table.add_column("Last Seen", style="cyan")
+        
+        if blocks:
+            for block in blocks:
+                # Parse timestamp to human-readable format
+                try:
+                    dt = datetime.fromisoformat(block['timestamp'])
+                    time_str = dt.strftime("%H:%M:%S")
+                except:
+                    time_str = "unknown"
+                
+                table.add_row(
+                    block['ip'],
+                    block['threat_type'],
+                    str(block['count']),
+                    time_str
+                )
+        else:
+            table.add_row(
+                Align.center("─" * 40),
+                Align.center("No blocks detected"),
+                "",
+                ""
+            )
+        
+        return Panel(
+            table,
+            title="🚫 WALL OF SHAME",
+            border_style="red",
+            expand=True
+        )
+    
+    def render_incident_alerts(self) -> Panel:
+        """Render recent incident alerts"""
+        alerts = self.data_manager.get_incident_alerts(limit=5)
+        
+        table = Table(
+            title="Recent Alerts",
+            show_header=True,
+            header_style="bold yellow",
+            show_lines=False
+        )
+        
+        table.add_column("Source IP", style="yellow", width=15)
+        table.add_column("Threat Type", style="red", width=20)
+        table.add_column("Action", style="cyan", width=15)
+        table.add_column("Time", style="white", width=10)
+        
+        if alerts:
+            for alert in alerts:
+                try:
+                    dt = datetime.fromisoformat(alert['timestamp'])
+                    time_str = dt.strftime("%H:%M:%S")
+                except:
+                    time_str = "unknown"
+                
+                table.add_row(
+                    alert['source_ip'],
+                    alert['threat_type'][:20],
+                    alert['action'][:15],
+                    time_str
+                )
+        else:
+            table.add_row(
+                Align.center("─" * 40),
+                Align.center("No alerts"),
+                "",
+                ""
+            )
+        
+        return Panel(
+            table,
+            title="📋 INCIDENT FEED",
+            border_style="yellow",
+            expand=True
+        )
+    
+    def render_summary_stats(self) -> Panel:
+        """Render summary statistics"""
+        summary = self.data_manager.get_threat_summary()
+        
+        stats_text = Text()
+        stats_text.append(f"Total Incidents: ", style="white")
+        stats_text.append(f"{summary['total']}\n", style="bold cyan")
+        stats_text.append(f"Last 24 Hours:  ", style="white")
+        stats_text.append(f"{summary['last_24h']}\n", style="bold yellow")
+        stats_text.append(f"Unique Threats: ", style="white")
+        stats_text.append(f"{summary['unique']}", style="bold red")
+        
+        return Panel(
+            stats_text,
+            title="📊 SUMMARY",
+            border_style="cyan",
+            expand=False
+        )
+    
+    def render_layout(self) -> Layout:
+        """Create complete dashboard layout"""
+        layout = Layout()
+        layout.split(
+            Layout(name="header", size=3),
+            Layout(name="main"),
+            Layout(name="footer", size=2)
+        )
+        
+        layout["header"].update(
+            Panel(
+                Text(
+                    "🛡️  SENTINEL AGENT - CLI DASHBOARD",
+                    justify="center",
+                    style="bold cyan"
+                )
+            )
+        )
+        
+        layout["main"].split_row(
+            Layout(name="left"),
+            Layout(name="right")
+        )
+        
+        layout["left"].split(
+            Layout(self.render_security_score(), name="score"),
+            Layout(self.render_summary_stats(), name="stats")
+        )
+        
+        layout["right"].split(
+            Layout(self.render_recent_blocks_table(), name="blocks"),
+            Layout(self.render_incident_alerts(), name="alerts")
+        )
+        
+        layout["footer"].update(
+            Panel(
+                Text(
+                    f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | "
+                    f"Database: sentinel_intel.db | Press Ctrl+C to exit",
+                    justify="center",
+                    style="dim white"
+                )
+            )
+        )
+        
+        return layout
+    
+    def display_static(self):
+        """Display dashboard once (non-interactive)"""
+        self.console.clear()
+        layout = self.render_layout()
+        self.console.print(layout)
+    
+    def display_live(self, refresh_interval: float = 5.0):
+        """Display dashboard with live updates"""
+        try:
+            with Live(
+                self.render_layout(),
+                console=self.console,
+                refresh_per_second=1/refresh_interval,
+                screen=True
+            ) as live:
+                while True:
+                    time.sleep(refresh_interval)
+                    live.update(self.render_layout())
+        except KeyboardInterrupt:
+            self.console.print("\n[yellow]Dashboard stopped[/yellow]")
+    
+    def display_headless(self, refresh_interval: float = 30.0):
+        """Display dashboard in headless mode (single update per interval)"""
+        try:
+            while True:
+                self.display_static()
+                time.sleep(refresh_interval)
+        except KeyboardInterrupt:
+            self.console.print("\n[yellow]Dashboard stopped[/yellow]")
+
+
+def start_cli_dashboard(db_path: str = "sentinel_intel.db", 
+                       live_mode: bool = True,
+                       refresh_interval: float = 5.0):
+    """Start the CLI dashboard
+    
+    Args:
+        db_path: Path to SQLite database
+        live_mode: If True, use live updating; if False, static display
+        refresh_interval: Seconds between updates
+    """
+    dashboard = CLIDashboard(db_path)
+    
+    try:
+        if live_mode:
+            dashboard.display_live(refresh_interval)
+        else:
+            dashboard.display_headless(refresh_interval)
+    except Exception as e:
+        logging.error(f"Error in CLI dashboard: {e}")
+        raise
+
+
+if __name__ == "__main__":
+    # Example usage
+    start_cli_dashboard(live_mode=False, refresh_interval=10.0)

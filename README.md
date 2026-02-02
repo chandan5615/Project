@@ -12,6 +12,10 @@ An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed 
   - **Enforcer Agent**: Prepares and executes defensive measures
 - **Quiet Logging**: Console shows only WARNING+ messages; full logs to `/app/logs/sentinel.log`
 - **SQLite Data Persistence**: Tracks incidents, actions, and threat intelligence
+- **Adaptive Reporting System**: Automatically adjusts UI based on environment:
+  - **GUI Mode**: Web dashboard (Streamlit) with metrics and incident tracking
+  - **CLI Mode**: Rich terminal UI with formatted tables and live updates
+  - **Docker/Systemd**: Logging-only mode for automated deployments
 - **Zero-Exposure Admin Dashboard**: Internal-only FastAPI UI with Basic Auth and WebSocket real-time updates
 - **Human-in-the-Loop Security**: Requires explicit approval before executing any blocking actions
 - **Professional Output**: Clean, formatted text-based reports (no emojis/icons)
@@ -282,6 +286,56 @@ sentinel-agent/
 - **IP validation**: Bulletproof validation (rejects invalid octets)
 - **JSON parsing**: Robust brace-counting algorithm for nested structures
 - **Type hints**: 100% type coverage for Python 3.9+ compatibility
+
+---
+
+## Adaptive Reporting System
+
+The system automatically adapts its reporting interface based on the deployment environment:
+
+### Modes
+
+**GUI Mode** (Desktop/Development)
+- Streamlit-based web dashboard at `127.0.0.1:8501`
+- Real-time security metrics and incident tracking
+- Security score (0-100%), blocked IPs list, incident feed
+- Console shows only heartbeat messages
+
+**CLI Mode** (Terminal/SSH/Headless)
+- Rich terminal UI with formatted tables
+- Live security status, blocked IPs, incident alerts
+- Works over SSH and remote terminals
+- Full logging to file
+
+**Docker Mode**
+- Logging-only (no dashboard)
+- All output to stdout and log files
+- Suitable for container orchestration
+
+**Systemd Mode**
+- Logging-only (no dashboard)
+- Journal/syslog integration
+- Suitable for system services
+
+### Usage
+
+The mode is automatically detected at startup:
+```bash
+# Desktop with X11/Wayland → GUI mode (Streamlit dashboard)
+python main.py
+
+# SSH terminal → CLI mode (Rich terminal UI)
+ssh user@server
+python main.py
+
+# Docker container → Docker mode (logs only)
+docker run sentinel-agent:latest
+
+# Systemd service → Systemd mode (logs only)
+systemctl start sentinel-agent
+```
+
+For detailed configuration, see [ADAPTIVE_REPORTING.md](ADAPTIVE_REPORTING.md).
 
 ---
 
