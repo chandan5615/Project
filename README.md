@@ -1,6 +1,6 @@
-# Sentinel Agent v2.1
+# Sentinel Agent v2.2
 
-An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. Sentinel Agent uses CrewAI for orchestration and local Ollama (Llama 3) as the LLM engine to monitor, analyze, and respond to security threats in real-time with quiet logging and an internal admin dashboard.
+An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. Sentinel Agent uses CrewAI for orchestration and local Ollama (Llama 3) as the LLM engine to monitor, analyze, and respond to security threats in real-time with professional logging, adaptive reporting, and an internal admin dashboard.
 
 ## Features
 
@@ -10,7 +10,8 @@ An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed 
   - **Threat Intelligence Researcher**: Checks IP reputation and threat intelligence
   - **Incident Response Specialist**: Generates remediation plans and firewall rules
   - **Enforcer Agent**: Prepares and executes defensive measures
-- **Quiet Logging**: Console shows only WARNING+ messages; full logs to `/app/logs/sentinel.log`
+- **Intelligent Logging**: Differential logging with 60-second heartbeat; console shows only critical alerts, full logs to `/app/logs/sentinel.log`
+- **Anti-Spam Filtering**: Prevents duplicate threat alerts; tracks reported IPs to avoid log spam
 - **SQLite Data Persistence**: Tracks incidents, actions, and threat intelligence
 - **Adaptive Reporting System**: Automatically adjusts UI based on environment:
   - **GUI Mode**: Web dashboard (Streamlit) with metrics and incident tracking
@@ -18,7 +19,7 @@ An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed 
   - **Docker/Systemd**: Logging-only mode for automated deployments
 - **Zero-Exposure Admin Dashboard**: Internal-only FastAPI UI with Basic Auth and WebSocket real-time updates
 - **Human-in-the-Loop Security**: Requires explicit approval before executing any blocking actions
-- **Professional Output**: Clean, formatted text-based reports (no emojis/icons)
+- **Professional Output**: Clean, professional text output with uppercase headers and status indicators
 - **Modular Architecture**: Clean separation of sensors, agents, tasks, and tools
 
 ## Architecture
@@ -189,11 +190,13 @@ python -m pytest -q
 See the following files for detailed information:
 
 - **[PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md)** — Complete technical documentation, architecture, and v2.0/v2.1 improvements
+- **[PRODUCTION_CLEANUP.md](PRODUCTION_CLEANUP.md)** — v2.2 Production cleanup documentation: emoji removal, anti-spam implementation, and deployment optimization
 - **[SETUP_GUIDE_WEB_APPLICATIONS.md](SETUP_GUIDE_WEB_APPLICATIONS.md)** — Web-based setup and deployment
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** — Quick commands and tips
 - **[ENVIRONMENT.md](ENVIRONMENT.md)** — Environment variables and configuration
 - **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)** — Docker and compose deployment
 - **[docs/DASHBOARD_SETUP.md](docs/DASHBOARD_SETUP.md)** — Admin dashboard setup and SSH tunneling
+- **[ADAPTIVE_REPORTING.md](ADAPTIVE_REPORTING.md)** — Adaptive reporting system configuration and modes
 
 ---
 
@@ -249,11 +252,13 @@ sentinel-agent/
 
 ## Key Features in Detail
 
-### 1. Quiet Logging (v2.1)
-- **Console output**: WARNING and above only (production-friendly)
+### 1. Intelligent Logging (v2.2)
+- **Console output**: Critical alerts only; heartbeat message every 60 seconds
 - **File logs**: Full DEBUG level to `/app/logs/sentinel.log`
 - **Rotation**: Automatic 10MB rolling logs with 5 backups
-- **No emojis/icons**: Clean, professional text output
+- **Differential logging**: Only new/unique threats trigger immediate alerts
+- **Anti-spam filter**: Tracks reported IPs to eliminate duplicate notifications
+- **Professional format**: Uppercase headers, status indicators (SECURE/CAUTION/CRITICAL), no emojis
 
 ### 2. Data Persistence (v2.1)
 - **SQLite database**: `/app/data/sentinel_intel.db`
@@ -370,6 +375,6 @@ This tool is designed for authorized security monitoring only. Ensure you have p
 
 ---
 
-**Version**: 2.1 (Quiet Logging + Dashboard + Professional Output)  
-**Last Updated**: January 30, 2026  
+**Version**: 2.2 (Anti-Spam Filtering + Professional Output + Adaptive Reporting)  
+**Last Updated**: February 2, 2026  
 **Status**: ✅ Production Ready
