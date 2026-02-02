@@ -15,7 +15,7 @@ import json
 # Configure page
 st.set_page_config(
     page_title="Sentinel Agent Dashboard",
-    page_icon="🛡️",
+    page_icon="S",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -199,18 +199,18 @@ class DashboardDataManager:
             # Ensure score is 0-100
             score = max(0, min(100, score))
             
-            # Determine status
+            # Determine status (color-coded, no emoji)
             if score >= 80:
-                status = "🟢 Secure"
+                status = "SECURE"
             elif score >= 50:
-                status = "🟡 Caution"
+                status = "CAUTION"
             else:
-                status = "🔴 Critical"
+                status = "CRITICAL"
             
             return (int(score), status)
         except Exception as e:
             self.logger.error(f"Error calculating security score: {e}")
-            return (100, "🟢 Secure")
+            return (100, "SECURE")
 
 
 def render_security_state_card(data_manager: DashboardDataManager):
@@ -232,12 +232,12 @@ def render_security_state_card(data_manager: DashboardDataManager):
 
 def render_wall_of_shame(data_manager: DashboardDataManager):
     """Render blocked IPs table"""
-    st.subheader("🚫 Wall of Shame - Blocked Threat Sources")
+    st.subheader("BLOCKED THREAT SOURCES")
     
     df = data_manager.get_blocked_ips(limit=20)
     
     if df.empty:
-        st.info("✅ No blocked IPs - Network is clean!")
+        st.info("STATUS: No blocked IPs - Network is clean")
     else:
         # Format for display
         display_df = df.copy()
@@ -255,12 +255,12 @@ def render_wall_of_shame(data_manager: DashboardDataManager):
 
 def render_incident_feed(data_manager: DashboardDataManager):
     """Render incident feed with threat details"""
-    st.subheader("📋 Incident Feed - Recent Threats")
+    st.subheader("INCIDENT FEED - RECENT THREATS")
     
     df = data_manager.get_incident_feed(limit=20)
     
     if df.empty:
-        st.info("✅ No recent incidents")
+        st.info("STATUS: No recent incidents")
     else:
         # Format for display
         display_df = df.copy()
@@ -278,7 +278,7 @@ def render_incident_feed(data_manager: DashboardDataManager):
 
 def render_network_health(data_manager: DashboardDataManager):
     """Render network health metrics and trends"""
-    st.subheader("📊 Network Health - Last Hour Activity")
+    st.subheader("NETWORK HEALTH - LAST HOUR ACTIVITY")
     
     stats = data_manager.get_network_stats()
     
@@ -340,7 +340,7 @@ def main():
         st.text(f"Database: {Path(db_path).name}")
     
     # Main header
-    st.title("🛡️ Sentinel Agent Security Dashboard")
+    st.title("SENTINEL AGENT - SECURITY DASHBOARD")
     st.markdown("Real-time threat monitoring and incident tracking")
     
     st.divider()

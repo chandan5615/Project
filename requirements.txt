@@ -8,10 +8,10 @@ langchain>=0.1.0
 langchain-community>=0.0.20
 watchdog>=3.0.0
 crewai-tools>=0.1.0
-# Added runtime and test dependencies
+# Runtime dependencies
 uvicorn[standard]>=0.20.0
 pytest>=7.0.0
-# Added for adaptive reporting system
+# Reporting system (production)
 streamlit>=1.35.0
 rich>=13.7.0
 pandas>=2.0.0

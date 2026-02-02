@@ -6,7 +6,7 @@ Provides formatted terminal-based monitoring of security incidents with live upd
 import sqlite3
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
@@ -17,6 +17,40 @@ from rich.progress import BarColumn, Progress
 from rich.live import Live
 from rich.align import Align
 import time
+
+
+class AntiSpamFilter:
+    """Prevents spam by tracking recently reported IPs and only showing new blocks"""
+    
+    def __init__(self, max_history: int = 100):
+        self.reported_ips: Set[str] = set()
+        self.max_history = max_history
+        self.last_new_block_time = 0
+        self.console = Console()
+    
+    def is_new_block(self, ip: str) -> bool:
+        """Check if this is a new IP that hasn't been reported yet"""
+        return ip not in self.reported_ips
+    
+    def add_block(self, ip: str):
+        """Register a blocked IP to prevent re-reporting"""
+        self.reported_ips.add(ip)
+        
+        # Prevent memory leaks - keep set bounded
+        if len(self.reported_ips) > self.max_history:
+            # Remove oldest entries (keep most recent)
+            items = list(self.reported_ips)
+            self.reported_ips = set(items[-self.max_history:])
+    
+    def print_new_block_alert(self, ip: str, threat_type: str, action: str):
+        """Print only when a genuinely NEW IP is blocked"""
+        from rich.style import Style
+        
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.console.print(
+            f"[yellow][{timestamp}][/yellow] [bold]NEW BLOCK:[/bold] {ip} | {threat_type} | {action}",
+            style="bold red"
+        )
 
 
 class CLIDashboardDataManager:
@@ -175,12 +209,15 @@ class CLIDashboardDataManager:
 
 
 class CLIDashboard:
-    """Rich CLI Dashboard renderer"""
+    """Rich CLI Dashboard renderer with anti-spam filtering"""
     
     def __init__(self, db_path: str = "sentinel_intel.db"):
         self.console = Console()
         self.data_manager = CLIDashboardDataManager(db_path)
         self.logger = logging.getLogger(__name__)
+        self.anti_spam = AntiSpamFilter(max_history=100)
+        self.last_heartbeat_time = 0
+        self.heartbeat_interval = 60  # Print heartbeat every 60 seconds
     
     def render_security_score(self) -> Panel:
         """Render security score panel"""
@@ -198,7 +235,7 @@ class CLIDashboard:
         
         return Panel(
             score_text,
-            title="🛡️  SECURITY STATE",
+            title="SECURITY STATE",
             border_style=color,
             expand=False
         )
@@ -208,7 +245,7 @@ class CLIDashboard:
         blocks = self.data_manager.get_recent_blocks(limit=5)
         
         table = Table(
-            title="Recent Blocks",
+            title="BLOCKED IPS",
             show_header=True,
             header_style="bold cyan",
             show_lines=False
@@ -289,7 +326,7 @@ class CLIDashboard:
         
         return Panel(
             table,
-            title="📋 INCIDENT FEED",
+            title="INCIDENT FEED",
             border_style="yellow",
             expand=True
         )
@@ -308,7 +345,7 @@ class CLIDashboard:
         
         return Panel(
             stats_text,
-            title="📊 SUMMARY",
+            title="SUMMARY STATISTICS",
             border_style="cyan",
             expand=False
         )
@@ -325,7 +362,7 @@ class CLIDashboard:
         layout["header"].update(
             Panel(
                 Text(
-                    "🛡️  SENTINEL AGENT - CLI DASHBOARD",
+                    "SENTINEL AGENT - SECURITY CONSOLE",
                     justify="center",
                     style="bold cyan"
                 )
@@ -359,6 +396,24 @@ class CLIDashboard:
         )
         
         return layout
+    
+    def print_heartbeat(self):
+        """Print minimal heartbeat message (anti-spam: once per 60 seconds)"""
+        current_time = time.time()
+        
+        if current_time - self.last_heartbeat_time >= self.heartbeat_interval:
+            score, _, _ = self.data_manager.calculate_security_score()
+            summary = self.data_manager.get_threat_summary()
+            
+            timestamp = datetime.now().strftime("%H:%M")
+            self.console.print(
+                f"[cyan][{timestamp}][/cyan] Sentinel Active | "
+                f"Threats Detected: {summary['last_24h']} | "
+                f"Security Score: {score}%",
+                style="dim"
+            )
+            
+            self.last_heartbeat_time = current_time
     
     def display_static(self):
         """Display dashboard once (non-interactive)"""

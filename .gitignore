@@ -22,6 +22,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
 
 # IDE
 .vscode/
@@ -30,6 +31,8 @@ wheels/
 *.swo
 *~
 *.iml
+*.sublime-project
+*.sublime-workspace
 
 # Logs and Data
 *.log
@@ -39,6 +42,8 @@ logs/
 *.db
 *.sqlite
 *.sqlite3
+sentinel_intel.db*
+*.db-journal
 
 # OS
 .DS_Store
@@ -48,6 +53,29 @@ Thumbs.db
 incident_history.json
 test_auth.log
 .env
+.env.local
+
+# Notebooks (not in production)
+*.ipynb
+.ipynb_checkpoints/
+
+# Backup files
+*.bak
+*~
+*.tmp
+*_old.*
+*_v1.*
+*_v2.*
+
+# Cache
+.cache/
+*.cache
+pip-cache/
+
+# Generated files
+.generated
+.timestamp
+session_state.json
 .env.local
 
 # Temporary files
