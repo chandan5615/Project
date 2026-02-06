@@ -19,6 +19,13 @@ from output_formatter import OutputFormatter, print_alert, print_report, print_s
 from data_engine import get_engine
 import logging
 
+# Import new feature modules
+from threat_intelligence import get_threat_intelligence
+from auth import get_authenticator
+from list_manager import get_list_manager
+from metrics import get_metrics
+from anomaly_scorer import get_anomaly_scorer
+
 # Initialize data engine (SQLite)
 data_engine = get_engine()
 
@@ -78,6 +85,20 @@ class SentinelAgent:
             attack_info: Attack detection information dictionary
             source: Source of the event ("auth" or "web")
         """
+        # Initialize feature modules
+        threat_intel = get_threat_intelligence()
+        list_mgr = get_list_manager()
+        perf_metrics = get_metrics()
+        anomaly_scorer = get_anomaly_scorer()
+        
+        # FEATURE 4: Check whitelist before processing
+        if list_mgr.is_ip_whitelisted(ip_address):
+            logger.info(f"IP {ip_address} is whitelisted - skipping analysis")
+            return
+        
+        # Record detection start for metrics
+        detection_start_time = perf_metrics.get_current_timestamp()
+        
         # Detect attack type if not provided
         if not attack_info:
             attack_info = self.attack_detector.detect_attack(log_line, source=source)
@@ -88,6 +109,24 @@ class SentinelAgent:
                     "description": "Suspicious activity detected",
                     "source": source
                 }
+        
+        # FEATURE 2: Check threat intelligence
+        threat_result = threat_intel.check_ip_reputation(ip_address)
+        if threat_result.get('is_malicious'):
+            logger.warning(f"IP {ip_address} is in threat database: {threat_result.get('threat_level')}")
+            attack_info['threat_level'] = threat_result.get('threat_level')
+        
+        # FEATURE 10: Calculate anomaly score
+        incident_data = {
+            "ip": ip_address,
+            "attack_type": attack_info.get("attack_type", "unknown"),
+            "severity": attack_info.get("severity", "medium"),
+            "source": source
+        }
+        
+        anomaly_result = anomaly_scorer.calculate_anomaly_score(incident_data)
+        anomaly_score = anomaly_result.get('anomaly_score', 0)
+        logger.info(f"Anomaly score for {ip_address}: {anomaly_score:.2f} ({anomaly_result.get('recommendation')})")
         
         # Log the attack
         attack_record = self.attack_logger.log_attack(
@@ -169,8 +208,21 @@ class SentinelAgent:
 
             result = crew.kickoff()
             
+            # Record AI response completion time
+            ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
+            
             # Parse and display results
             final_report = self._extract_final_report(result, ip_address, log_line)
+            
+            # FEATURE 7: Record detection metrics
+            if incident_id:
+                perf_metrics.record_detection(
+                    incident_id=incident_id,
+                    attack_type=attack_info.get("attack_type", "unknown"),
+                    detection_time_ms=detection_start_time,
+                    ai_response_time_ms=ai_response_time,
+                    confidence=anomaly_result.get('anomaly_score', 0)
+                )
             
             # Store incident
             incident_record = {
@@ -207,6 +259,9 @@ class SentinelAgent:
                         data_engine.insert_action(incident_id, "monitoring", "No action required - monitoring", True)
                     except Exception as e:
                         logger.error(f"Error inserting action: {e}")
+            
+            # Update IP profile for anomaly scoring
+            anomaly_scorer.update_ip_profile(ip_address, attack_info.get("severity", "medium"))
             
         except Exception as e:
             logger.error(f"Error processing security event: {e}", exc_info=True)
@@ -364,6 +419,9 @@ class SentinelAgent:
             logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
             logger.info(f"  Status: Processing...\n")
             
+            # Record response start time for metrics
+            response_start = perf_metrics.get_current_timestamp()
+            
             # Execute the command
             result = subprocess.run(
                 rule.split(),
@@ -372,7 +430,9 @@ class SentinelAgent:
                 timeout=10
             )
             
+            response_time = perf_metrics.get_current_timestamp() - response_start
             success = False
+            
             if result.returncode == 0:
                 logger.info(OutputFormatter.success_message(
                     "FIREWALL RULE SUCCESSFULLY APPLIED",
@@ -388,6 +448,15 @@ class SentinelAgent:
                     "FIREWALL RULE EXECUTION FAILED",
                     f"Error output: {result.stderr}"
                 ))
+            
+            # FEATURE 7: Record response metrics
+            if incident_id:
+                perf_metrics.record_response(
+                    incident_id=incident_id,
+                    action_type="firewall_block",
+                    execution_time_ms=response_time,
+                    success=success
+                )
                 
             if incident_id:
                 try:
@@ -400,6 +469,16 @@ class SentinelAgent:
                 "COMMAND EXECUTION TIMEOUT",
                 "The firewall command timed out after 10 seconds."
             ))
+            
+            # Record failed response
+            if incident_id:
+                perf_metrics.record_response(
+                    incident_id=incident_id,
+                    action_type="firewall_block",
+                    execution_time_ms=-1,
+                    success=False
+                )
+            
             if incident_id:
                 try:
                     data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
