@@ -129,19 +129,36 @@ curl http://localhost:8000/api/health
 
 ---
 
-## 🔐 Authentication
+## 🔐 Authentication & Security
 
-### Default Credentials
+### ⚡ NEW: Enterprise-Grade Encryption
+
+**v2.2 now includes bcrypt password hashing and Fernet encryption!**
+
+**First-time users:** System generates a **secure random password** on startup.
+
+```bash
+# Find your password in logs:
+docker-compose logs sentinel-agent | grep "DEFAULT ADMIN"
+
+# Or check the credentials file:
+cat data/INITIAL_CREDENTIALS.txt
 ```
-Username: admin
-Password: sentinel123
-⚠️ CHANGE IMMEDIATELY IN PRODUCTION
+
+📋 **Change password immediately:**
+```bash
+python password_manager.py
+# Select: 1. Change Password
 ```
+
+📚 **Full Security Guide:** [SECURITY_UPGRADE.md](SECURITY_UPGRADE.md)
+
+---
 
 ### Get API Token
 ```bash
 curl -X POST http://localhost:8000/api/auth/login \
-  -d "username=admin&password=sentinel123"
+  -d "username=admin&password=YOUR_PASSWORD_HERE"
 # Returns: {"token":"eyJhbGc...","expires_in":86400}
 ```
 

@@ -330,6 +330,3 @@ volumes:
       options:
         max-size: "5m"
         max-file: "2"
-
-volumes:
-  ollama_data:

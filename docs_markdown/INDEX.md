@@ -24,6 +24,21 @@ Welcome to Sentinel Agent v2.2 documentation! This comprehensive index helps you
 
 ## 📖 Complete Documentation Map
 
+### 🔐 Security & Authentication (NEW in v2.2!)
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[SECURITY_UPGRADE.md](../SECURITY_UPGRADE.md)** | Quick security upgrade guide | All users |
+| **SECURITY_IMPLEMENTATION.md** | Complete security architecture | Developers & DevOps |
+| **[CHANGELOG_SECURITY.md](../CHANGELOG_SECURITY.md)** | Security changes in v2.2 | Technical leads |
+
+**Key Features:**
+- ✅ bcrypt password hashing (enterprise-grade)
+- ✅ Fernet encryption for credentials
+- ✅ Secure random password generation
+- ✅ Password strength validation
+- ✅ Interactive password manager tool
+
 ### 🎯 Feature Documentation
 
 | Document | Purpose | Audience |
