@@ -1,0 +1,280 @@
+#!/bin/bash
+
+# ============================================================================
+# Sentinel Agent - Professional Installation Script (Linux/macOS)
+# ============================================================================
+# This script provides a clean, professional installation of the Sentinel Agent
+# system with full dependency checking, validation, and post-installation setup.
+# ============================================================================
+
+set -e
+
+# Color definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+NC='\033[0m' # No Color
+
+# Helper functions
+write_header() {
+    echo ""
+    echo -e "${MAGENTA}$(printf '=%.0s' {1..70})${NC}"
+    echo -e "${MAGENTA}$1${NC}"
+    echo -e "${MAGENTA}$(printf '=%.0s' {1..70})${NC}"
+    echo ""
+}
+
+write_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+write_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+write_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+write_info() {
+    echo -e "${CYAN}ℹ️  $1${NC}"
+}
+
+# ============================================================================
+# MAIN INSTALLATION PROCESS
+# ============================================================================
+
+write_header "SENTINEL AGENT - COMPLETE INSTALLATION"
+
+# Step 1: Check Python Installation
+echo "[STEP 1/8] Checking Python Installation..."
+if ! command -v python3 &> /dev/null; then
+    write_error "Python3 is not installed"
+    write_info "Install Python 3.10+ using:"
+    write_info "  Ubuntu/Debian: sudo apt-get install python3 python3-venv python3-dev"
+    write_info "  macOS: brew install python3"
+    exit 1
+fi
+
+PYTHON_VERSION=$(python3 --version)
+write_success "Python found: $PYTHON_VERSION"
+
+# Check Python version is 3.10+
+PYTHON_MINOR=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+REQUIRED_VERSION="3.10"
+if [[ $(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_MINOR" | sort -V | head -n1) != "$REQUIRED_VERSION" ]]; then
+    write_error "Python 3.10+ is required. Current version: $PYTHON_MINOR"
+    exit 1
+fi
+
+# Step 2: Check for Ollama
+echo ""
+echo "[STEP 2/8] Checking Ollama Installation..."
+if ! command -v ollama &> /dev/null; then
+    write_warning "Ollama is not installed or not in PATH"
+    write_info "Ollama is required for AI features"
+    write_info "Install from: https://ollama.ai"
+    write_warning "Continuing installation, but Ollama must be installed for full functionality"
+else
+    OLLAMA_VERSION=$(ollama --version)
+    write_success "Ollama found: $OLLAMA_VERSION"
+    write_info "Make sure Ollama service is running: ollama serve"
+fi
+
+# Step 3: Check for required system packages
+echo ""
+echo "[STEP 3/8] Checking System Dependencies..."
+write_info "Checking required build tools..."
+
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if ! command -v gcc &> /dev/null; then
+        write_warning "gcc not found. Some packages may fail to compile."
+        write_info "Install: sudo apt-get install build-essential python3-dev"
+    else
+        write_success "Build tools found"
+    fi
+fi
+
+# Step 4: Remove existing venv
+echo ""
+echo "[STEP 4/8] Preparing Virtual Environment..."
+if [ -d "venv" ]; then
+    write_warning "Existing virtual environment found. Removing..."
+    rm -rf venv
+    write_success "Old environment removed"
+fi
+
+# Step 5: Create Virtual Environment
+echo ""
+echo "[STEP 5/8] Creating Virtual Environment..."
+python3 -m venv venv
+write_success "Virtual environment created"
+
+# Step 6: Activate and upgrade pip
+echo ""
+echo "[STEP 6/8] Activating Virtual Environment and Upgrading Pip..."
+source venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel --quiet
+write_success "pip upgraded successfully"
+
+# Step 7: Install Requirements
+echo ""
+echo "[STEP 7/8] Installing Project Dependencies..."
+if [ ! -f "requirements.txt" ]; then
+    write_error "requirements.txt not found!"
+    exit 1
+fi
+
+if ! pip install -r requirements.txt; then
+    write_error "Failed to install requirements"
+    exit 1
+fi
+write_success "All dependencies installed successfully"
+
+# Step 8: Initialize Databases
+echo ""
+echo "[STEP 8/8] Initializing Databases..."
+if [ ! -d "data" ]; then
+    mkdir -p data
+    write_success "Data directory created"
+fi
+
+if python -c "from data_engine import get_engine; engine = get_engine()" 2>/dev/null; then
+    write_success "Database initialization complete"
+else
+    write_warning "Database initialization skipped (will be done on first run)"
+fi
+
+# ============================================================================
+# POST-INSTALLATION CONFIGURATION
+# ============================================================================
+
+write_header "POST-INSTALLATION SETUP"
+
+# Create .env file
+if [ ! -f ".env" ]; then
+    write_info "Creating .env file with default configuration..."
+    cat > .env << 'EOF'
+# Sentinel Agent Configuration
+# Generated by installation script
+
+# Ollama Configuration
+OLLAMA_MODEL=llama3:8b
+OLLAMA_HOST=http://localhost:11434
+
+# API Configuration
+API_HOST=127.0.0.1
+API_PORT=8000
+API_WORKERS=1
+
+# Dashboard Configuration
+DASHBOARD_PORT=8501
+
+# Logging Configuration
+LOG_LEVEL=INFO
+
+# Analytics (optional)
+ENABLE_METRICS=true
+ENABLE_ANOMALY_DETECTION=true
+
+# Feature Flags
+ENABLE_THREAT_INTELLIGENCE=true
+ENABLE_AUTHENTICATION=true
+ENABLE_API=true
+EOF
+    write_success ".env file created with default configuration"
+else
+    write_info ".env file already exists, skipping creation"
+fi
+
+# ============================================================================
+# VERIFICATION
+# ============================================================================
+
+write_header "INSTALLATION VERIFICATION"
+
+# Verify key files
+KEY_FILES=(
+    "main.py"
+    "requirements.txt"
+    "data_engine.py"
+    "tasks.py"
+    "threat_intelligence.py"
+    "auth.py"
+    "list_manager.py"
+    "metrics.py"
+    "sentinel_api.py"
+    "anomaly_scorer.py"
+)
+
+ALL_FILES_EXIST=true
+for file in "${KEY_FILES[@]}"; do
+    if [ -f "$file" ]; then
+        write_success "Found: $file"
+    else
+        write_error "Missing: $file"
+        ALL_FILES_EXIST=false
+    fi
+done
+
+if [ "$ALL_FILES_EXIST" = false ]; then
+    write_error "Some key files are missing! Installation may be incomplete."
+    exit 1
+fi
+
+echo ""
+write_header "✅ INSTALLATION COMPLETE"
+
+cat << 'EOF'
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    NEXT STEPS - GET STARTED IN 2 MINUTES                   ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📋 PRE-REQUISITES:
+   1. Ensure Ollama is running:
+      💻 ollama serve
+      
+   2. Verify Ollama has llama3:8b model:
+      💻 ollama pull llama3:8b
+
+📊 START THE SYSTEM:
+
+   Terminal 1 - Activate and Run Core System:
+      💻 source venv/bin/activate
+      💻 python main.py
+
+   Terminal 2 - Start REST API (optional):
+      💻 source venv/bin/activate
+      💻 python sentinel_api.py
+      
+   Terminal 3 - Start Streamlit Dashboard (optional):
+      💻 source venv/bin/activate
+      💻 streamlit run dashboard/web_dashboard.py
+
+🔗 ACCESS POINTS:
+   • REST API:        http://localhost:8000
+   • Dashboard:       http://localhost:8501
+   • Main System:     Console output in Terminal 1
+
+📚 DOCUMENTATION:
+   • README.md:            Project overview
+   • docs_markdown/*:       Comprehensive guides
+   • docs_markdown/INDEX.md: Documentation navigator
+
+⚠️  TROUBLESHOOTING:
+   • If Ollama fails: Check Ollama service is running
+   • If modules missing: Ensure virtual environment is activated
+   • If port conflicts: Edit .env to change ports
+
+🎯 FIRST RUN TEST:
+   • The system will auto-initialize databases on first run
+   • Sample data will be loaded for demonstrations
+   • Check console output for status messages
+
+EOF
+
+write_success "Virtual environment is ready! All dependencies installed."
+write_success "Run the commands above to start the Sentinel Agent."

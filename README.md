@@ -2,6 +2,42 @@
 
 An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. Sentinel Agent uses CrewAI for orchestration and local Ollama (Llama 3) as the LLM engine to monitor, analyze, and respond to security threats in real-time.
 
+---
+
+## ⚡ Installation (Choose One - All Are Clean & No-Mess!)
+
+### 🪟 Windows Users
+
+**PowerShell (Recommended) ⭐**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+.\install.ps1
+```
+
+**Command Prompt (Alternative)**
+```cmd
+install.bat
+```
+
+### 🐧 Linux/macOS Users
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+### 🐍 Any Platform (Python)
+
+```bash
+python install.py
+```
+
+**⏱️ Installation Time:** 3-6 minutes | **Includes:** venv + all dependencies + databases
+
+📚 **Need More Info?** See [QUICK_INSTALL.md](QUICK_INSTALL.md) or [INSTALLATION.md](INSTALLATION.md)
+
+---
+
 ## ✨ What's New in v2.2
 
 **6 Enterprise Features Added:**
