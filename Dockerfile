@@ -127,9 +127,4 @@ VOLUME ["/app/logs", "/app/data"]
 #
 # With docker-compose (recommended):
 #   docker-compose up -d
-# ============================================================================
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import os; exit(0 if os.path.exists('/app/data/attack_records.json') else 1)" || exit 1
-
-CMD ["python", "main.py"]
+# ==========================================================================

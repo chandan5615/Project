@@ -1,19 +1,19 @@
-# 📋 SENTINEL AGENT v2.2 - MASTER DOCUMENTATION
+#  SENTINEL AGENT v2.2 - MASTER DOCUMENTATION
 
 ## Project Overview
 
 **Sentinel Agent** is a production-ready, autonomous AI-powered Security Operations Center (SOC) analyst that monitors Linux systems for security threats using:
-- 🤖 **CrewAI** for multi-agent orchestration
-- 🧠 **Ollama (Llama 3)** for local LLM inference
-- 🔒 **Multiple security detection layers** (pattern-based + ML)
-- 📊 **REST API** with 20+ endpoints
-- 💾 **SQLite persistence** for data management
+-  **CrewAI** for multi-agent orchestration
+-  **Ollama (Llama 3)** for local LLM inference
+-  **Multiple security detection layers** (pattern-based + ML)
+-  **REST API** with 20+ endpoints
+-  **SQLite persistence** for data management
 
 **Version**: 2.2 | **Status**: ✅ Production Ready | **Code Quality**: 9.9/10 | **Features**: 6 Enterprise Features
 
 ---
 
-## 🎯 What's Included
+##  What's Included
 
 ### Core System Features
 ✅ Real-time log monitoring (auth.log + web logs)  
@@ -33,18 +33,18 @@
 ✅ **Feature 10**: ML Anomaly Scoring (4-factor weighted algorithm)  
 
 ### Integration & Tools
-✅ 📡 REST API (FastAPI) with full feature coverage  
-✅ 🎨 Web dashboard (Streamlit) for visualization  
-✅ 💻 CLI dashboard (Rich) for terminal use  
-✅ 🏐 Firewall integration (iptables commands)  
-✅ 🔍 OSINT tools for threat research  
-✅ 📊 Real-time statistics and metrics  
-✅ 🚀 Docker support (Dockerfile + docker-compose)  
-✅ 📚 Comprehensive documentation (25+ guides)
+✅  REST API (FastAPI) with full feature coverage  
+✅  Web dashboard (Streamlit) for visualization  
+✅  CLI dashboard (Rich) for terminal use  
+✅  Firewall integration (iptables commands)  
+✅  OSINT tools for threat research  
+✅  Real-time statistics and metrics  
+✅  Docker support (Dockerfile + docker-compose)  
+✅  Comprehensive documentation (25+ guides)
 
 ---
 
-## 📊 Statistics
+##  Statistics
 
 | Metric | Value |
 |--------|-------|
@@ -60,7 +60,7 @@
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
+##  Quick Start (5 Minutes)
 
 ### Installation
 ```bash
@@ -104,12 +104,12 @@ curl -H "X-API-Key: YOUR_TOKEN" \
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Sentinel-Agent/
 │
-├── 📄 ROOT FILES
+├──  ROOT FILES
 │   ├── README.md                           # Project overview (START HERE)
 │   ├── QUICK_INSTALL.md                    # 2-min installation
 │   ├── INSTALLATION.md                     # Detailed installation guide
@@ -126,7 +126,7 @@ Sentinel-Agent/
 │   ├── anomaly_scorer.py                   # Feature 10: ML anomaly scoring
 │   │   (sentinel_api.py includes Feature 8: REST API)
 │
-├── 🔧 CORE MODULES
+├──  CORE MODULES
 │   ├── agents.py                           # AI crew definition
 │   ├── tasks.py                            # Security playbooks
 │   ├── data_engine.py                      # SQLite persistence
@@ -134,39 +134,39 @@ Sentinel-Agent/
 │   ├── crewai/
 │   │   └── tools.py                        # CrewAI tool definitions
 │
-├── 📡 SENSORS (Real-time monitoring)
+├──  SENSORS (Real-time monitoring)
 │   ├── sensors/
 │   │   ├── auth_sensor.py                  # Auth log monitoring
 │   │   ├── web_sensor.py                   # Web log monitoring
 │   │   └── __init__.py
 │
-├── 🛡️ DEFENSE (Attack detection)
+├── ️ DEFENSE (Attack detection)
 │   ├── defense/
 │   │   ├── attack_detector.py              # Attack pattern matching
 │   │   ├── attack_logger.py                # Incident persistence
 │   │   └── __init__.py
 │
-├── 🎨 DASHBOARDS (User interfaces)
+├──  DASHBOARDS (User interfaces)
 │   ├── dashboard/
 │   │   ├── web_dashboard.py                # Streamlit web UI
 │   │   ├── cli_dashboard.py                # Rich terminal UI
 │   │   ├── app.py                          # Dashboard controller
 │   │   └── __init__.py
 │
-├── 🔨 TOOLS
+├──  TOOLS
 │   ├── tools/
 │   │   ├── tools.py                        # OSINT & firewall tools
 │   │   ├── crewai/  (legacy)
 │   │   ├── _init_.py
 │   │   └── __pycache__
 │
-├── 📊 WATCHDOG (Event monitoring)
+├──  WATCHDOG (Event monitoring)
 │   ├── watchdog/
 │   │   ├── observers.py                    # File system monitoring
 │   │   ├── events.py                       # Event definitions
 │   │   └── __init__.py
 │
-├── 💾 DATA (Databases auto-created)
+├──  DATA (Databases auto-created)
 │   ├── data/                               # Auto-created on first run
 │   │   ├── threat_intel.db                 # Feature 2 database
 │   │   ├── auth.db                         # Feature 3 database
@@ -175,7 +175,7 @@ Sentinel-Agent/
 │   │   └── anomalies.db                    # Feature 10 database
 │   │   (sentinel_intel.db created by core system)
 │
-├── 📚 DOCUMENTATION (25+ guides)
+├──  DOCUMENTATION (25+ guides)
 │   ├── docs_markdown/
 │   │   ├── INDEX.md                        # Documentation navigator
 │   │   ├── README_FEATURES.md              # Feature quick reference
@@ -200,19 +200,19 @@ Sentinel-Agent/
 │   ├── install.py                          # Python installer
 │   ├── setup.ps1, setup.sh, setup.bat     # Setup scripts
 │   │
-│   └── 🐳 DOCKER
+│   └──  DOCKER
 │       ├── Dockerfile                      # Container definition
 │       ├── docker-compose.yml              # Development compose
 │       ├── docker-compose.prod.yml         # Production compose
 │       └── docker-entrypoint.sh            # Container startup
 │
-└── 📦 DEPENDENCIES
+└──  DEPENDENCIES
     └── __pycache__                         # Auto-generated cache
 ```
 
 ---
 
-## 🔌 REST API Endpoints (20+)
+##  REST API Endpoints (20+)
 
 ### Authentication (2 endpoints)
 ```
@@ -266,7 +266,7 @@ GET /api/info                     → System information
 
 ---
 
-## 💾 Database Schema
+##  Database Schema
 
 ### threat_intel.db (Feature 2)
 | Table | Purpose |
@@ -308,7 +308,7 @@ GET /api/info                     → System information
 
 ---
 
-## 🔐 Default Credentials
+##  Default Credentials
 
 ```
 Username: admin
@@ -318,7 +318,7 @@ Password: sentinel123
 
 ---
 
-## 📚 Documentation Organization
+##  Documentation Organization
 
 ### Start Here
 - **[../README.md](../README.md)** - Project overview
@@ -348,9 +348,9 @@ Password: sentinel123
 
 ---
 
-## 🎓 Learning Paths
+##  Learning Paths
 
-### 👨‍💻 For Developers
+### ‍ For Developers
 **Time**: ~2 hours | **Path**:
 1. [README.md](../README.md) (5 min)
 2. [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) (20 min)
@@ -358,7 +358,7 @@ Password: sentinel123
 4. [CODE_REVIEW_REPORT.md](CODE_REVIEW_REPORT.md) (20 min)
 5. [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) (20 min)
 
-### 🔒 For Security Teams
+###  For Security Teams
 **Time**: ~2 hours | **Path**:
 1. [README.md](../README.md) (5 min)
 2. [COMPLETE_FEATURES_SUMMARY.md](COMPLETE_FEATURES_SUMMARY.md) (15 min)
@@ -366,7 +366,7 @@ Password: sentinel123
 4. [ATTACK_TEST_SCENARIOS.md](ATTACK_TEST_SCENARIOS.md) (30 min)
 5. [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) (20 min)
 
-### 🚀 For DevOps/Operations
+###  For DevOps/Operations
 **Time**: ~1.5 hours | **Path**:
 1. [QUICK_INSTALL.md](../QUICK_INSTALL.md) (2 min)
 2. [INSTALLATION.md](../INSTALLATION.md) (15 min)
@@ -375,7 +375,7 @@ Password: sentinel123
 5. [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) (20 min)
 6. [QUICK_REFERENCE.md](QUICK_REFERENCE.md) (15 min)
 
-### 📊 For Managers/Decision Makers
+###  For Managers/Decision Makers
 **Time**: ~1 hour | **Path**:
 1. [README.md](../README.md) (5 min)
 2. [COMPLETE_FEATURES_SUMMARY.md](COMPLETE_FEATURES_SUMMARY.md) (15 min)
@@ -413,7 +413,7 @@ Password: sentinel123
 
 ---
 
-## 🐛 Troubleshooting Quick Links
+##  Troubleshooting Quick Links
 
 | Issue | Solution |
 |-------|----------|
@@ -427,7 +427,7 @@ Password: sentinel123
 
 ---
 
-## 📞 Support Resources
+##  Support Resources
 
 | Need | Resource |
 |------|----------|
@@ -440,7 +440,7 @@ Password: sentinel123
 
 ---
 
-## 🌟 Key Highlights
+##  Key Highlights
 
 ### Code Quality
 ✅ **9.9/10 code quality** - Comprehensive code review  
@@ -468,7 +468,7 @@ Password: sentinel123
 
 ---
 
-## 📈 What's New in v2.2
+##  What's New in v2.2
 
 ### New Features (6 Total)
 1. **Offline Threat Intelligence** - Local IP reputation (threat_intelligence.py)
@@ -487,7 +487,7 @@ Password: sentinel123
 
 ---
 
-## 🚀 Getting Started Now
+##  Getting Started Now
 
 ### Quickest Start (2 minutes)
 ```bash
@@ -508,7 +508,7 @@ Password: sentinel123
 
 ---
 
-## 📋 File References
+##  File References
 
 **Root Documentation**
 - [README.md](../README.md) - Main overview

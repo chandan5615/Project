@@ -1,6 +1,6 @@
 # Docker Automation - Quick Visual Summary
 
-## 🎯 What You Can Do Now
+##  What You Can Do Now
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -21,7 +21,7 @@
 
 ---
 
-## 📦 What Was Built
+##  What Was Built
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -65,7 +65,7 @@
 
 ---
 
-## 📚 Documentation Created
+##  Documentation Created
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -73,7 +73,7 @@
 │                      (75+ Total Pages)                          │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  🎯 DOCKER_INDEX.md                                            │
+│   DOCKER_INDEX.md                                            │
 │     → Central navigation hub (start here!)                     │
 │     → File organization                                        │
 │     → Quick reference                                          │
@@ -83,20 +83,20 @@
 │     → 3 deployment options                                     │
 │     → Essential commands                                       │
 │                                                                 │
-│  📖 DOCKER_DEPLOYMENT.md  (20 pages)                           │
+│   DOCKER_DEPLOYMENT.md  (20 pages)                           │
 │     → Complete deployment guide                                │
 │     → Prerequisites & setup                                    │
 │     → Configuration options                                    │
 │     → Production checklist                                     │
 │                                                                 │
-│  🐛 DOCKER_TROUBLESHOOTING.md  (25 pages - 14 Issues)         │
+│   DOCKER_TROUBLESHOOTING.md  (25 pages - 14 Issues)         │
 │     → Service won't start                                      │
 │     → API not responding                                       │
 │     → Ollama connection failed                                 │
 │     → Disk/memory issues                                       │
 │     → And 10 more solutions!                                   │
 │                                                                 │
-│  🚀 DOCKER_PROFILES_ADVANCED.md  (30 pages)                   │
+│   DOCKER_PROFILES_ADVANCED.md  (30 pages)                   │
 │     → Advanced configurations                                  │
 │     → Scaling patterns                                         │
 │     → Security setup                                           │
@@ -114,7 +114,7 @@
 │     → Verification checklist                                   │
 │     → Project status                                           │
 │                                                                 │
-│  🔄 MIGRATION_TRADITIONAL_TO_DOCKER.md                         │
+│   MIGRATION_TRADITIONAL_TO_DOCKER.md                         │
 │     → How to migrate from traditional setup                    │
 │     → 3 migration strategies                                   │
 │     → Dual-run capabilities                                    │
@@ -125,7 +125,7 @@
 
 ---
 
-## 🧪 Testing & Validation
+##  Testing & Validation
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -154,7 +154,7 @@
 
 ---
 
-## 🎛️ Deployment Options
+## ️ Deployment Options
 
 ```
 ┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
@@ -179,26 +179,26 @@
 
 ---
 
-## 🔍 Key Features at a Glance
+##  Key Features at a Glance
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                                                                  │
-│  🎯 AUTOMATION                   🏭 PRODUCTION                  │
+│   AUTOMATION                    PRODUCTION                  │
 │     ✅ Zero venv setup               ✅ SSL/TLS support         │
 │     ✅ Auto dependencies             ✅ Health checks           │
 │     ✅ Auto model download           ✅ Resource limits         │
 │     ✅ Auto database init            ✅ Log rotation            │
 │     ✅ Auto service restart          ✅ Data persistence       │
 │                                                                  │
-│  📊 OPERATIONAL                  💾 DATA MANAGEMENT             │
+│   OPERATIONAL                   DATA MANAGEMENT             │
 │     ✅ Easy scaling                  ✅ Named volumes           │
 │     ✅ Container profiles            ✅ Automated backups       │
 │     ✅ Monitoring ready              ✅ Quick restore           │
 │     ✅ Rate limiting                 ✅ Backup scheduling       │
 │     ✅ Load balancing                ✅ Data validation         │
 │                                                                  │
-│  👤 DEVELOPER FRIENDLY           🔍 SUPPORT                     │
+│   DEVELOPER FRIENDLY            SUPPORT                     │
 │     ✅ Multiple guides               ✅ 75+ pages docs          │
 │     ✅ Quick commands                ✅ 14+ issue solutions     │
 │     ✅ Clear examples                ✅ Cheat sheet             │
@@ -210,7 +210,7 @@
 
 ---
 
-## 📊 Quick Selection Guide
+##  Quick Selection Guide
 
 ```
 How should I deploy?
@@ -251,7 +251,7 @@ How should I deploy?
 
 ---
 
-## 📚 Where to Start
+##  Where to Start
 
 ```
 ┌─ Are you completely new?
@@ -307,7 +307,7 @@ How should I deploy?
 
 ---
 
-## 🚀 Get Started Now!
+##  Get Started Now!
 
 ### Step 1: Verify (1 minute)
 ```bash
@@ -336,7 +336,7 @@ open http://localhost:8501
 
 ---
 
-## 🎓 All Documentation Files
+##  All Documentation Files
 
 | File | Purpose | Time |
 |------|---------|------|
@@ -351,7 +351,7 @@ open http://localhost:8501
 
 ---
 
-**Everything is ready. Start with git clone!** 🎉
+**Everything is ready. Start with git clone!** 
 
 ```bash
 git clone <repo> sentinel-agent
@@ -359,4 +359,4 @@ cd sentinel-agent
 docker-compose --profile with-ollama up -d
 ```
 
-That's it! Your secure operations center is running. 🚀🔒
+That's it! Your secure operations center is running. 

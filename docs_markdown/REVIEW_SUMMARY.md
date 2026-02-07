@@ -104,7 +104,7 @@ The system is **production-ready** with:
 ## Detailed Report
 
 **Full code review with line-by-line analysis available in**:
-📄 [CODE_REVIEW_REPORT.md](CODE_REVIEW_REPORT.md)
+ [CODE_REVIEW_REPORT.md](CODE_REVIEW_REPORT.md)
 
 **Contents**:
 - Executive summary

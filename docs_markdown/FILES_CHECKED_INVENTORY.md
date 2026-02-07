@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 PRIMARY FILES REVIEWED (13 Files)
+##  PRIMARY FILES REVIEWED (13 Files)
 
 ### Core Application Logic (4 files)
 - ✅ **main.py** (569 lines)
@@ -80,7 +80,7 @@
 
 ---
 
-## 📄 SUPPORTING FILES REVIEWED
+##  SUPPORTING FILES REVIEWED
 
 - ✅ **view_attacks.py** (133 lines)
   - Attack records viewer
@@ -100,7 +100,7 @@
 
 ---
 
-## 🔍 ANALYSIS SCOPE
+##  ANALYSIS SCOPE
 
 ### Code Quality Metrics Checked
 
@@ -117,7 +117,7 @@
 
 ---
 
-## 📊 STATISTICS
+##  STATISTICS
 
 | Metric | Count |
 |--------|-------|
@@ -131,7 +131,7 @@
 
 ---
 
-## 🎯 VERIFICATION CHECKLIST
+##  VERIFICATION CHECKLIST
 
 ### Syntax & Structure
 - ✅ No syntax errors found
@@ -172,7 +172,7 @@
 
 ---
 
-## 📝 DETAILED FINDINGS BY FILE
+##  DETAILED FINDINGS BY FILE
 
 ### main.py
 **Lines**: 569  
@@ -275,7 +275,7 @@
 
 ---
 
-## 🎓 KEY FINDINGS SUMMARY
+##  KEY FINDINGS SUMMARY
 
 ### ✅ Positive Findings
 - Excellent code organization and structure
@@ -306,7 +306,7 @@
 
 ---
 
-## 🏆 OVERALL ASSESSMENT
+##  OVERALL ASSESSMENT
 
 **Code Quality Score**: 9.9/10  
 **Bugs Found**: 0  
@@ -317,7 +317,7 @@
 
 ---
 
-## 📚 REFERENCE DOCUMENTS
+##  REFERENCE DOCUMENTS
 
 - [CODE_REVIEW_REPORT.md](CODE_REVIEW_REPORT.md) - Comprehensive analysis
 - [REVIEW_SUMMARY.md](REVIEW_SUMMARY.md) - Quick reference

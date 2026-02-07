@@ -39,7 +39,7 @@ write_error() {
 }
 
 write_info() {
-    echo -e "${CYAN}ℹ️  $1${NC}"
+    echo -e "${CYAN}️  $1${NC}"
 }
 
 # ============================================================================
@@ -233,33 +233,33 @@ cat << 'EOF'
 ║                    NEXT STEPS - GET STARTED IN 2 MINUTES                   ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
-📋 PRE-REQUISITES:
+ PRE-REQUISITES:
    1. Ensure Ollama is running:
-      💻 ollama serve
+       ollama serve
       
    2. Verify Ollama has llama3:8b model:
-      💻 ollama pull llama3:8b
+       ollama pull llama3:8b
 
-📊 START THE SYSTEM:
+ START THE SYSTEM:
 
    Terminal 1 - Activate and Run Core System:
-      💻 source venv/bin/activate
-      💻 python main.py
+       source venv/bin/activate
+       python main.py
 
    Terminal 2 - Start REST API (optional):
-      💻 source venv/bin/activate
-      💻 python sentinel_api.py
+       source venv/bin/activate
+       python sentinel_api.py
       
    Terminal 3 - Start Streamlit Dashboard (optional):
-      💻 source venv/bin/activate
-      💻 streamlit run dashboard/web_dashboard.py
+       source venv/bin/activate
+       streamlit run dashboard/web_dashboard.py
 
-🔗 ACCESS POINTS:
+ ACCESS POINTS:
    • REST API:        http://localhost:8000
    • Dashboard:       http://localhost:8501
    • Main System:     Console output in Terminal 1
 
-📚 DOCUMENTATION:
+ DOCUMENTATION:
    • README.md:            Project overview
    • docs_markdown/*:       Comprehensive guides
    • docs_markdown/INDEX.md: Documentation navigator
@@ -269,7 +269,7 @@ cat << 'EOF'
    • If modules missing: Ensure virtual environment is activated
    • If port conflicts: Edit .env to change ports
 
-🎯 FIRST RUN TEST:
+ FIRST RUN TEST:
    • The system will auto-initialize databases on first run
    • Sample data will be loaded for demonstrations
    • Check console output for status messages

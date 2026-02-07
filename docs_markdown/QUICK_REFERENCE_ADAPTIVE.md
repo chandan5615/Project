@@ -3,7 +3,7 @@
 **Last Updated**: January 30, 2026  
 **Version**: 2.1  
 
-## 🚀 Quick Start (60 seconds)
+##  Quick Start (60 seconds)
 
 ### Installation
 ```bash
@@ -32,7 +32,7 @@ systemctl start sentinel-agent
 
 ---
 
-## 🎨 Environment Modes
+##  Environment Modes
 
 | Mode | Triggered When | Interface | Console |
 |------|---|---|---|
@@ -43,9 +43,9 @@ systemctl start sentinel-agent
 
 ---
 
-## 💻 Dashboard Features
+##  Dashboard Features
 
-### 🛡️ Web Dashboard (GUI Mode)
+### ️ Web Dashboard (GUI Mode)
 - **URL**: `http://127.0.0.1:8501` (automatically starts)
 - **Components**:
   - Security Score card (0-100%)
@@ -54,7 +54,7 @@ systemctl start sentinel-agent
   - Network Health (incidents/minute graph)
 - **Refresh**: 5-60 seconds (configurable via sidebar)
 
-### 🖥️ CLI Dashboard (Terminal Mode)
+### ️ CLI Dashboard (Terminal Mode)
 - **Display**: Rich formatted tables in terminal
 - **Updates**: Every 5-30 seconds
 - **Components**:
@@ -64,14 +64,14 @@ systemctl start sentinel-agent
   - Summary stats
 - **SSH Compatible**: ✅ Works over remote terminals
 
-### 📦 Docker/Systemd Mode
+###  Docker/Systemd Mode
 - **Display**: None (logging-only)
 - **Output**: Via `docker logs` or `journalctl`
 - **Logging**: Full logs to `/app/logs/sentinel.log`
 
 ---
 
-## 🔧 Core Components
+##  Core Components
 
 ### 1. Environment Detector
 ```python
@@ -129,7 +129,7 @@ printer.print_network_summary(threats=10, blocked=5, score=85)
 
 ---
 
-## 🎯 Integration into main.py
+##  Integration into main.py
 
 ```python
 from environment_detector import EnvironmentDetector
@@ -176,16 +176,16 @@ class SentinelAgent:
 
 ---
 
-## 🖥️ Dashboard Features by Mode
+## ️ Dashboard Features by Mode
 
 ### GUI Mode (Streamlit)
 **When**: Display server detected (X11, Wayland, or Windows Terminal)  
 **URL**: `http://127.0.0.1:8501`  
 **Features**:
-- 🛡️ Security Score (0-100%) with status indicator
-- 🚫 Wall of Shame (blocked IPs table)
-- 📋 Incident Feed (recent threats)
-- 📊 Network Health (incidents/minute graph)
+- ️ Security Score (0-100%) with status indicator
+-  Wall of Shame (blocked IPs table)
+-  Incident Feed (recent threats)
+-  Network Health (incidents/minute graph)
 - ⚙️ Configuration panel
 
 **Console Output**:
@@ -198,24 +198,24 @@ class SentinelAgent:
 ### CLI Mode (Rich)
 **When**: No display server (SSH, terminal, or headless)  
 **Features**:
-- 🛡️ Security Score with progress bar
-- 🚫 Wall of Shame (last 5 blocks)
-- 📋 Incident Feed (last 5 incidents)
-- 📊 Summary statistics
+- ️ Security Score with progress bar
+-  Wall of Shame (last 5 blocks)
+-  Incident Feed (last 5 incidents)
+-  Summary statistics
 - Live or static updates
 
 **Console Output**:
 ```
 ============================================================
-🛡️  SENTINEL AGENT - CLI DASHBOARD
+️  SENTINEL AGENT - CLI DASHBOARD
 ============================================================
 
-🛡️  SECURITY STATE
+️  SECURITY STATE
 Security Score: 78%
 ████████████████████████░░░░░░░░
 Status: CAUTION
 
-🚫 WALL OF SHAME
+ WALL OF SHAME
 IP: 192.168.1.100
 Threat: Brute Force
 Count: 3
@@ -234,7 +234,7 @@ Last: 16:45:32
 
 ---
 
-## 📊 Database Access
+##  Database Access
 
 All dashboards read from `sentinel_intel.db`:
 
@@ -285,7 +285,7 @@ CREATE TABLE threat_intel (
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Run All Tests
 ```bash
@@ -311,7 +311,7 @@ streamlit run dashboard/web_dashboard.py
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 ### Dashboard not starting
 ```bash
@@ -357,7 +357,7 @@ streamlit run dashboard/web_dashboard.py --logger.level=error
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 - **ADAPTIVE_REPORTING.md** - Comprehensive guide (300+ lines)
 - **README.md** - Project overview with adaptive reporting section
@@ -367,7 +367,7 @@ streamlit run dashboard/web_dashboard.py --logger.level=error
 
 ---
 
-## 🔐 Security Notes
+##  Security Notes
 
 1. **Always bind to 127.0.0.1** - Never expose dashboards to internet
 2. **Use SSH tunneling** for remote access:
@@ -386,7 +386,7 @@ streamlit run dashboard/web_dashboard.py --logger.level=error
 
 ---
 
-## 📝 Common Tasks
+##  Common Tasks
 
 ### Add New Threat Detection
 ```python

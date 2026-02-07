@@ -1,13 +1,13 @@
-# 🔐 Security Upgrade - Password Encryption
+# Security Upgrade - Password Encryption
 
-## ✅ What Changed
+## What Changed
 
 Your Sentinel Agent now uses **enterprise-grade encryption** for passwords:
 
 - **Old:** SHA-256 hashing (vulnerable to rainbow tables)
 - **New:** bcrypt with automatic salting (industry standard)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install New Dependencies
 
@@ -67,7 +67,7 @@ curl -X POST http://localhost:8000/api/auth/change-password \
 rm data/INITIAL_CREDENTIALS.txt
 ```
 
-## 🛠️ Password Manager Tool
+## Password Manager Tool
 
 Interactive CLI for managing passwords:
 
@@ -82,7 +82,7 @@ python password_manager.py
 - Encrypt credentials
 - Test password strength
 
-## 📋 Password Requirements
+## Password Requirements
 
 **Minimum (Weak):**
 - 8+ characters
@@ -94,11 +94,11 @@ python password_manager.py
 - Special characters (@#$%)
 
 **Examples:**
-- ❌ `sentinel123` (weak)
-- ⚠️  `Sentinel2024` (moderate)
-- ✅ `S3nt!n3l@2024#Sec` (strong)
+- [NO] `sentinel123` (weak)
+- [MEDIUM] `Sentinel2024` (moderate)
+- [YES] `S3nt!n3l@2024#Sec` (strong)
 
-## 🔑 API Key Management
+## API Key Management
 
 **Create:**
 ```bash
@@ -111,7 +111,7 @@ python password_manager.py
 curl -H "X-API-Key: sk_abc123..." http://localhost:8000/api/attack-records
 ```
 
-## 🛡️ Security Features
+## Security Features
 
 ### What's Protected Now:
 
@@ -122,13 +122,13 @@ curl -H "X-API-Key: sk_abc123..." http://localhost:8000/api/attack-records
 
 ### Best Practices:
 
-✅ Change default password immediately  
-✅ Use API keys for automation  
-✅ Rotate keys every 90 days  
-✅ Backup master encryption key  
-✅ Never commit passwords/keys to git  
+[YES] Change default password immediately
+[YES] Use API keys for automation
+[YES] Rotate keys every 90 days
+[YES] Backup master encryption key
+[YES] Never commit passwords/keys to git  
 
-## 🔧 Migration from Old System
+## Migration from Old System
 
 **If you have existing users:**
 
@@ -150,7 +150,7 @@ docker-compose restart
 # Use new random password from logs
 ```
 
-## 📚 Full Documentation
+## Full Documentation
 
 See [SECURITY_IMPLEMENTATION.md](docs_markdown/SECURITY_IMPLEMENTATION.md) for:
 - Complete security architecture
@@ -158,14 +158,14 @@ See [SECURITY_IMPLEMENTATION.md](docs_markdown/SECURITY_IMPLEMENTATION.md) for:
 - Troubleshooting guide
 - Advanced configuration
 
-## ⚠️ Important Security Notes
+## Important Security Notes
 
 1. **Save your admin password** when you first see it
 2. **Backup your master key** at `data/secrets/.master.key`
 3. **Without the master key**, encrypted data cannot be recovered
 4. **Change default password** immediately after installation
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **"bcrypt not available":**
 ```bash
@@ -184,7 +184,7 @@ docker-compose build --no-cache
 - Include uppercase, lowercase, numbers, symbols
 - Test with: `python password_manager.py` → option 6
 
-## 📞 Support
+## Support
 
 **Quick Commands:**
 

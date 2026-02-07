@@ -4,7 +4,7 @@ Quick reference for common Docker and docker-compose commands.
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ```bash
 # Navigate to project
@@ -23,7 +23,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ---
 
-## 📊 Service Management
+##  Service Management
 
 ### Start Services
 ```bash
@@ -60,7 +60,7 @@ docker-compose restart sentinel-agent
 
 ---
 
-## 📋 View Status & Logs
+##  View Status & Logs
 
 ### Status
 ```bash
@@ -104,7 +104,7 @@ docker-compose logs sentinel-agent > debug.log
 
 ---
 
-## 🔧 Container Interaction
+##  Container Interaction
 
 ### Access Container Shell
 ```bash
@@ -138,7 +138,7 @@ docker-compose exec sentinel-agent nano /app/config.json
 
 ---
 
-## 🏗️ Building & Images
+## ️ Building & Images
 
 ### Build Image
 ```bash
@@ -175,7 +175,7 @@ docker tag sentinel-agent:2.2 myrepo/sentinel-agent:latest
 
 ---
 
-## 🌐 API & Testing
+##  API & Testing
 
 ### Health Check
 ```bash
@@ -221,7 +221,7 @@ docker-compose exec sentinel-agent curl https://api.github.com
 
 ---
 
-## 💾 Data Management
+##  Data Management
 
 ### Backup
 ```bash
@@ -264,7 +264,7 @@ docker-compose exec sentinel-agent df -h
 
 ---
 
-## 🧹 Cleanup & Maintenance
+##  Cleanup & Maintenance
 
 ### Clean Up
 ```bash
@@ -298,7 +298,7 @@ docker images --format "{{.Repository}}:{{.Tag}} {{.Size}}" | sort -k2 -h
 
 ---
 
-## 🔍 Debugging & Troubleshooting
+##  Debugging & Troubleshooting
 
 ### Diagnostic Commands
 ```bash
@@ -363,7 +363,7 @@ fuser -k 8000/tcp
 
 ---
 
-## 📦 Profiles & Variations
+##  Profiles & Variations
 
 ### Using Profiles
 ```bash
@@ -395,7 +395,7 @@ curl http://localhost:8002/api/health   # instance3
 
 ---
 
-## 🔒 Security Commands
+##  Security Commands
 
 ### Check Security
 ```bash
@@ -426,7 +426,7 @@ docker-compose exec sentinel-agent chmod 755 /app/logs
 
 ---
 
-## 🚨 Common Issues Quick Fixes
+##  Common Issues Quick Fixes
 
 ### Service Won't Start
 ```bash
@@ -480,7 +480,7 @@ docker image prune -a
 
 ---
 
-## 📚 Help & Documentation
+##  Help & Documentation
 
 ### Get Help
 ```bash
@@ -507,7 +507,7 @@ see docs_markdown/DOCKER_TROUBLESHOOTING.md
 
 ---
 
-## 📋 Command By Purpose
+##  Command By Purpose
 
 ### "I want to start the application"
 ```bash
@@ -561,7 +561,7 @@ docker-compose ps           # Service status
 
 ---
 
-## 🎯 One-Liners
+##  One-Liners
 
 ```bash
 # Quick health check
@@ -588,7 +588,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 ---
 
-## 📞 Quick Links
+##  Quick Links
 
 - **Quick Start:** `docs_markdown/DOCKER_QUICKSTART.md`
 - **Full Guide:** `docs_markdown/DOCKER_DEPLOYMENT.md`

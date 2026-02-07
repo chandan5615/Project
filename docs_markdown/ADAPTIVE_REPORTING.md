@@ -287,15 +287,15 @@ CREATE TABLE threat_intel (
 ### CLI Mode Output
 ```
 ============================================================
-🛡️  SENTINEL AGENT - CLI DASHBOARD
+️  SENTINEL AGENT - CLI DASHBOARD
 ============================================================
 
-🛡️  SECURITY STATE
+️  SECURITY STATE
 Security Score: 78%
 ████████████████████████░░░░░░░░
 Status: CAUTION
 
-🚫 WALL OF SHAME                   📋 INCIDENT FEED
+ WALL OF SHAME                    INCIDENT FEED
 IP: 192.168.1.100                  192.168.1.100 | Brute Force
 Threat: Brute Force                Action: BLOCK | 16:45:32
 Count: 3

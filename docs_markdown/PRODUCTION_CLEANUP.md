@@ -10,12 +10,12 @@
 
 ### Web Dashboard (Streamlit)
 **Changes**:
-- ❌ Removed all emojis (🛡️, 🚫, 📋, 📊)
+- ❌ Removed all emojis (️, , , )
 - ✅ Replaced with professional UPPERCASE labels:
-  - `"SENTINEL AGENT - SECURITY DASHBOARD"` (was `"🛡️ Sentinel Agent Security Dashboard"`)
-  - `"BLOCKED THREAT SOURCES"` (was `"🚫 Wall of Shame"`)
-  - `"INCIDENT FEED - RECENT THREATS"` (was `"📋 Incident Feed"`)
-  - `"NETWORK HEALTH - LAST HOUR ACTIVITY"` (was `"📊 Network Health"`)
+  - `"SENTINEL AGENT - SECURITY DASHBOARD"` (was `"️ Sentinel Agent Security Dashboard"`)
+  - `"BLOCKED THREAT SOURCES"` (was `" Wall of Shame"`)
+  - `"INCIDENT FEED - RECENT THREATS"` (was `" Incident Feed"`)
+  - `"NETWORK HEALTH - LAST HOUR ACTIVITY"` (was `" Network Health"`)
 
 **Status Indicators**: 
 - Color-coded via Streamlit styling (green/yellow/red borders)
@@ -26,15 +26,15 @@
 **Changes**:
 - ❌ Removed all emojis from terminal UI
 - ✅ Professional panel titles:
-  - `"SECURITY STATE"` (was `"🛡️  SECURITY STATE"`)
-  - `"BLOCKED IPS"` (was `"🚫 WALL OF SHAME"`)
-  - `"INCIDENT FEED"` (was `"📋 INCIDENT FEED"`)
-  - `"SUMMARY STATISTICS"` (was `"📊 SUMMARY"`)
-- ✅ Header: `"SENTINEL AGENT - SECURITY CONSOLE"` (was `"🛡️  SENTINEL AGENT - CLI DASHBOARD"`)
+  - `"SECURITY STATE"` (was `"️  SECURITY STATE"`)
+  - `"BLOCKED IPS"` (was `" WALL OF SHAME"`)
+  - `"INCIDENT FEED"` (was `" INCIDENT FEED"`)
+  - `"SUMMARY STATISTICS"` (was `" SUMMARY"`)
+- ✅ Header: `"SENTINEL AGENT - SECURITY CONSOLE"` (was `"️  SENTINEL AGENT - CLI DASHBOARD"`)
 
 ### Docker Entrypoint Script
 **Changes**:
-- ❌ Removed all status emojis (✅, ⚠️, 🛑)
+- ❌ Removed all status emojis (✅, ⚠️, )
 - ✅ Professional status indicators:
   - `"[SUCCESS]"` (was `"✅"`)
   - `"[WARNING]"` (was `"⚠️"`)
@@ -310,13 +310,13 @@ Checks for:
 
 ### Before (Emoji-Heavy)
 ```
-🛡️  SENTINEL AGENT - CLI DASHBOARD
+️  SENTINEL AGENT - CLI DASHBOARD
 ═════════════════════════════════
-🛡️  SECURITY STATE
-Status: 🟢 SECURE
-🚫 WALL OF SHAME
+️  SECURITY STATE
+Status:  SECURE
+ WALL OF SHAME
 192.168.1.100 │ Brute Force │ 5
-[22:45] Monitoring Active - 3 Threats 🚨
+[22:45] Monitoring Active - 3 Threats 
 ```
 
 ### After (Professional)

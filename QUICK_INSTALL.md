@@ -1,4 +1,4 @@
-# 🚀 QUICK INSTALL REFERENCE
+#  QUICK INSTALL REFERENCE
 
 ## Choose Your Installation (All are Clean & No-Mess!)
 
@@ -16,14 +16,14 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 install.bat
 ```
 
-### 🐧 **Linux/macOS Users**
+###  **Linux/macOS Users**
 
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-### 🐍 **Any Platform (Python)**
+###  **Any Platform (Python)**
 
 ```bash
 python install.py
@@ -108,10 +108,10 @@ streamlit run dashboard/web_dashboard.py
 
 ---
 
-## 📚 Full Documentation
+##  Full Documentation
 
 For complete installation guide with all options and troubleshooting:
-👉 **See [INSTALLATION.md](INSTALLATION.md)**
+ **See [INSTALLATION.md](INSTALLATION.md)**
 
 ---
 
@@ -130,7 +130,7 @@ dir data\         # Windows
 
 ---
 
-## Ready to Go! 🎉
+## Ready to Go! 
 
 Your Sentinel Agent is installed and ready to use.
 
@@ -140,4 +140,4 @@ Your Sentinel Agent is installed and ready to use.
 3. Open API: `http://localhost:8000`
 4. Read docs: `README.md` or `docs_markdown/INDEX.md`
 
-**No mess, no problems!** 🎯
+**No mess, no problems!** 

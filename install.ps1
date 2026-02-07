@@ -46,7 +46,7 @@ function Write-Error-Custom {
 
 function Write-Info {
     param([string]$Text)
-    Write-Host "ℹ️  $Text" -ForegroundColor $Colors.Info
+    Write-Host "️  $Text" -ForegroundColor $Colors.Info
 }
 
 # ============================================================================
@@ -273,33 +273,33 @@ Write-Host "
 ║                    NEXT STEPS - GET STARTED IN 2 MINUTES                   ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
-📋 PRE-REQUISITES:
+ PRE-REQUISITES:
    1. Ensure Ollama is running:
-      💻 ollama serve
+       ollama serve
       
    2. Verify Ollama has llama3:8b model:
-      💻 ollama pull llama3:8b
+       ollama pull llama3:8b
 
-📊 START THE SYSTEM:
+ START THE SYSTEM:
 
    Terminal 1 - Activate and Run Core System:
-      💻 .\venv\Scripts\Activate.ps1
-      💻 python main.py
+       .\venv\Scripts\Activate.ps1
+       python main.py
 
    Terminal 2 - Start REST API (optional):
-      💻 .\venv\Scripts\Activate.ps1
-      💻 python sentinel_api.py
+       .\venv\Scripts\Activate.ps1
+       python sentinel_api.py
       
    Terminal 3 - Start Streamlit Dashboard (optional):
-      💻 .\venv\Scripts\Activate.ps1
-      💻 streamlit run dashboard/web_dashboard.py
+       .\venv\Scripts\Activate.ps1
+       streamlit run dashboard/web_dashboard.py
 
-🔗 ACCESS POINTS:
+ ACCESS POINTS:
    • REST API:        http://localhost:8000
    • Dashboard:       http://localhost:8501
    • Main System:     Console output in Terminal 1
 
-📚 DOCUMENTATION:
+ DOCUMENTATION:
    • README.md:            Project overview
    • docs_markdown/*:       Comprehensive guides
    • docs_markdown/INDEX.md: Documentation navigator
@@ -309,7 +309,7 @@ Write-Host "
    • If modules missing: Ensure virtual environment is activated
    • If port conflicts: Edit .env to change ports
 
-🎯 FIRST RUN TEST:
+ FIRST RUN TEST:
    • The system will auto-initialize databases on first run
    • Sample data will be loaded for demonstrations
    • Check console output for status messages

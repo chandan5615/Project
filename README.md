@@ -4,9 +4,9 @@ An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed 
 
 ---
 
-## ⚡ Installation (Choose One - All Are Clean & No-Mess!)
+## Installation (Choose One - All Are Clean & No-Mess!)
 
-### 🐳 Docker (Recommended - Fastest!) ⭐
+### Docker (Recommended - Fastest!)
 
 **No Python environment setup needed. Everything is containerized.**
 
@@ -31,11 +31,11 @@ ollama pull llama3:8b && ollama serve
 docker-compose up -d
 ```
 
-📚 **Docker Guide**: [DOCKER_QUICKSTART.md](docs_markdown/DOCKER_QUICKSTART.md) | [Full Guide](docs_markdown/DOCKER_DEPLOYMENT.md)
+ **Docker Guide**: [DOCKER_QUICKSTART.md](docs_markdown/DOCKER_QUICKSTART.md) | [Full Guide](docs_markdown/DOCKER_DEPLOYMENT.md)
 
 ---
 
-### 🪟 Windows Users (Traditional Setup)
+### Windows Users (Traditional Setup)
 
 **PowerShell (Recommended) ⭐**
 ```powershell
@@ -48,14 +48,14 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 install.bat
 ```
 
-### 🐧 Linux/macOS Users (Traditional Setup)
+###  Linux/macOS Users (Traditional Setup)
 
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-### 🐍 Any Platform (Python)
+###  Any Platform (Python)
 
 ```bash
 python install.py
@@ -63,25 +63,25 @@ python install.py
 
 **⏱️ Installation Time:** 3-6 minutes | **Includes:** venv + all dependencies + databases
 
-📚 **Need More Info?** See [QUICK_INSTALL.md](QUICK_INSTALL.md) or [INSTALLATION.md](INSTALLATION.md)
+ **Need More Info?** See [QUICK_INSTALL.md](QUICK_INSTALL.md) or [INSTALLATION.md](INSTALLATION.md)
 
 ---
 
-## ✨ What's New in v2.2
+## What's New in v2.2
 
 **6 Enterprise Features Added:**
-- ✅ **Offline Threat Intelligence** - Local IP reputation database
-- ✅ **Dashboard Authentication** - Secure token-based access
-- ✅ **Whitelist/Blacklist Management** - Flexible IP filtering
-- ✅ **Performance Metrics** - Detection & response time tracking
-- ✅ **REST API** - 20+ endpoints for external integration
-- ✅ **ML Anomaly Scoring** - Multi-factor threat detection
+- [YES] **Offline Threat Intelligence** - Local IP reputation database
+- [YES] **Dashboard Authentication** - Secure token-based access
+- [YES] **Whitelist/Blacklist Management** - Flexible IP filtering
+- [YES] **Performance Metrics** - Detection & response time tracking
+- [YES] **REST API** - 20+ endpoints for external integration
+- [YES] **ML Anomaly Scoring** - Multi-factor threat detection
 
-[📚 Full Documentation](docs_markdown/README_FEATURES.md)
+[ Full Documentation](docs_markdown/README_FEATURES.md)
 
 ---
 
-## 🎯 Core Features
+##  Core Features
 
 ### Security Detection & Response
 - **Real-time Log Monitoring**: Watches auth.log and web logs
@@ -99,7 +99,7 @@ python install.py
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
+##  Quick Start (5 Minutes)
 
 ### Prerequisites
 ```bash
@@ -129,7 +129,7 @@ curl http://localhost:8000/api/health
 
 ---
 
-## 🔐 Authentication & Security
+##  Authentication & Security
 
 ### ⚡ NEW: Enterprise-Grade Encryption
 
@@ -145,13 +145,13 @@ docker-compose logs sentinel-agent | grep "DEFAULT ADMIN"
 cat data/INITIAL_CREDENTIALS.txt
 ```
 
-📋 **Change password immediately:**
+ **Change password immediately:**
 ```bash
 python password_manager.py
 # Select: 1. Change Password
 ```
 
-📚 **Full Security Guide:** [SECURITY_UPGRADE.md](SECURITY_UPGRADE.md)
+ **Full Security Guide:** [SECURITY_UPGRADE.md](SECURITY_UPGRADE.md)
 
 ---
 
@@ -170,7 +170,7 @@ curl -H "X-API-Key: $TOKEN" http://localhost:8000/api/metrics/dashboard
 
 ---
 
-## 📊 API Endpoints (20+)
+##  API Endpoints (20+)
 
 ### Core Endpoints
 ```bash
@@ -213,7 +213,7 @@ GET  /api/incidents/by-ip/{ip}            # Incidents from IP
 
 ---
 
-## 🗂️ Project Structure
+## ️ Project Structure
 
 ```
 Sentinel/Project/
@@ -274,7 +274,7 @@ Sentinel/Project/
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 Full documentation is available in [`docs_markdown/`](docs_markdown/) folder:
 
@@ -328,7 +328,7 @@ export DASHBOARD_PASS=sentinel123
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Quick Verification
 ```bash
@@ -373,7 +373,7 @@ result = scorer.calculate_anomaly_score({
 
 ---
 
-## 🐳 Docker Deployment
+##  Docker Deployment
 
 ### Quick Start
 ```bash
@@ -395,7 +395,7 @@ See [DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md) for:
 
 ---
 
-## 🔒 Security Considerations
+##  Security Considerations
 
 ### Initial Setup
 - [ ] Change default admin password
@@ -420,7 +420,7 @@ See [DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md) for:
 
 ---
 
-## 📊 Performance
+##  Performance
 
 ### Benchmarks
 - **Detection Overhead**: ~10-15ms per event (<2% of analysis time)
@@ -437,7 +437,7 @@ See [DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md) for:
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### API won't start
 ```bash
@@ -486,7 +486,7 @@ See [DEPLOYMENT_GUIDE.md](docs_markdown/DEPLOYMENT_GUIDE.md#troubleshooting) for
 
 ---
 
-## 📈 Monitoring & Maintenance
+##  Monitoring & Maintenance
 
 ### Check System Status
 ```bash
@@ -508,7 +508,7 @@ tail -f logs/sentinel.log
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](docs_markdown/CONTRIBUTING.md) for:
 - Code style guidelines
@@ -518,7 +518,7 @@ We welcome contributions! See [CONTRIBUTING.md](docs_markdown/CONTRIBUTING.md) f
 
 ---
 
-## 📞 Support
+##  Support
 
 ### Documentation
 - Full API docs in [FEATURE_INTEGRATION.md](docs_markdown/FEATURE_INTEGRATION.md)
@@ -533,13 +533,13 @@ We welcome contributions! See [CONTRIBUTING.md](docs_markdown/CONTRIBUTING.md) f
 
 ---
 
-## 📜 License
+##  License
 
 [Add your license information here]
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - CrewAI for multi-agent orchestration
 - Ollama for local LLM inference
@@ -548,7 +548,7 @@ We welcome contributions! See [CONTRIBUTING.md](docs_markdown/CONTRIBUTING.md) f
 
 ---
 
-## 📋 Version History
+##  Version History
 
 **v2.2** (Current)
 - ✅ Added offline threat intelligence
@@ -572,7 +572,7 @@ We welcome contributions! See [CONTRIBUTING.md](docs_markdown/CONTRIBUTING.md) f
 
 ---
 
-## 🚀 Next Steps
+##  Next Steps
 
 1. **Review** the documentation in [docs_markdown/](docs_markdown/)
 2. **Configure** your environment (see Configuration section)

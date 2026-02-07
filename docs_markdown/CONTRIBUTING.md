@@ -302,6 +302,6 @@ By contributing, you agree your code is licensed under the same license as the p
 
 ---
 
-**Thank you for contributing to Sentinel Agent! 🎉**
+**Thank you for contributing to Sentinel Agent! **
 
 Questions? Open an issue or email maintainers@example.com

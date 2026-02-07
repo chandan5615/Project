@@ -1,4 +1,4 @@
-# 📦 Sentinel Agent - Complete Installation Guide
+#  Sentinel Agent - Complete Installation Guide
 
 ## Quick Start (2 Minutes)
 
@@ -16,13 +16,13 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 install.bat
 ```
 
-#### 🐧 **Linux/macOS**
+####  **Linux/macOS**
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-#### 🐍 **Cross-Platform (Python)**
+####  **Cross-Platform (Python)**
 ```bash
 python install.py
 ```
@@ -267,7 +267,7 @@ ollama serve
 You should see output like:
 ```
 Starting Ollama server...
-🔗 Ollama is running on 127.0.0.1:11434
+ Ollama is running on 127.0.0.1:11434
 ```
 
 ### Pull Required Model (First Time Only)
@@ -320,9 +320,9 @@ python main.py
 
 You should see:
 ```
-🚀 Sentinel Agent Starting...
-📊 Initializing data engine...
-🔍 Starting threat intelligence system...
+ Sentinel Agent Starting...
+ Initializing data engine...
+ Starting threat intelligence system...
 ✅ All systems initialized
 ```
 
@@ -546,6 +546,6 @@ After successful installation, refer to:
 
 ---
 
-**Installation Complete! 🎉**
+**Installation Complete! **
 
 Your Sentinel Agent system is now ready to use. Follow the "Starting the System" section above to begin!

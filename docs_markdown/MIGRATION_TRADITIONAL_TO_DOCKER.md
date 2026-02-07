@@ -4,7 +4,7 @@ Guide for migrating from traditional Python virtual environment setup to Docker 
 
 ---
 
-## 📋 Overview
+##  Overview
 
 | Aspect | Traditional | Docker |
 |--------|-----------|--------|
@@ -18,7 +18,7 @@ Guide for migrating from traditional Python virtual environment setup to Docker 
 
 ---
 
-## 🚀 Quick Migration (5 Minutes)
+##  Quick Migration (5 Minutes)
 
 ### Step 1: Backup Existing Data
 ```bash
@@ -67,11 +67,11 @@ curl http://localhost:8000/api/health
 docker-compose logs -f sentinel-agent
 ```
 
-### Done! 🎉
+### Done! 
 
 ---
 
-## 📊 Data Migration Strategies
+##  Data Migration Strategies
 
 ### Strategy 1: Fresh Start (Recommended for Development)
 
@@ -181,7 +181,7 @@ curl http://localhost:8000/api/health
 
 ---
 
-## 🗄️ Database Migration
+## ️ Database Migration
 
 ### Automatic Migration
 Docker automatically handles database initialization. If migration is needed:
@@ -239,7 +239,7 @@ docker-compose up -d
 
 ---
 
-## 🔄 Dual-Run Configuration
+##  Dual-Run Configuration
 
 Try Docker without stopping traditional setup:
 
@@ -304,7 +304,7 @@ docker-compose up -d
 
 ---
 
-## 📊 Validation Checklist
+##  Validation Checklist
 
 After migration, verify everything works:
 
@@ -366,7 +366,7 @@ docker-compose logs sentinel-agent | head -50
 
 ---
 
-## 🔙 Rollback Plan
+##  Rollback Plan
 
 If Docker migration has issues:
 
@@ -412,7 +412,7 @@ docker-compose restart
 
 ---
 
-## 🎯 Migration Checklist
+##  Migration Checklist
 
 - [ ] **Backup** - Create backup of traditional setup data
 - [ ] **Plan** - Decide on migration strategy (fresh/import/parallel)
@@ -500,7 +500,7 @@ ls -la logs/
 
 ---
 
-## 🚀 Performance Comparison
+##  Performance Comparison
 
 After migration, you might notice:
 
@@ -526,7 +526,7 @@ deploy:
 
 ---
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md) - 5-minute guide
 - [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Full deployment guide
@@ -558,7 +558,7 @@ open http://localhost:8501
 
 ---
 
-**Migration Complete!** 🎉
+**Migration Complete!** 
 
 You've successfully transitioned from traditional setup to Docker. For next steps, see [DOCKER_INDEX.md](DOCKER_INDEX.md) for navigation.
 

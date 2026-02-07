@@ -1,6 +1,6 @@
 # Docker Quick Start - Sentinel Agent v2.2
 
-## 📦 Installation (Choose One)
+##  Installation (Choose One)
 
 ### Option A: Quick Start (5 minutes)
 ```bash
@@ -43,7 +43,7 @@ docker-compose logs -f sentinel-agent
 
 ---
 
-## 🚀 Essential Commands
+##  Essential Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -57,7 +57,7 @@ docker-compose logs -f sentinel-agent
 
 ---
 
-## 📊 Accessing the Application
+##  Accessing the Application
 
 | Service | URL | Purpose |
 |---------|-----|---------|
@@ -68,7 +68,7 @@ docker-compose logs -f sentinel-agent
 
 ---
 
-## 🔧 Configuration
+##  Configuration
 
 ### Update Environment Variables
 
@@ -89,7 +89,7 @@ API_PORT=8000
 
 ---
 
-## 💾 Data Management
+##  Data Management
 
 ```bash
 # Backup
@@ -108,7 +108,7 @@ docker system prune -a
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Service Won't Start
 ```bash
@@ -159,7 +159,7 @@ deploy:
 
 ---
 
-## 📝 Common Tasks
+##  Common Tasks
 
 ### Run Custom Script
 ```bash
@@ -189,7 +189,7 @@ docker-compose -p instance2 up -d
 
 ---
 
-## 🔐 Security
+##  Security
 
 ### Enable HTTPS (Production)
 ```bash
@@ -210,7 +210,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ---
 
-## 📦 Docker Images
+##  Docker Images
 
 ### View Images
 ```bash
@@ -256,7 +256,7 @@ docker network inspect sentinel-network
 
 ---
 
-## 📋 Startup Checklist
+##  Startup Checklist
 
 - [ ] Docker and Docker Compose installed
 - [ ] Sufficient disk space (10GB+)
@@ -271,7 +271,7 @@ docker network inspect sentinel-network
 
 ---
 
-## 🎯 Next Steps
+##  Next Steps
 
 1. **Configure**: Edit `docker-compose.yml` as needed
 2. **Start**: Run `docker-compose up -d`

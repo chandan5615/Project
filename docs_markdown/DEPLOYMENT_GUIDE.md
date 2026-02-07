@@ -6,7 +6,7 @@
 
 ---
 
-## 📦 WHAT'S NEW
+##  WHAT'S NEW
 
 ### 6 Enterprise Features Added
 1. ✅ **Offline Threat Intelligence** (threat_intelligence.py)
@@ -25,7 +25,7 @@
 
 ---
 
-## 🚀 QUICK START (5 MINUTES)
+##  QUICK START (5 MINUTES)
 
 ### Prerequisite: Python 3.10+
 ```bash
@@ -78,7 +78,7 @@ curl http://localhost:8000/api/health
 
 ---
 
-## 🔑 AUTHENTICATION & API KEYS
+##  AUTHENTICATION & API KEYS
 
 ### Default Login Credentials
 ```
@@ -115,7 +115,7 @@ curl -X POST http://localhost:8000/api/threats/check-ip \
 
 ---
 
-## 📊 AVAILABLE ENDPOINTS
+##  AVAILABLE ENDPOINTS
 
 ### Health & Info
 ```bash
@@ -201,7 +201,7 @@ curl -H "X-API-Key: $TOKEN" http://localhost:8000/api/incidents/by-ip/192.0.2.1
 
 ---
 
-## 🔍 MONITORING & VERIFICATION
+##  MONITORING & VERIFICATION
 
 ### Check if System is Running
 ```bash
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
 ---
 
-## 🧪 TESTING THE SYSTEM
+##  TESTING THE SYSTEM
 
 ### Test 1: Threat Intelligence
 ```python
@@ -388,7 +388,7 @@ EOF
 
 ---
 
-## 📈 PRODUCTION DEPLOYMENT
+##  PRODUCTION DEPLOYMENT
 
 ### Docker Deployment
 ```bash
@@ -462,7 +462,7 @@ server {
 
 ---
 
-## 🔒 SECURITY CHECKLIST
+##  SECURITY CHECKLIST
 
 - [ ] Change default admin password
 - [ ] Set up HTTPS with certificate
@@ -477,7 +477,7 @@ server {
 
 ---
 
-## 🐛 TROUBLESHOOTING
+##  TROUBLESHOOTING
 
 ### API won't start
 ```bash
@@ -535,7 +535,7 @@ ls -la auth.db
 
 ---
 
-## 📚 DOCUMENTATION FILES
+##  DOCUMENTATION FILES
 
 | File | Purpose |
 |------|---------|
@@ -547,7 +547,7 @@ ls -la auth.db
 
 ---
 
-## 📞 GETTING HELP
+##  GETTING HELP
 
 ### In Code
 - Check docstrings: `help(function_name)`
@@ -566,7 +566,7 @@ ls -la auth.db
 
 ---
 
-## 🎯 NEXT STEPS
+##  NEXT STEPS
 
 ### Immediate (Day 1)
 1. [ ] Change default admin password
@@ -615,7 +615,7 @@ ls -la auth.db
 
 ---
 
-## 🚀 DEPLOYMENT SUCCESS INDICATORS
+##  DEPLOYMENT SUCCESS INDICATORS
 
 ✅ System is ready when you see:
 

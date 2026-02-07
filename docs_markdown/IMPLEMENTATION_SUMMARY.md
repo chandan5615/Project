@@ -39,10 +39,10 @@ EnvironmentDetector.get_config()  # Returns: Complete config dict
 **Purpose**: Beautiful web interface for GUI environments
 
 **Features**:
-- 🛡️ **Security State Card**: Score 0-100%, real-time status (green/yellow/red)
-- 🚫 **Wall of Shame**: Table of blocked IPs with timestamps and block counts
-- 📋 **Incident Feed**: Last 20 incidents with threat types and actions
-- 📊 **Network Health**: Line chart of incidents/minute over last hour
+- ️ **Security State Card**: Score 0-100%, real-time status (green/yellow/red)
+-  **Wall of Shame**: Table of blocked IPs with timestamps and block counts
+-  **Incident Feed**: Last 20 incidents with threat types and actions
+-  **Network Health**: Line chart of incidents/minute over last hour
 - ⚙️ **Configuration**: Database path, auto-refresh interval selector
 
 **Technical Details**:
@@ -65,10 +65,10 @@ EnvironmentDetector.get_config()  # Returns: Complete config dict
 **Purpose**: Terminal-based monitoring for headless environments
 
 **Features**:
-- 🛡️ **Security State**: Score with progress bar, status (green/yellow/red)
-- 🚫 **Wall of Shame**: Table of last 5 blocked IPs with threat type and timestamp
-- 📋 **Incident Feed**: Table of last 5 incidents with IP, threat type, action, time
-- 📊 **Summary Stats**: Total incidents, last 24h count, unique threats
+- ️ **Security State**: Score with progress bar, status (green/yellow/red)
+-  **Wall of Shame**: Table of last 5 blocked IPs with threat type and timestamp
+-  **Incident Feed**: Table of last 5 incidents with IP, threat type, action, time
+-  **Summary Stats**: Total incidents, last 24h count, unique threats
 
 **Modes**:
 - **Live Mode**: Real-time updates with Rich Live feature (for local terminals)
@@ -399,7 +399,7 @@ streamlit run dashboard/web_dashboard.py
 - Read-only database access for dashboards
 - No credential storage in code
 
-### 🔒 Recommendations
+###  Recommendations
 - Use SSH tunneling for remote access to web dashboard
 - Restrict file permissions: `chmod 600 app/logs/sentinel.log`
 - Ensure SQLite database has restricted permissions

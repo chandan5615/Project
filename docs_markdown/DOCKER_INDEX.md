@@ -4,7 +4,7 @@ Complete navigation guide for Docker-related documentation and tools.
 
 ---
 
-## 📚 Documentation Files
+##  Documentation Files
 
 ### Quick Start Guides
 
@@ -22,7 +22,7 @@ Complete navigation guide for Docker-related documentation and tools.
 
 ---
 
-## 🔧 Tools & Scripts
+##  Tools & Scripts
 
 ### System Preparation
 
@@ -43,7 +43,7 @@ docker-test.bat
 
 ---
 
-## 🐳 Core Docker Files
+##  Core Docker Files
 
 | File | Purpose | For |
 |------|---------|-----|
@@ -56,7 +56,7 @@ docker-test.bat
 
 ---
 
-## 📋 Quick Reference
+##  Quick Reference
 
 ### Installation Methods
 
@@ -116,7 +116,7 @@ docker-compose up -d
 
 ---
 
-## 📖 Reading Guide by Role
+##  Reading Guide by Role
 
 ### For Developers
 
@@ -179,7 +179,7 @@ docker-compose exec sentinel-agent bash
 
 ---
 
-## 🎯 Common Tasks
+##  Common Tasks
 
 ### Task: Deploy in 30 Seconds
 → See [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md) - Quick Start section
@@ -305,7 +305,7 @@ docker-compose up -d
 
 ---
 
-## 📊 File Organization
+##  File Organization
 
 ```
 sentinel-agent/
@@ -336,7 +336,7 @@ sentinel-agent/
 
 ---
 
-## 🚀 Next Steps
+##  Next Steps
 
 1. **Start Immediately:** Run `./docker-test.sh` then quick start command
 2. **Learn Basics:** Read [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md)
@@ -346,7 +346,7 @@ sentinel-agent/
 
 ---
 
-## 📞 Support
+##  Support
 
 - **Quick Issues:** See [DOCKER_TROUBLESHOOTING.md](DOCKER_TROUBLESHOOTING.md)
 - **Setup Help:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
@@ -366,7 +366,7 @@ sentinel-agent/
 
 ---
 
-## 📝 Version Information
+##  Version Information
 
 - **Sentinel Agent:** v2.2
 - **Docker Compose:** v3.9 (compatible with Docker 20.10+)
@@ -375,4 +375,4 @@ sentinel-agent/
 
 ---
 
-**Happy Deploying! 🚀**
+**Happy Deploying! **

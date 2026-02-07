@@ -2,10 +2,10 @@
 # Sentinel Agent - Setup Script
 # Creates a virtual environment and installs all dependencies
 
-echo "🚀 Setting up Sentinel Agent environment..."
+echo " Setting up Sentinel Agent environment..."
 
 # Create virtual environment
-echo "📦 Creating virtual environment..."
+echo " Creating virtual environment..."
 python3 -m venv venv
 
 # Activate virtual environment
@@ -17,7 +17,7 @@ echo "⬆️  Upgrading pip..."
 pip install --upgrade pip
 
 # Install dependencies
-echo "📥 Installing dependencies..."
+echo " Installing dependencies..."
 pip install -r requirements.txt
 
 echo ""

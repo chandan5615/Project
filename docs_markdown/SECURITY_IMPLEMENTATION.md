@@ -1,6 +1,6 @@
 # Security Implementation Guide - Sentinel Agent v2.2
 
-## 🔐 Enterprise-Grade Security Features
+##  Enterprise-Grade Security Features
 
 Your Sentinel Agent now includes enterprise-grade encryption and security:
 
@@ -35,7 +35,7 @@ Your Sentinel Agent now includes enterprise-grade encryption and security:
 
 ---
 
-## 📦 New Dependencies
+##  New Dependencies
 
 Added to `requirements.txt`:
 
@@ -56,7 +56,7 @@ docker-compose build --no-cache
 
 ---
 
-## 🔧 Usage
+##  Usage
 
 ### 1. Password Management
 
@@ -122,7 +122,7 @@ success, message = auth.create_user("analyst1", "secure_pass", "analyst")
 
 ---
 
-## 🔑 First-Time Setup
+##  First-Time Setup
 
 ### Step 1: First Login
 
@@ -171,7 +171,7 @@ rm data/INITIAL_CREDENTIALS.txt
 
 ---
 
-## 🛡️ Security Best Practices
+## ️ Security Best Practices
 
 ### Password Requirements
 
@@ -222,7 +222,7 @@ python password_manager.py
 
 ---
 
-## 🔧 Configuration
+##  Configuration
 
 ### bcrypt Cost Factor
 
@@ -258,7 +258,7 @@ cp data/secrets/.master.key /secure/backup/location/
 
 ---
 
-## 🔄 Migration from Old System
+##  Migration from Old System
 
 If you have existing users with SHA-256 hashes:
 
@@ -288,7 +288,7 @@ docker-compose restart
 
 ---
 
-## 📊 Security Checklist
+##  Security Checklist
 
 After implementing encryption:
 
@@ -305,7 +305,7 @@ After implementing encryption:
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### "bcrypt not available"
 
@@ -352,7 +352,7 @@ If migrating from old system:
 
 ---
 
-## 📞 Support
+##  Support
 
 **Password Management:** Use `password_manager.py` tool
 
