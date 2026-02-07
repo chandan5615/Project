@@ -37,7 +37,11 @@ Welcome to Sentinel Agent v2.2 documentation! This comprehensive index helps you
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | **DEPLOYMENT_GUIDE.md** | Installation & usage instructions | DevOps, System Admins |
-| **DOCKER_DEPLOYMENT.md** | Docker & container setup | Cloud/Container engineers |
+| **DOCKER_INDEX.md** | Docker documentation navigation | All users (START HERE FOR DOCKER!) |
+| **DOCKER_QUICKSTART.md** | 5-minute Docker quick start | Developers & new users |
+| **DOCKER_DEPLOYMENT.md** | Comprehensive Docker guide | Cloud/Container engineers |
+| **DOCKER_TROUBLESHOOTING.md** | 14+ Docker issue solutions | Debugging & operations |
+| **DOCKER_PROFILES_ADVANCED.md** | Advanced Docker configs & scaling | Advanced deployments |
 | **GITHUB_DEPLOYMENT.md** | GitHub-based deployment | Git users |
 | **ENVIRONMENT.md** | Environment variables & configuration | Configuration managers |
 

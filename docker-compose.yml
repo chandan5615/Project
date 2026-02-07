@@ -1,25 +1,48 @@
-# Sentinel Agent - Docker Compose
+# ============================================================================
+# Sentinel Agent v2.2 - Docker Compose Configuration
+# ============================================================================
+# Complete automated setup for Sentinel Agent
 # 
-# Smart Ollama Detection:
-# - If Ollama is running on host (port 11434), uses that
-# - If not, starts Ollama in Docker automatically
+# QUICK START:
+#   docker-compose up -d
 #
-# Usage: ./start.sh (recommended) or docker compose up -d
+# With Ollama (AI engine):
+#   docker-compose --profile with-ollama up -d
+#
+# Production setup:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# View logs:
+#   docker-compose logs -f sentinel-agent
+#
+# Stop everything:
+#   docker-compose down
+#
+# Clean up (remove volumes/data):
+#   docker-compose down -v
+# ============================================================================
+
+version: '3.9'
 
 services:
-  # Ollama LLM Server (only starts if host Ollama is not available)
-  # The sentinel-agent entrypoint checks for host Ollama first
+  # ========================================================================
+  # OLLAMA - LLM Server (AI Engine)
+  # ========================================================================
+  # Provides the language model for Sentinel Agent
+  # Optional - only starts with --profile with-ollama flag
   ollama:
     image: ollama/ollama:latest
-    container_name: ollama
+    container_name: sentinel-ollama
     restart: unless-stopped
+    profiles:
+      - with-ollama  # Only start with: docker-compose --profile with-ollama up
     ports:
-      - "11434:11434"
+      - "${OLLAMA_PORT:-11434}:11434"
     volumes:
       - ollama_data:/root/.ollama
-    profiles:
-      - with-ollama
-    # For GPU support, uncomment:
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    # Uncomment for GPU support (requires nvidia-docker)
     # deploy:
     #   resources:
     #     reservations:
@@ -28,56 +51,247 @@ services:
     #           count: all
     #           capabilities: [gpu]
     healthcheck:
-      test: ["CMD-SHELL", "ollama list || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
+    networks:
+      - sentinel-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # Model Puller - Downloads LLM model (only with ollama profile)
+  # ========================================================================
+  # MODEL PULLER - Download LLM Model
+  # ========================================================================
+  # Automatically pulls llama3:8b model after Ollama starts
+  # Only runs with --profile with-ollama flag
   ollama-pull:
     image: ollama/ollama:latest
-    container_name: ollama-pull
+    container_name: sentinel-ollama-pull
+    profiles:
+      - with-ollama
     depends_on:
       ollama:
         condition: service_healthy
-    profiles:
-      - with-ollama
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: /bin/sh
     command:
+      - -c
       - |
-        echo "Pulling LLM model: $${OLLAMA_MODEL:-llama3:8b}..."
-        OLLAMA_HOST=http://ollama:11434 ollama pull $${OLLAMA_MODEL:-llama3:8b}
-        echo "Model pull complete!"
+        echo "⏳ Pulling Ollama model: ${OLLAMA_MODEL:-llama3:8b}..."
+        sleep 5
+        OLLAMA_HOST=http://ollama:11434 ollama pull ${OLLAMA_MODEL:-llama3:8b}
+        echo "✅ Model download complete!"
+        echo "Waiting for Sentiment Agent to start..."
+        sleep 30
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b}
     restart: "no"
+    networks:
+      - sentinel-network
 
-  # Sentinel Agent - Security Monitoring
+  # ========================================================================
+  # SENTINEL AGENT - Main Security Monitoring System
+  # ========================================================================
   sentinel-agent:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.10"
+    image: sentinel-agent:2.2
     container_name: sentinel-agent
-    user: root
-    restart: unless-stopped
-    privileged: true
-    network_mode: host
+    
+    # Security & Networking
+    user: root  # Required for iptables and log monitoring
+    privileged: true  # Required for firewall control
+    network_mode: host  # Access to all host network interfaces
+    cap_add:
+      - NET_ADMIN  # Network administration
+      - SYS_ADMIN  # System administration
+    
+    restart: unless-stopped  # Auto-restart if crashes
+    
+    # Environment variables
     environment:
-      - OLLAMA_BASE_URL=http://127.0.0.1:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b}
-      - AUTH_LOG_PATH=${AUTH_LOG_PATH:-/var/log/auth.log}
-      - WEB_LOG_PATH=${WEB_LOG_PATH:-/var/log/apache2/access.log}
-      - PYTHONUNBUFFERED=1
+      # Ollama Configuration
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://127.0.0.1:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3:8b}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      
+      # System Configuration
+      AUTH_LOG_PATH: ${AUTH_LOG_PATH:-/var/log/auth.log}
+      WEB_LOG_PATH: ${WEB_LOG_PATH:-/var/log/apache2/access.log}
+      SENTINEL_LOG_DIR: /app/logs
+      SENTINEL_DATA_DIR: /app/data
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+      # API Configuration
+      API_HOST: ${API_HOST:-0.0.0.0}
+      API_PORT: ${API_PORT:-8000}
+      DASHBOARD_PORT: ${DASHBOARD_PORT:-8501}
+      
+      # Python Configuration
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /app
+    
+    # Port mappings
+    ports:
+      - "${API_PORT:-8000}:8000"        # REST API
+      - "${DASHBOARD_PORT:-8501}:8501"  # Optional: Streamlit dashboard
+    
+    # Volume mounts
     volumes:
+      # Read-only access to system logs
       - /var/log:/var/log:ro
+      # Application data persistence
       - ./data:/app/data
       - ./logs:/app/logs
-    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
-    command: >
-      python main.py
-      --auth-log ${AUTH_LOG_PATH:-/var/log/auth.log}
-      --web-log ${WEB_LOG_PATH:-/var/log/apache2/access.log}
+      # System access for log monitoring
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    
+    # Startup configuration
+    entrypoint: /usr/local/bin/docker-entrypoint.sh
+    command: python main.py
+    
+    # Dependency ordering
+    depends_on:
+      ollama:
+        condition: service_healthy
+        required: false  # Optional - works without Ollama
+    
+    networks:
+      - sentinel-network
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=sentinel-agent"
+
+  # ========================================================================
+  # REST API - FastAPI Server (Optional: Separate Service)
+  # ========================================================================
+  # Uncomment to run REST API as separate container
+  # sentinel-api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: sentinel-agent:2.2
+  #   container_name: sentinel-api
+  #   restart: unless-stopped
+  #   environment:
+  #     OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+  #     PYTHONUNBUFFERED: "1"
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./data:/app/data
+  #     - ./logs:/app/logs
+  #   command: python sentinel_api.py
+  #   depends_on:
+  #     - sentinel-agent
+  #   networks:
+  #     - sentinel-network
+
+  # ========================================================================
+  # WEB DASHBOARD - Streamlit UI (Optional: Separate Service)
+  # ========================================================================
+  # Uncomment to run Streamlit dashboard as separate container
+  # sentinel-dashboard:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: sentinel-agent:2.2
+  #   container_name: sentinel-dashboard
+  #   restart: unless-stopped
+  #   environment:
+  #     PYTHONUNBUFFERED: "1"
+  #   ports:
+  #     - "8501:8501"
+  #   volumes:
+  #     - ./data:/app/data:ro
+  #     - ./logs:/app/logs:ro
+  #   command: streamlit run dashboard/web_dashboard.py
+  #   depends_on:
+  #     - sentinel-agent
+  #   networks:
+  #     - sentinel-network
+
+# ============================================================================
+# NETWORKS - Container communication
+# ============================================================================
+networks:
+  sentinel-network:
+    driver: bridge
+    name: sentinel-network
+
+# ============================================================================
+# VOLUMES - Persistent data storage
+# ============================================================================
+volumes:
+  ollama_data:
+    name: sentinel-ollama-data
+    driver: local
+
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+# Environment variables can be set in .env file:
+#
+# OLLAMA_PORT=11434
+# OLLAMA_MODEL=llama3:8b
+# API_PORT=8000
+# DASHBOARD_PORT=8501
+# LOG_LEVEL=INFO
+# API_HOST=0.0.0.0
+#
+# ============================================================================
+# QUICK COMMANDS
+# ============================================================================
+#
+# Start Sentinel Agent (with Ollama):
+#   docker-compose --profile with-ollama up -d
+#
+# Start only Sentinel Agent (without Ollama if already running):
+#   docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f sentinel-agent
+#
+# View Ollama logs:
+#   docker-compose logs -f ollama
+#
+# Stop all services:
+#   docker-compose down
+#
+# Restart everything:
+#   docker-compose restart
+#
+# Remove all data (WARNING: deletes databases):
+#   docker-compose down -v
+#
+# Check service status:
+#   docker-compose ps
+#
+# Execute command in container:
+#   docker-compose exec sentinel-agent python -c "import threat_intelligence"
+#
+# Access API:
+#   curl http://localhost:8000/api/health
+#
+# Access logs from previous run:
+#   docker-compose logs --tail=100 sentinel-agent
+#
+# ============================================================================
     logging:
       driver: "json-file"
       options:

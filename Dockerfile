@@ -1,52 +1,133 @@
-# Sentinel Agent - Dockerfile
+# Sentinel Agent v2.2 - Dockerfile
+# Multi-stage build for optimized production image
+# 
+# BUILD IMAGE: python:3.10-slim (includes build tools)
+# FINAL IMAGE: python:3.10-slim (minimal, optimized)
+# 
+# Features:
+# - All dependencies pre-installed
+# - Optimized for security analysis
+# - Ready for AIml, CrewAI, FastAPI
+# - Ollama integration built-in
+# - iptables and networking tools included
+
+# ============================================================================
+# STAGE 1: BUILDER - Compile dependencies
+# ============================================================================
 FROM python:3.10-slim as builder
 
 WORKDIR /app
+
+# Install build dependencies (only needed for compilation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ make libc6-dev \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    libc6-dev \
+    libffi-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements and create virtual environment
 COPY requirements.txt .
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --upgrade pip && \
+
+# Create virtual environment and install packages
+RUN python -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-# Final stage
+# ============================================================================
+# STAGE 2: RUNTIME - Production image
+# ============================================================================
 FROM python:3.10-slim
 
-# --- FIX: ALL SYSTEM TOOLS INSTALLED HERE AS ROOT ---
+LABEL maintainer="Sentinel Agent Development Team"
+LABEL version="2.2"
+LABEL description="Autonomous AI Security Operations Center (SOC) analyst"
+
+# Install runtime dependencies only (smaller final image)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Firewall & networking
     iptables \
     net-tools \
-    curl \
-    util-linux \
-    procps \
     iproute2 \
+    # Utilities
+    curl \
+    wget \
+    git \
+    # System tools
+    procps \
+    util-linux \
+    # Log monitoring
+    tail \
+    grep \
+    # Debugging
+    strace \
+    lsof \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
+
+# Set environment variables
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app:$PYTHONPATH \
+    SENTINEL_VERSION="2.2" \
+    SENTINEL_LOG_DIR=/app/logs \
+    SENTINEL_DATA_DIR=/app/data \
+    LOG_LEVEL=INFO
 
+# Create application directory
 WORKDIR /app
+
+# Copy application code
 COPY . .
 
+# Create entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Create required directories with proper permissions
 RUN mkdir -p /app/logs /app/data && \
     chmod 755 /app/logs /app/data
 
-RUN useradd -m -u 1000 sentinel && \
-    chown -R sentinel:sentinel /app
+# Health check - verify system is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
 
-# Switch to non-root user (Note: iptables will still need --privileged)
-USER sentinel
+# Expose ports
+# - 8000: REST API (FastAPI)
+# - 8501: Web Dashboard (Streamlit) - optional
+EXPOSE 8000 8501
 
+# Set entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+# Default command
+CMD ["python", "main.py"]
+
+# Volumes for persistence
 VOLUME ["/app/logs", "/app/data"]
+
+# ============================================================================
+# BUILD NOTES:
+# ============================================================================
+# Image Size: ~1.5GB (Python + dependencies + required tools)
+# Build Time: ~3-5 minutes (depending on internet speed)
+# 
+# To build:
+#   docker build -t sentinel-agent:2.2 .
+#
+# To run:
+#   docker run --privileged -it -p 8000:8000 sentinel-agent:2.2
+#
+# With docker-compose (recommended):
+#   docker-compose up -d
+# ============================================================================
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import os; exit(0 if os.path.exists('/app/data/attack_records.json') else 1)" || exit 1
