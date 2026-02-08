@@ -80,23 +80,130 @@ docker-compose --profile with-ollama up -d
 
 ---
 
+## 🚀 Running Sentinel Agent (Docker)
+
+### Complete Startup Sequence
+
+**Terminal 1: Start Ollama (if not already running)**
+```bash
+ollama serve
+# Output: Listening on 127.0.0.1:11434
+```
+
+**Terminal 2: Build and Start Sentinel Agent**
+```bash
+cd ~/Project  # or wherever you cloned it
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Expected Output & Logs
+
+**After `docker-compose up -d`:**
+```
+Creating volume "project_ollama_data" with default driver
+Creating sentinel-agent ... done
+```
+
+**Check real-time logs:**
+```bash
+docker-compose logs sentinel-agent
+```
+
+**Expected log output (successful startup):**
+```
+=========================================
+Sentinel Agent - Container Starting
+=========================================
+
+Detecting Ollama server...
+[SUCCESS] Found Ollama on host at http://127.0.0.1:11434
+Checking for model: llama3:8b...
+[SUCCESS] Model llama3:8b is available
+
+[SUCCESS] Auth log found: /var/log/auth.log
+[SUCCESS] Web log found: /var/log/apache2/access.log
+
+=========================================
+Configuration:
+  Ollama URL: http://127.0.0.1:11434
+  Ollama Model: llama3:8b
+  Auth Log: /var/log/auth.log
+  Web Log: /var/log/apache2/access.log
+  Data Directory: /app/data
+=========================================
+
+Starting Sentinel Agent services...
+
+[1/2] Starting Sentinel Agent monitor (main.py)...
+      Monitor started (PID: 15)
+
+[2/2] Starting REST API server (sentinel_api.py on port 8000)...
+      Uvicorn running on http://0.0.0.0:8000
+```
+
+### Verify Everything is Running
+
+```bash
+# Check container status
+docker-compose ps
+# Should show: sentinel-agent   Up (healthy)
+
+# Test the API
+curl http://localhost:8000/api/health
+# Should return: {"status":"healthy","version":"2.2"}
+
+# View ongoing logs (streaming)
+docker-compose logs -f sentinel-agent
+```
+
+### Access Sentinel Agent
+
+- **REST API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs (Interactive Swagger UI)
+- **Health Check**: http://localhost:8000/api/health
+- **Metrics**: http://localhost:8000/api/metrics/detection
+- **Dashboard**: http://localhost:8501 (if enabled)
+
+### Stop the Agent
+
+```bash
+# Graceful stop (keeps data)
+docker-compose down
+
+# Stop and remove all data
+docker-compose down -v
+
+# View logs after stopping
+docker-compose logs sentinel-agent
+```
+
+---
+
 ### Traditional Installation (Non-Docker)
 
-### Windows Users
+**Windows Users**
 
 **PowerShell (Recommended) ⭐**
 ```powershell
-# 1. Ensure Ollama is running
+# Step 1: Ensure Ollama is running
 ollama serve  # In separate terminal
 
-# 2. Install Sentinel Agent
+# Step 2: Install Sentinel Agent (one-time)
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 .\install.ps1
 
-# 3. Activate environment and run
+# Step 3: Activate environment
 .\venv\Scripts\Activate.ps1
-python main.py  # Terminal 1 - Monitoring
-python sentinel_api.py  # Terminal 2 - REST API
+
+# Step 4: Run in two terminals
+# Terminal 1: Start monitoring (runs indefinitely)
+python main.py
+
+# Terminal 2: Start REST API (in another PowerShell)
+.\venv\Scripts\Activate.ps1
+python sentinel_api.py
+# Should see: Uvicorn running on http://0.0.0.0:8000
 ```
 
 **Command Prompt (Alternative)**
@@ -106,29 +213,71 @@ venv\Scripts\activate.bat
 python main.py
 ```
 
-###  Linux/macOS Users
+**Linux/macOS Users**
 
+**Step 1: Install (one-time)**
 ```bash
-# 1. Ensure Ollama is running
-ollama serve  # In separate terminal
-
-# 2. Install and run
 chmod +x install.sh
 ./install.sh
-source venv/bin/activate
-python main.py  # Terminal 1 - Monitoring
-python sentinel_api.py  # Terminal 2 - REST API
+# This creates venv, installs dependencies, and creates databases
 ```
 
-###  Any Platform (Python)
+**Step 2: Ensure Ollama is running**
+```bash
+ollama serve  # Terminal 1
+```
+
+**Step 3: Activate and Run**
+```bash
+# Terminal 2: Start monitoring
+source venv/bin/activate
+python main.py
+# Expected output:
+# [INFO:__main__:] SENTINEL AGENT v2.0 INITIALIZATION
+# [INFO:__main__:]   Auth log monitoring: ACTIVE
+# [INFO:__main__:]   Web log monitoring: ACTIVE
+
+# Terminal 3: Start REST API (open new terminal)
+source venv/bin/activate
+python sentinel_api.py
+# Expected output:
+# INFO:     Started server process [PID]
+# INFO:     Uvicorn running on http://0.0.0.0:8000
+```
+
+**Any Platform (Python)**
+```bash
+# Install dependencies and set up
+python install.py
+
+# Then run as shown above for your OS
+```
+
+### Traditional: Verify It's Working
 
 ```bash
-python install.py
+# Test the API (Terminal 3 or new terminal)
+curl http://localhost:8000/api/health
+# Should return: {"status":"healthy","version":"2.2"}
+
+# View API documentation
+# Open browser: http://localhost:8000/docs
+```
+
+### Traditional: Stop the Agent
+
+```bash
+# In Terminal 1 and 2, press:
+Ctrl+C
+
+# Logs will show shutdown message:
+# INFO:__main__:Shutting down monitors...
+# INFO:__main__:Sentinel Agent stopped
 ```
 
 **⏱️ Installation Time:** 3-6 minutes | **Includes:** venv + all dependencies + databases
 
- **Need More Info?** See [QUICK_INSTALL.md](QUICK_INSTALL.md) or [INSTALLATION.md](INSTALLATION.md)
+
 
 ---
 
@@ -323,12 +472,13 @@ Sentinel/Project/
 │
 ├── Documentation (in docs_markdown/)
 ├── docs_markdown/
-│   ├── FEATURE_INTEGRATION.md          # Integration guide
-│   ├── DEPLOYMENT_GUIDE.md             # Usage guide
-│   ├── COMPLETE_FEATURES_SUMMARY.md    # Feature overview
-│   ├── README_FEATURES.md              # Quick reference
-│   ├── CODE_REVIEW_REPORT.md           # Code quality
-│   └── ... (23 more documentation files)
+│   ├── FEATURE_INTEGRATION.md          # Feature integration guide
+│   ├── DEPLOYMENT_GUIDE.md             # Practical usage guide
+│   ├── README_FEATURES.md              # Feature quick reference
+│   ├── DOCKER_DEPLOYMENT.md            # Docker setup guide
+│   ├── SECURITY_IMPLEMENTATION.md      # Security documentation
+│   ├── CHANGELOG.md                    # Version history
+│   └── QUICK_REFERENCE.md              # Command reference
 │
 └── Configuration & Scripts
     ├── activate_env.sh / .bat
@@ -341,27 +491,27 @@ Sentinel/Project/
 
 ##  Documentation
 
-Full documentation is available in [`docs_markdown/`](docs_markdown/) folder:
+All essential documentation is in [`docs_markdown/`](docs_markdown/) folder:
 
-### Getting Started
-- [**FEATURE_INTEGRATION.md**](docs_markdown/FEATURE_INTEGRATION.md) - Feature-by-feature integration guide
-- [**DEPLOYMENT_GUIDE.md**](docs_markdown/DEPLOYMENT_GUIDE.md) - Practical usage and deployment
-- [**README_FEATURES.md**](docs_markdown/README_FEATURES.md) - Quick feature reference
-
-### Technical Details
-- [**CODE_REVIEW_REPORT.md**](docs_markdown/CODE_REVIEW_REPORT.md) - Code quality assessment
-- [**IMPLEMENTATION_COMPLETE.md**](docs_markdown/IMPLEMENTATION_COMPLETE.md) - Implementation status
-- [**PROJECT_DOCUMENTATION.md**](docs_markdown/PROJECT_DOCUMENTATION.md) - System architecture
-
-### Deployment & Operations
-- [**DOCKER_DEPLOYMENT.md**](docs_markdown/DOCKER_DEPLOYMENT.md) - Docker setup
-- [**GITHUB_DEPLOYMENT.md**](docs_markdown/GITHUB_DEPLOYMENT.md) - GitHub deployment
-- [**ENVIRONMENT.md**](docs_markdown/ENVIRONMENT.md) - Environment variables
-
-### Additional Resources
+### Quick References
+- [**README_FEATURES.md**](docs_markdown/README_FEATURES.md) - Feature overview
 - [**QUICK_REFERENCE.md**](docs_markdown/QUICK_REFERENCE.md) - Command reference
 - [**CHANGELOG.md**](docs_markdown/CHANGELOG.md) - Version history
+
+### Setup & Deployment
+- [**DEPLOYMENT_GUIDE.md**](docs_markdown/DEPLOYMENT_GUIDE.md) - Usage and deployment guide
+- [**DOCKER_DEPLOYMENT.md**](docs_markdown/DOCKER_DEPLOYMENT.md) - Docker setup guide
+- [**DOCKER_QUICKSTART.md**](docs_markdown/DOCKER_QUICKSTART.md) - Docker quick start
+- [**DOCKER_TROUBLESHOOTING.md**](docs_markdown/DOCKER_TROUBLESHOOTING.md) - Docker troubleshooting
+
+### Configuration & Integration
+- [**FEATURE_INTEGRATION.md**](docs_markdown/FEATURE_INTEGRATION.md) - Feature integration guide
+- [**ENVIRONMENT.md**](docs_markdown/ENVIRONMENT.md) - Environment variables
+- [**SECURITY_IMPLEMENTATION.md**](docs_markdown/SECURITY_IMPLEMENTATION.md) - Security setup
+
+### Contributing
 - [**CONTRIBUTING.md**](docs_markdown/CONTRIBUTING.md) - Contribution guidelines
+- [**ADAPTIVE_REPORTING.md**](docs_markdown/ADAPTIVE_REPORTING.md) - Reporting features
 
 ---
 
