@@ -14,7 +14,7 @@
 # ============================================================================
 # STAGE 1: BUILDER - Compile dependencies
 # ============================================================================
-FROM python:3.10-slim as builder
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
@@ -60,9 +60,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # System tools
     procps \
     util-linux \
-    # Log monitoring
-    tail \
-    grep \
     # Debugging
     strace \
     lsof \
@@ -75,7 +72,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app:$PYTHONPATH \
+    PYTHONPATH=/app \
     SENTINEL_VERSION="2.2" \
     SENTINEL_LOG_DIR=/app/logs \
     SENTINEL_DATA_DIR=/app/data \
