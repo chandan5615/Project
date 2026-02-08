@@ -130,7 +130,7 @@ services:
     
     # Startup configuration
     entrypoint: /usr/local/bin/docker-entrypoint.sh
-    command: python main.py
+    command: /usr/local/bin/docker-startup.sh
     
     # NOTE: Using host Ollama (already installed on Ubuntu)
     # Removed 'depends_on' and 'networks' since network_mode:host is used
@@ -194,17 +194,6 @@ services:
   #     - sentinel-network
 
 # ============================================================================
-# NETWORKS - Container communication
-# ============================================================================
-networks:
-  sentinel-network:
-    driver: bridge
-    name: sentinel-network
 
-# ============================================================================
-# VOLUMES - Persistent data storage
-# ============================================================================
-volumes:
-  ollama_data:
     name: sentinel-ollama-data
     driver: local

@@ -108,8 +108,11 @@ if [ ! -d /var/log/apache2 ]; then
     echo "[INFO] Created Apache2 log directory"
 fi
 
-# Grant sentinel user sudo access for firewall operations
+# Grant sentinel user sudo access for firewall operations (if container is running as root)
 if [ "$(id -u)" = "0" ]; then
+    # Create sudoers.d directory if it doesn't exist
+    mkdir -p /etc/sudoers.d 2>/dev/null || true
+    # Write sudoers config silently (ignore errors if permission denied)
     echo "sentinel ALL=(ALL) NOPASSWD: /sbin/iptables, /sbin/iptables-save, /sbin/ip6tables" > /etc/sudoers.d/sentinel-firewall 2>/dev/null || true
     chmod 0440 /etc/sudoers.d/sentinel-firewall 2>/dev/null || true
 fi

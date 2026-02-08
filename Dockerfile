@@ -88,6 +88,10 @@ COPY . .
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Copy startup script (starts both main.py and sentinel_api.py)
+COPY docker-startup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-startup.sh
+
 # Create required directories with proper permissions
 RUN mkdir -p /app/logs /app/data && \
     chmod 755 /app/logs /app/data
