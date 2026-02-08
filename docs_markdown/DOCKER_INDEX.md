@@ -61,15 +61,19 @@ docker-test.bat
 ### Installation Methods
 
 ```bash
-# Fastest (30 seconds)
+# ⭐ RECOMMENDED: Host Ollama (Production - Best Performance)
+# Terminal 1: Start Ollama
+ollama serve
+
+# Terminal 2: Deploy Sentinel Agent
 git clone <repo> && cd sentinel-agent
+docker-compose up -d  # Starts in 10 seconds!
+
+# Alternative: Docker Ollama (Containerized everything)
+# Uncomment ollama and ollama-pull services in docker-compose.yml
 docker-compose --profile with-ollama up -d
 
-# Production with Host Ollama
-ollama pull llama3:8b && ollama serve
-docker-compose up -d
-
-# Production with SSL
+# Production with SSL/TLS
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
@@ -77,15 +81,19 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ```bash
 # Service Management
-docker-compose up -d              # Start services
+docker-compose up -d              # Start with host Ollama
 docker-compose down               # Stop services
 docker-compose ps                 # View status
 docker-compose logs -f            # Follow logs
 
+# Verify Setup
+curl http://localhost:8000/api/health    # API health check
+curl http://localhost:11434/api/tags     # Ollama health check
+
 # Debugging
 docker-compose exec sentinel-agent bash
 docker stats
-docker-compose config
+docker-compose config --quiet     # Validate YAML
 
 # Advanced
 docker-compose build --no-cache

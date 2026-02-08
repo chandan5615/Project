@@ -6,15 +6,18 @@ An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed 
 
 ## Installation (Choose One - All Are Clean & No-Mess!)
 
-### Docker (Recommended - Fastest!)
+### Docker (Recommended - Fastest!) ⭐
 
-**No Python environment setup needed. Everything is containerized.**
+**Using Host Ollama (Production - v2.2 Optimized)**
 
 ```bash
-# Clone and deploy in 30 seconds
+# Terminal 1: Start host Ollama
+ollama serve
+
+# Terminal 2: Deploy Sentinel Agent (30 seconds)
 git clone <repo> sentinel-agent
 cd sentinel-agent
-docker-compose --profile with-ollama up -d
+docker-compose up -d
 
 # Verify it's running
 curl http://localhost:8000/api/health
@@ -23,12 +26,19 @@ curl http://localhost:8000/api/health
 **That's it!** Your system is ready. Access:
 - **API**: http://localhost:8000
 - **Dashboard**: http://localhost:8501 (optional)
+- **Ollama**: http://localhost:11434 (local engine)
 
-**For Docker Host Ollama (Production):**
+**Why Host Ollama?**
+✅ Better performance (no container overhead)
+✅ Direct GPU access
+✅ Simpler setup
+✅ Native system integration
+
+**Using Docker Ollama (Alternative):**
 ```bash
-ollama pull llama3:8b && ollama serve
-# In another terminal:
-docker-compose up -d
+# Uncomment ollama and ollama-pull services in docker-compose.yml
+# Then run:
+docker-compose --profile with-ollama up -d
 ```
 
  **Docker Guide**: [DOCKER_QUICKSTART.md](docs_markdown/DOCKER_QUICKSTART.md) | [Full Guide](docs_markdown/DOCKER_DEPLOYMENT.md)

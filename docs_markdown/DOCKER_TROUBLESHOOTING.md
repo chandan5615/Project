@@ -6,6 +6,38 @@
 
 ## 0. DOCKER COMPOSE VALIDATION ERRORS
 
+### Symptom: Network Mode Conflicts
+```bash
+ERROR: 'network_mode' and 'networks' cannot be combined
+```
+
+**Root Cause:**
+- `sentinel-agent` service uses `network_mode: host` (required for system access)
+- But also tried to use `networks:` section (cannot be combined)
+
+**Solution (v2.2 Fixed):**
+- Removed `networks:` section from `sentinel-agent` service
+- Service now uses only `network_mode: host`
+- This allows localhost access to Ollama at `http://localhost:11434`
+
+**If you encounter this error:**
+```yaml
+# ❌ WRONG - Cannot combine these
+sentinel-agent:
+  network_mode: host
+  networks:
+    - sentinel-network  # ← Remove this
+
+# ✅ CORRECT - Only one networking mode
+sentinel-agent:
+  network_mode: host
+  # No networks section
+```
+
+---
+
+## 0. DOCKER COMPOSE VALIDATION ERRORS (YAML Syntax)
+
 ### Symptom
 ```bash
 docker-compose --profile with-ollama up -d
@@ -13,8 +45,6 @@ docker-compose --profile with-ollama up -d
 # volumes.dashboard value does not match any regexes
 # services.sentinel-agent.depends_on contains unsupported option: 'required'
 ```
-
-### Solution
 
 **Root Cause:**
 - Docker Compose version mismatch or YAML syntax errors
@@ -48,55 +78,6 @@ depends_on:
 depends_on:
   ollama:
     condition: service_healthy
-```
-
-❌ **Invalid** - Properties floating after volumes section:
-```yaml
-volumes:
-  ollama_data:
-    driver: local
-    
-logging:  # ← This should NOT be here, moves to service level
-  driver: json-file
-```
-
-✅ **Valid** - Properties belong to their service:
-```yaml
-services:
-  sentinel-agent:
-    logging:
-      driver: json-file
-      
-volumes:
-  ollama_data:
-    driver: local
-```
-
-**Validate After Fixes:**
-```bash
-# Quick syntax check
-docker-compose config --quiet
-
-# Full validation with output
-docker-compose config
-
-# If valid, you'll see the complete composed configuration
-# If invalid, errors will specify the problem line
-```
-
-**Version-Specific Notes:**
-- **Docker Compose v1.x**: Some options may not be supported
-- **Docker Compose v2.x**: Better validation and error messages
-- **Docker Desktop**: Uses bundled compose, update via Docker Desktop settings
-
-**Check Your Version:**
-```bash
-docker-compose --version
-
-# If outdated (v1.x), upgrade:
-# Linux: sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-# macOS: brew install docker-compose
-# Windows: Update Docker Desktop
 ```
 
 ---

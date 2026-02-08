@@ -111,26 +111,20 @@ cd Sentinel-Agent
 cd /path/to/Sentinel-Agent
 ```
 
-### 2. Set Up Environment Variables (Optional)
+### 2. Start Host Ollama (Recommended)
 
 ```bash
-# Create .env file (optional - defaults work out of the box)
-cat > .env << EOF
-# Ollama model (default: llama3:8b)
-OLLAMA_MODEL=llama3:8b
+# Terminal 1: Start Ollama service
+ollama serve
 
-# Log paths (defaults shown)
-AUTH_LOG_PATH=/var/log/auth.log
-WEB_LOG_PATH=/var/log/apache2/access.log
-EOF
-
-# Secure the file
-chmod 600 .env
+# Verify Ollama is ready
+curl http://localhost:11434/api/tags
 ```
 
-### 3. Build and Run
+### 3. Start Sentinel Agent (in another terminal)
 
 ```bash
+# Terminal 2: Deploy Sentinel Agent
 # Build and start containers
 docker compose up -d
 
@@ -144,6 +138,63 @@ docker compose ps
 ---
 
 ## Installation
+
+### Option 1: Using Host Ollama (Recommended - Production)
+
+**Best for:**
+- Production deployments
+- Better performance (no container overhead)
+- Direct GPU access
+- Native system integration
+
+**Steps:**
+
+```bash
+# 1. Ensure Ollama is installed and running on your host
+ollama serve  # Terminal 1
+
+# 2. In another terminal, start Sentinel Agent
+cd /path/to/Sentinel-Agent
+docker compose up -d  # Terminal 2
+
+# 3. Verify
+docker compose ps
+curl http://localhost:8000/api/health
+```
+
+**Configuration (.env optional):**
+```bash
+# Create .env file if you want custom settings
+cat > .env << EOF
+OLLAMA_MODEL=llama3:8b
+AUTH_LOG_PATH=/var/log/auth.log
+WEB_LOG_PATH=/var/log/apache2/access.log
+EOF
+chmod 600 .env
+```
+
+### Option 2: Using Docker Ollama (Alternative)
+
+**Best for:**
+- Development/testing
+- No host Ollama installed
+- Containerized everything
+
+**Steps:**
+
+```bash
+# 1. Edit docker-compose.yml and uncomment ollama and ollama-pull services
+
+# 2. Start with --profile with-ollama flag
+docker compose --profile with-ollama up -d
+
+# 3. Wait for model to download (~5-10 minutes)
+docker compose logs ollama-pull
+
+# 4. Verify
+docker compose ps
+curl http://localhost:8000/api/health
+```
 
 ### Step 1: Prepare Project Directory
 
@@ -164,6 +215,10 @@ mkdir -p data logs
 ```bash
 # Create .env file (optional - defaults work out of the box)
 cat > .env << EOF
+# Which Ollama to use:
+# - If using host Ollama: defaults work (OLLAMA_BASE_URL=http://localhost:11434)
+# - If using Docker Ollama: set OLLAMA_HOST=http://ollama:11434
+
 # Ollama model to use (default: llama3:8b)
 # Smaller: llama3.2:3b (faster, less RAM)
 # Larger: llama3:70b (slower, more accurate)

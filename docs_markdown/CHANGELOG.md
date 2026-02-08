@@ -268,6 +268,9 @@ All 6 features are fully integrated with:
 - **Docker Compose YAML Validation**: Removed unsupported `required: false` syntax from `depends_on` configuration
 - **Docker Compose Structure**: Fixed malformed YAML with orphaned service properties after volumes section
 - **Compose Version Compatibility**: Ensured compatibility with Docker Compose v1.x and v2.x
+- **Network Mode Conflict**: Resolved `network_mode: host` and `networks:` combination error
+- **Host Ollama Support**: Optimized docker-compose.yml for using system-installed Ollama
+- **Ollama URL Configuration**: Updated all Ollama URLs from `http://ollama:11434` to `http://localhost:11434`
 
 ### Documentation Updates
 - Added Docker Compose troubleshooting section to `DOCKER_TROUBLESHOOTING.md`

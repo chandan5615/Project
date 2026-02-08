@@ -1,45 +1,56 @@
-# Sentinel Agent v2.0 - Quick Reference Guide
+# Sentinel Agent v2.2 - Quick Reference Guide
 
-**Version**: 2.0 (Enhanced & Fixed)  
-**Release Date**: January 26, 2026  
+**Version**: 2.2 (Production Ready)  
+**Release Date**: February 8, 2026  
 **Status**: Production Ready ✅
 
 ---
 
-##  What's Included in v2.0
+##  Quick Start (Docker - Recommended)
 
-### ✅ 7 Critical Code Fixes
-1. **Python 3.9 Compatibility** - Type hints now work with Python 3.9+
-2. **IP Validation Security** - Bulletproof IP validation prevents bypass attacks
-3. **Robust JSON Parsing** - Handles complex nested JSON structures
-4. **Log Rotation Support** - Seamless detection and handling of log rotations
-5. **Complete Type Safety** - 100% type hint coverage
-6. **Enhanced Error Handling** - Better recovery mechanisms
-7. **Improved Resilience** - 3x retry loops for critical operations
-
-###  Complete Documentation
-- PROJECT_DOCUMENTATION.md - Main documentation (updated v2.0)
-- VERSION_2_0_SUMMARY.md - Release summary with all improvements
-- COMPLETION_REPORT.md - Implementation verification report
-- And 9 other supporting documents
-
----
-
-##  Quick Start
-
-### 1. Install & Setup
+### With Host Ollama (Production)
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Terminal 1: Start Ollama
+ollama serve
 
-# Verify Ollama is running
-curl http://localhost:11434/api/tags
+# Terminal 2: Deploy Sentinel Agent
+cd ~/Project
+docker-compose up -d
 
-# Start the system
+# Verify
+curl http://localhost:8000/api/health
+```
+
+### Traditional Setup (Linux/macOS)
+```bash
+# Setup
+./setup.sh && source venv/bin/activate
+
+# Ensure Ollama is running (Terminal 1)
+ollama serve
+
+# Start agent (Terminal 2)
 sudo python main.py
 ```
 
-### 2. Monitor Attacks
+---
+
+##  Docker Compose Commands (v2.2)
+
+| Command | Purpose |
+|---------|---------|
+| `docker-compose up -d` | Start with host Ollama |
+| `docker-compose down` | Stop all services |
+| `docker-compose ps` | List running services |
+| `docker-compose logs -f sentinel-agent` | View live logs |
+| `docker-compose --profile with-ollama up -d` | Start with Docker Ollama (alternative) |
+| `docker-compose config --quiet` | Validate configuration |
+
+---
+
+##  Essential Commands
+
+### Monitor Attacks
 ```bash
 # View all attacks
 python view_attacks.py
@@ -51,13 +62,35 @@ python view_attacks.py --ip 192.168.1.100
 python view_attacks.py --type "Brute Force"
 ```
 
-### 3. Configure (Optional)
-Edit `.env` file:
+### API Testing
 ```bash
-OLLAMA_URL=http://localhost:11434
+# Health check
+curl http://localhost:8000/api/health
+
+# Get metrics
+curl -H "X-API-Key: $TOKEN" http://localhost:8000/api/metrics/stats
+
+# List threats
+curl -H "X-API-Key: $TOKEN" http://localhost:8000/api/threats/list
+```
+
+---
+
+##  Configuration
+
+Edit `.env` file for custom settings:
+```bash
+# Ollama Configuration (v2.2 - Host Ollama)
+OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3:8b
+
+# Log Paths
 AUTH_LOG_PATH=/var/log/auth.log
 WEB_LOG_PATH=/var/log/apache2/access.log
+
+# API Settings
+API_HOST=0.0.0.0
+API_PORT=8000
 ```
 
 ---
@@ -65,39 +98,26 @@ WEB_LOG_PATH=/var/log/apache2/access.log
 ##  Documentation Map
 
 ### Start Here
-- **[PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md)** - Complete system documentation
-- **[README.md](README.md)** - Project overview
+- **[README.md](../README.md)** - Project overview (in root)
+- **[DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md)** - 5-minute Docker setup
 
-### Understanding the Fixes
-- **[VERSION_2_0_SUMMARY.md](VERSION_2_0_SUMMARY.md)** - All v2.0 improvements detailed
-- **[FIXES_IMPLEMENTED.md](FIXES_IMPLEMENTED.md)** - Detailed fix documentation
-- **[CODE_ANALYSIS_REPORT.md](CODE_ANALYSIS_REPORT.md)** - Code quality analysis
+### Docker Guides
+- **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)** - Complete Docker deployment guide
+- **[DOCKER_TROUBLESHOOTING.md](DOCKER_TROUBLESHOOTING.md)** - Docker problem solutions
+- **[DOCKER_INDEX.md](DOCKER_INDEX.md)** - Docker documentation index
 
 ### Setup & Configuration
-- **[SETUP_GUIDE_WEB_APPLICATIONS.md](SETUP_GUIDE_WEB_APPLICATIONS.md)** - Web app setup guide
-- **[ENVIRONMENT.md](ENVIRONMENT.md)** - Environment configuration
-- **[GEMINI_SETUP.md](GEMINI_SETUP.md)** - LLM configuration (now Ollama)
+- **[ENVIRONMENT.md](ENVIRONMENT.md)** - Environment variables
+- **[INSTALLATION.md](../INSTALLATION.md)** - Installation guide (in root)
 
-### Deployment
-- **[DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md)** - Docker deployment
-- **[docker-compose.yml](docker-compose.yml)** - Docker configuration
+### Features
+- **[README_FEATURES.md](README_FEATURES.md)** - v2.2 features overview
+- **[FEATURE_INTEGRATION.md](FEATURE_INTEGRATION.md)** - Technical integration details
 
-### Verification & Monitoring
-- **[VERIFICATION_REPORT.md](VERIFICATION_REPORT.md)** - QA verification results
-- **[COMPLETION_REPORT.md](COMPLETION_REPORT.md)** - Implementation completion report
-- **[ATTACK_DEFENSE.md](ATTACK_DEFENSE.md)** - Attack types and defense strategies
-
----
-
-##  Key Improvements Explained
-
-### Fix 1: Python 3.9 Support
-**Why it matters**: Originally only worked on Python 3.10+, now works on 3.9+  
-**What changed**: Type hint syntax `list[Task]` → `List[Task]`  
-**Impact**: Broader compatibility across systems  
-**Status**: ✅ Verified
-
-### Fix 2 & 3: IP Validation
+### Reference
+- **[QUICK_REFERENCE_ADAPTIVE.md](QUICK_REFERENCE_ADAPTIVE.md)** - Dashboard commands
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history
 **Why it matters**: Previously accepted invalid IPs like `192.168.abc.1`  
 **What changed**: Enhanced validation to ensure ALL octets are digits AND 0-255  
 **Impact**: Prevents attackers from bypassing IP blocking  

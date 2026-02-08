@@ -346,6 +346,65 @@ Access at: `http://localhost:8501`
 
 ---
 
+## Docker Installation (Alternative - v2.2)
+
+For containerized deployment, use Docker Compose. This method doesn't require manual Python setup.
+
+### Prerequisites
+- Docker installed (version 20.10+)
+- Docker Compose installed (version 1.29+)
+- Host Ollama installed and running (recommended for better performance)
+
+### Option 1: Using Host Ollama (Recommended)
+
+```bash
+# Terminal 1: Start Ollama (keep running)
+ollama serve
+
+# Terminal 2: Deploy Sentinel Agent
+cd /path/to/Sentinel-Agent
+docker-compose up -d
+
+# Verify
+docker-compose ps
+curl http://localhost:8000/api/health
+```
+
+### Option 2: Using Docker Ollama (Alternative)
+
+```bash
+# Edit docker-compose.yml and uncomment ollama and ollama-pull services
+
+# Start with profile
+cd /path/to/Sentinel-Agent
+docker-compose --profile with-ollama up -d
+
+# Wait for model download (~5-10 minutes)
+docker-compose logs -f ollama-pull
+
+# Verify
+docker-compose ps
+curl http://localhost:8000/api/health
+```
+
+### Docker Compose Commands
+
+| Task | Command |
+|------|---------|
+| Start services | `docker-compose up -d` |
+| Stop services | `docker-compose down` |
+| View status | `docker-compose ps` |
+| View logs | `docker-compose logs -f sentinel-agent` |
+| Access shell | `docker-compose exec sentinel-agent bash` |
+| Validate config | `docker-compose config --quiet` |
+
+### Accessing Services (Docker)
+- **API**: http://localhost:8000
+- **Health Check**: curl http://localhost:8000/api/health
+- **Logs**: `docker-compose logs -f sentinel-agent`
+
+---
+
 ## Troubleshooting
 
 ### ❌ Python Not Found

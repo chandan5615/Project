@@ -2,22 +2,21 @@
 
 ##  Installation (Choose One)
 
-### Option A: Quick Start (5 minutes)
+### Option A: Host Ollama (Production - Recommended) ⭐
 ```bash
-git clone <repo> && cd sentinel-agent
-docker-compose --profile with-ollama up -d
-```
-
-### Option B: With Host Ollama (2 minutes)
-```bash
-# Terminal 1: Install and run Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull llama3:8b
+# Terminal 1: Start Ollama
 ollama serve
 
 # Terminal 2: Start Sentinel Agent
 cd sentinel-agent
 docker-compose up -d
+```
+
+### Option B: Docker Ollama (Alternative)
+```bash
+cd sentinel-agent
+# Uncomment ollama and ollama-pull services in docker-compose.yml
+docker-compose --profile with-ollama up -d
 ```
 
 ### Option C: Production (with SSL/Nginx)
@@ -36,6 +35,9 @@ docker-compose ps
 
 # Test API health
 curl http://localhost:8000/api/health
+
+# Check Ollama connectivity
+curl http://localhost:11434/api/tags
 
 # View logs
 docker-compose logs -f sentinel-agent
