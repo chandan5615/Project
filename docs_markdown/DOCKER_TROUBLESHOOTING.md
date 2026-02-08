@@ -4,6 +4,103 @@
 
 ---
 
+## 0. DOCKER COMPOSE VALIDATION ERRORS
+
+### Symptom
+```bash
+docker-compose --profile with-ollama up -d
+# ERROR: The Compose file './docker-compose.yml' is invalid because:
+# volumes.dashboard value does not match any regexes
+# services.sentinel-agent.depends_on contains unsupported option: 'required'
+```
+
+### Solution
+
+**Root Cause:**
+- Docker Compose version mismatch or YAML syntax errors
+- Incompatible `depends_on` syntax (some versions don't support `required` keyword)
+- Malformed volumes or service definitions
+
+**Fix:**
+```bash
+# Validate configuration
+docker-compose config --quiet
+
+# If errors appear, check for:
+# 1. Remove 'required: false' from depends_on sections
+# 2. Ensure all services are properly nested under 'services:'
+# 3. Ensure all volumes are properly nested under 'volumes:'
+# 4. No orphaned properties outside service/volume definitions
+```
+
+**Examples of Invalid vs Valid:**
+
+❌ **Invalid** - `required` keyword not supported:
+```yaml
+depends_on:
+  ollama:
+    condition: service_healthy
+    required: false  # ← Remove this line
+```
+
+✅ **Valid** - Use only condition:
+```yaml
+depends_on:
+  ollama:
+    condition: service_healthy
+```
+
+❌ **Invalid** - Properties floating after volumes section:
+```yaml
+volumes:
+  ollama_data:
+    driver: local
+    
+logging:  # ← This should NOT be here, moves to service level
+  driver: json-file
+```
+
+✅ **Valid** - Properties belong to their service:
+```yaml
+services:
+  sentinel-agent:
+    logging:
+      driver: json-file
+      
+volumes:
+  ollama_data:
+    driver: local
+```
+
+**Validate After Fixes:**
+```bash
+# Quick syntax check
+docker-compose config --quiet
+
+# Full validation with output
+docker-compose config
+
+# If valid, you'll see the complete composed configuration
+# If invalid, errors will specify the problem line
+```
+
+**Version-Specific Notes:**
+- **Docker Compose v1.x**: Some options may not be supported
+- **Docker Compose v2.x**: Better validation and error messages
+- **Docker Desktop**: Uses bundled compose, update via Docker Desktop settings
+
+**Check Your Version:**
+```bash
+docker-compose --version
+
+# If outdated (v1.x), upgrade:
+# Linux: sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# macOS: brew install docker-compose
+# Windows: Update Docker Desktop
+```
+
+---
+
 ## 1. SERVICE WON'T START
 
 ### Symptom

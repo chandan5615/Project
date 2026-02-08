@@ -264,6 +264,16 @@ All 6 features are fully integrated with:
 ### Breaking Changes
 - None. All changes are fully backward compatible.
 
+### Fixed
+- **Docker Compose YAML Validation**: Removed unsupported `required: false` syntax from `depends_on` configuration
+- **Docker Compose Structure**: Fixed malformed YAML with orphaned service properties after volumes section
+- **Compose Version Compatibility**: Ensured compatibility with Docker Compose v1.x and v2.x
+
+### Documentation Updates
+- Added Docker Compose troubleshooting section to `DOCKER_TROUBLESHOOTING.md`
+- Updated `README.md` with Docker validation error diagnosis and fixes
+- Added troubleshooting examples for common Docker issues
+
 ---
 
 ## [2.1] - 2026-01-30

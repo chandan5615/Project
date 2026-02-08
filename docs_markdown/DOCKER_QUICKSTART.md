@@ -231,6 +231,15 @@ docker build -t sentinel-agent:2.2 .
 
 ## 🆘 Getting Help
 
+**Docker Compose Validation Errors?**
+```bash
+# Validate configuration
+docker-compose config --quiet
+
+# If you see "volumes.dashboard" or "depends_on.required" errors,
+# see: DOCKER_TROUBLESHOOTING.md#0-docker-compose-validation-errors
+```
+
 **Check Logs First:**
 ```bash
 docker-compose logs --tail=200 sentinel-agent > debug.log
@@ -238,6 +247,7 @@ docker-compose logs --tail=200 sentinel-agent > debug.log
 
 **See Documentation:**
 - Full guide: `docs_markdown/DOCKER_DEPLOYMENT.md`
+- Troubleshooting: `docs_markdown/DOCKER_TROUBLESHOOTING.md`
 - Installation: `INSTALLATION.md`
 - Configuration: Review `docker-compose.yml` comments
 

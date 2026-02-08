@@ -160,11 +160,10 @@ services:
     entrypoint: /usr/local/bin/docker-entrypoint.sh
     command: python main.py
     
-    # Dependency ordering
+    # Dependency ordering (v2.2 fix: removed unsupported 'required' keyword for version compatibility)
     depends_on:
       ollama:
         condition: service_healthy
-        required: false  # Optional - works without Ollama
     
     networks:
       - sentinel-network
@@ -241,92 +240,3 @@ volumes:
   ollama_data:
     name: sentinel-ollama-data
     driver: local
-
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
-# Environment variables can be set in .env file:
-#
-# OLLAMA_PORT=11434
-# OLLAMA_MODEL=llama3:8b
-# API_PORT=8000
-# DASHBOARD_PORT=8501
-# LOG_LEVEL=INFO
-# API_HOST=0.0.0.0
-#
-# ============================================================================
-# QUICK COMMANDS
-# ============================================================================
-#
-# Start Sentinel Agent (with Ollama):
-#   docker-compose --profile with-ollama up -d
-#
-# Start only Sentinel Agent (without Ollama if already running):
-#   docker-compose up -d
-#
-# View logs:
-#   docker-compose logs -f sentinel-agent
-#
-# View Ollama logs:
-#   docker-compose logs -f ollama
-#
-# Stop all services:
-#   docker-compose down
-#
-# Restart everything:
-#   docker-compose restart
-#
-# Remove all data (WARNING: deletes databases):
-#   docker-compose down -v
-#
-# Check service status:
-#   docker-compose ps
-#
-# Execute command in container:
-#   docker-compose exec sentinel-agent python -c "import threat_intelligence"
-#
-# Access API:
-#   curl http://localhost:8000/api/health
-#
-# Access logs from previous run:
-#   docker-compose logs --tail=100 sentinel-agent
-#
-# ============================================================================
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/app/data/attack_records.json') else 1)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # Internal-only Zero-Exposure Admin Dashboard (do NOT publish ports)
-  # Start with: docker compose up -d --profile dashboard
-  dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sentinel-dashboard
-    restart: unless-stopped
-    network_mode: none   # isolates the dashboard from external networks
-    environment:
-      - DASHBOARD_USER=${DASHBOARD_USER:-sentinel}
-      - DASHBOARD_PASS=${DASHBOARD_PASS:-sentinel}
-      - DASHBOARD_WS_TOKEN_TTL=${DASHBOARD_WS_TOKEN_TTL:-300}
-    volumes:
-      - ./data:/app/data:ro
-      - ./logs:/app/logs:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command: >
-      uvicorn dashboard.app:app --host 127.0.0.1 --port 8080 --log-level info
-    profiles:
-      - dashboard
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "5m"
-        max-file: "2"

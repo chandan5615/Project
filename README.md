@@ -439,6 +439,37 @@ See [DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md) for:
 
 ##  Troubleshooting
 
+### Docker Compose validation errors
+
+**Error:** `volumes.dashboard value does not match` or `depends_on contains unsupported option: 'required'`
+
+```bash
+# Validate configuration
+docker-compose config --quiet
+
+# Fix: Remove 'required: false' from depends_on
+# Ensure all service properties are nested under 'services:'
+# Ensure all volume properties are nested under 'volumes:'
+```
+
+See [DOCKER_TROUBLESHOOTING.md](docs_markdown/DOCKER_TROUBLESHOOTING.md#0-docker-compose-validation-errors) for detailed fixes.
+
+### Docker service won't start
+```bash
+# View detailed logs
+docker-compose logs sentinel-agent
+
+# Check port conflicts
+docker-compose ps
+
+# Full reset
+docker-compose down -v
+docker-compose build --no-cache
+docker-compose --profile with-ollama up -d
+```
+
+See [DOCKER_TROUBLESHOOTING.md](docs_markdown/DOCKER_TROUBLESHOOTING.md) for comprehensive Docker help.
+
 ### API won't start
 ```bash
 # Check if port is in use
