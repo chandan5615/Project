@@ -33,7 +33,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 # Check all services running
 docker-compose ps
 
-# Test API health
+# Test API health (ports directly accessible via host network)
 curl http://localhost:8000/api/health
 
 # Check Ollama connectivity
@@ -42,6 +42,19 @@ curl http://localhost:11434/api/tags
 # View logs
 docker-compose logs -f sentinel-agent
 ```
+
+---
+
+##  Accessing the Application
+
+When using `network_mode: host`, ports are **directly accessible** without port forwarding:
+
+| Service | URL | Access |
+|---------|-----|--------|
+| API | `http://localhost:8000` | REST API endpoints |
+| Health Check | `http://localhost:8000/api/health` | Health status |
+| Dashboard | `http://localhost:8501` | Web interface (if running) |
+| Ollama | `http://localhost:11434` | LLM engine |
 
 ---
 
@@ -59,17 +72,6 @@ docker-compose logs -f sentinel-agent
 
 ---
 
-##  Accessing the Application
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| API | `http://localhost:8000` | REST API endpoints |
-| Health | `http://localhost:8000/api/health` | Health check |
-| Dashboard | `http://localhost:8501` | Web interface |
-| Ollama | `http://localhost:11434` | LLM engine (internal) |
-
----
-
 ##  Configuration
 
 ### Update Environment Variables
@@ -79,15 +81,15 @@ docker-compose logs -f sentinel-agent
 environment:
   LOG_LEVEL: DEBUG
   OLLAMA_MODEL: mistral:7b
-  API_PORT: 8000
 ```
 
 **Option 2: Use `.env` file**
 ```
 OLLAMA_MODEL=mistral:7b
 LOG_LEVEL=INFO
-API_PORT=8000
 ```
+
+**Note**: With `network_mode: host`, ports cannot be customized - they're bound directly to the host (8000 for API, 8501 for Dashboard).
 
 ---
 

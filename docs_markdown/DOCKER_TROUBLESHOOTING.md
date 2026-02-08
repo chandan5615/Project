@@ -36,7 +36,51 @@ sentinel-agent:
 
 ---
 
-## 0. DOCKER COMPOSE VALIDATION ERRORS (YAML Syntax)
+## 0B. PORT BINDING CONFLICT WITH HOST NETWORK MODE
+
+### Symptom
+```bash
+docker-compose up -d
+ERROR: for sentinel-agent  "host" network_mode is incompatible with port_bindings
+```
+
+**Root Cause:**
+- Using `network_mode: host` but also defining `ports:` in the service
+- When using host network mode, you cannot specify port mappings
+- Container directly uses host's network interface
+
+**Solution (v2.2.1 Fixed):**
+- Removed all `ports:` mappings from the service definition
+- With `network_mode: host`, ports are **directly accessible** on the host:
+  - API: `http://localhost:8000` (no forwarding needed)
+  - Dashboard: `http://localhost:8501` (no forwarding needed)
+  - Ollama: `http://localhost:11434` (no forwarding needed)
+
+**If you encounter this error:**
+```yaml
+# ❌ WRONG - Cannot combine these
+sentinel-agent:
+  network_mode: host
+  ports:
+    - "8000:8000"     # ← Remove all ports section
+    - "8501:8501"     # ← Remove all ports section
+
+# ✅ CORRECT - Only host network, no port bindings
+sentinel-agent:
+  network_mode: host
+  # No ports section needed - directly accessible via host
+```
+
+**Verify the fix:**
+```bash
+# Ports should be directly accessible
+curl http://localhost:8000/api/health
+curl http://localhost:11434/api/tags
+```
+
+---
+
+## 0C. DOCKER COMPOSE YAML VALIDATION ERRORS
 
 ### Symptom
 ```bash

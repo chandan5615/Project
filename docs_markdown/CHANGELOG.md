@@ -269,6 +269,7 @@ All 6 features are fully integrated with:
 - **Docker Compose Structure**: Fixed malformed YAML with orphaned service properties after volumes section
 - **Compose Version Compatibility**: Ensured compatibility with Docker Compose v1.x and v2.x
 - **Network Mode Conflict**: Resolved `network_mode: host` and `networks:` combination error
+- **Port Binding Conflict**: Removed incompatible port bindings with `network_mode: host` (v2.2.1 hotfix)
 - **Host Ollama Support**: Optimized docker-compose.yml for using system-installed Ollama
 - **Ollama URL Configuration**: Updated all Ollama URLs from `http://ollama:11434` to `http://localhost:11434`
 

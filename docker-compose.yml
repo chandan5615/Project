@@ -114,10 +114,8 @@ services:
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONPATH: /app
     
-    # Port mappings
-    ports:
-      - "${API_PORT:-8000}:8000"        # REST API
-      - "${DASHBOARD_PORT:-8501}:8501"  # Optional: Streamlit dashboard
+    # NOTE: NO PORT MAPPINGS - Using network_mode: host
+    # Ports are directly accessible: 8000 (API), 8501 (Dashboard)
     
     # Volume mounts
     volumes:
