@@ -493,23 +493,24 @@ Sentinel/Project/
 
 All essential documentation is in [`docs_markdown/`](docs_markdown/) folder:
 
-### Quick References
+### For End Users
+- [**USER_GUIDE.md**](docs_markdown/USER_GUIDE.md) - ⭐ **START HERE** - Features, access, and tasks
 - [**README_FEATURES.md**](docs_markdown/README_FEATURES.md) - Feature overview
 - [**QUICK_REFERENCE.md**](docs_markdown/QUICK_REFERENCE.md) - Command reference
-- [**CHANGELOG.md**](docs_markdown/CHANGELOG.md) - Version history
 
-### Setup & Deployment
+### For System Setup
 - [**DEPLOYMENT_GUIDE.md**](docs_markdown/DEPLOYMENT_GUIDE.md) - Usage and deployment guide
 - [**DOCKER_DEPLOYMENT.md**](docs_markdown/DOCKER_DEPLOYMENT.md) - Docker setup guide
 - [**DOCKER_QUICKSTART.md**](docs_markdown/DOCKER_QUICKSTART.md) - Docker quick start
 - [**DOCKER_TROUBLESHOOTING.md**](docs_markdown/DOCKER_TROUBLESHOOTING.md) - Docker troubleshooting
 
-### Configuration & Integration
+### For Technical Reference
 - [**FEATURE_INTEGRATION.md**](docs_markdown/FEATURE_INTEGRATION.md) - Feature integration guide
 - [**ENVIRONMENT.md**](docs_markdown/ENVIRONMENT.md) - Environment variables
 - [**SECURITY_IMPLEMENTATION.md**](docs_markdown/SECURITY_IMPLEMENTATION.md) - Security setup
 
-### Contributing
+### Additional Resources
+- [**CHANGELOG.md**](docs_markdown/CHANGELOG.md) - Version history
 - [**CONTRIBUTING.md**](docs_markdown/CONTRIBUTING.md) - Contribution guidelines
 - [**ADAPTIVE_REPORTING.md**](docs_markdown/ADAPTIVE_REPORTING.md) - Reporting features
 
