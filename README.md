@@ -498,8 +498,11 @@ All essential documentation is in [`docs_markdown/`](docs_markdown/) folder:
 - [**README_FEATURES.md**](docs_markdown/README_FEATURES.md) - Feature overview
 - [**QUICK_REFERENCE.md**](docs_markdown/QUICK_REFERENCE.md) - Command reference
 
-### For System Setup
+### For Testing & Validation
+- [**ATTACK_TESTING_GUIDE.md**](docs_markdown/ATTACK_TESTING_GUIDE.md) - Test attacks (DDoS, SQL injection, brute force, etc.)
 - [**DEPLOYMENT_GUIDE.md**](docs_markdown/DEPLOYMENT_GUIDE.md) - Usage and deployment guide
+
+### For System Setup
 - [**DOCKER_DEPLOYMENT.md**](docs_markdown/DOCKER_DEPLOYMENT.md) - Docker setup guide
 - [**DOCKER_QUICKSTART.md**](docs_markdown/DOCKER_QUICKSTART.md) - Docker quick start
 - [**DOCKER_TROUBLESHOOTING.md**](docs_markdown/DOCKER_TROUBLESHOOTING.md) - Docker troubleshooting
