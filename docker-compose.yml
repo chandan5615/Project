@@ -190,10 +190,9 @@ services:
   #   command: streamlit run dashboard/web_dashboard.py
   #   depends_on:
   #     - sentinel-agent
-  #   networks:
-  #     - sentinel-network
 
 # ============================================================================
-
-    name: sentinel-ollama-data
-    driver: local
+# VOLUMES - Persistent data storage
+# ============================================================================
+volumes:
+  ollama_data:

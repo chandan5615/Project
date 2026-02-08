@@ -10,23 +10,50 @@ An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed 
 
 **Using Host Ollama (Production - v2.2 Optimized)**
 
+**Step 1: Ensure Ollama is Running**
 ```bash
-# Terminal 1: Start host Ollama
+# Terminal 1: Start host Ollama (if not already running)
 ollama serve
 
-# Terminal 2: Deploy Sentinel Agent (30 seconds)
+# Verify Ollama is working
+curl http://localhost:11434/api/tags
+```
+
+**Step 2: Deploy Sentinel Agent**
+```bash
+# Terminal 2: Clone and navigate to project
 git clone <repo> sentinel-agent
 cd sentinel-agent
+
+# Build the Docker image
+docker-compose build
+
+# Start the services
 docker-compose up -d
 
-# Verify it's running
+# Wait a few seconds for services to start
+sleep 5
+```
+
+**Step 3: Verify Deployment**
+```bash
+# Check container status
+docker-compose ps
+# Should show: sentinel-agent   Up (healthy)
+
+# Test API health endpoint
 curl http://localhost:8000/api/health
+# Should return: {"status":"healthy","version":"2.2"}
+
+# View logs (optional)
+docker-compose logs -f sentinel-agent
 ```
 
 **That's it!** Your system is ready. Access:
-- **API**: http://localhost:8000
-- **Dashboard**: http://localhost:8501 (optional)
-- **Ollama**: http://localhost:11434 (local engine)
+- **API**: http://localhost:8000 (REST API for all operations)
+- **API Documentation**: http://localhost:8000/docs (Swagger UI)
+- **Health Check**: http://localhost:8000/api/health
+- **Ollama**: http://localhost:11434 (local AI engine)
 
 **Why Host Ollama?**
 ✅ Better performance (no container overhead)
@@ -34,35 +61,63 @@ curl http://localhost:8000/api/health
 ✅ Simpler setup
 ✅ Native system integration
 
+**Troubleshooting:**
+```bash
+# If container is unhealthy or API not responding:
+docker-compose logs sentinel-agent  # View logs
+docker-compose restart              # Restart services
+docker-compose down && docker-compose up -d  # Full restart
+```
+
 **Using Docker Ollama (Alternative):**
 ```bash
-# Uncomment ollama and ollama-pull services in docker-compose.yml
+# Edit docker-compose.yml and uncomment ollama services
 # Then run:
 docker-compose --profile with-ollama up -d
 ```
 
- **Docker Guide**: [DOCKER_QUICKSTART.md](docs_markdown/DOCKER_QUICKSTART.md) | [Full Guide](docs_markdown/DOCKER_DEPLOYMENT.md)
+ **Docker Guide**: [DOCKER_QUICKSTART.md](docs_markdown/DOCKER_QUICKSTART.md) | [Full Guide](docs_markdown/DOCKER_DEPLOYMENT.md) | [Troubleshooting](docs_markdown/DOCKER_TROUBLESHOOTING.md)
 
 ---
 
-### Windows Users (Traditional Setup)
+### Traditional Installation (Non-Docker)
+
+### Windows Users
 
 **PowerShell (Recommended) ⭐**
 ```powershell
+# 1. Ensure Ollama is running
+ollama serve  # In separate terminal
+
+# 2. Install Sentinel Agent
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 .\install.ps1
+
+# 3. Activate environment and run
+.\venv\Scripts\Activate.ps1
+python main.py  # Terminal 1 - Monitoring
+python sentinel_api.py  # Terminal 2 - REST API
 ```
 
 **Command Prompt (Alternative)**
 ```cmd
 install.bat
+venv\Scripts\activate.bat
+python main.py
 ```
 
-###  Linux/macOS Users (Traditional Setup)
+###  Linux/macOS Users
 
 ```bash
+# 1. Ensure Ollama is running
+ollama serve  # In separate terminal
+
+# 2. Install and run
 chmod +x install.sh
 ./install.sh
+source venv/bin/activate
+python main.py  # Terminal 1 - Monitoring
+python sentinel_api.py  # Terminal 2 - REST API
 ```
 
 ###  Any Platform (Python)
@@ -385,23 +440,60 @@ result = scorer.calculate_anomaly_score({
 
 ##  Docker Deployment
 
-### Quick Start
+### Quick Start (Recommended)
 ```bash
+# 1. Ensure Ollama is running on host
+ollama serve  # Terminal 1
+
+# 2. Build and deploy (Terminal 2)
+docker-compose build --no-cache
 docker-compose up -d
 
-# Check logs
-docker-compose logs -f sentinel
+# 3. Verify deployment
+docker-compose ps  # Should show: Up (healthy)
+curl http://localhost:8000/api/health
 
-# Stop
+# 4. View logs
+docker-compose logs -f sentinel-agent
+
+# 5. Stop services
 docker-compose down
 ```
+
+### Advanced Docker Operations
+```bash
+# Rebuild after code changes
+docker-compose build --no-cache
+docker-compose up -d --force-recreate
+
+# View real-time logs
+docker-compose logs -f sentinel-agent
+
+# Execute commands inside container
+docker-compose exec sentinel-agent bash
+
+# Check container health
+docker-compose ps
+docker inspect sentinel-agent | grep -i health
+
+# Full cleanup (WARNING: Deletes data!)
+docker-compose down -v  # -v removes volumes
+```
+
+### Docker Services Architecture (v2.2.1)
+- **Network Mode**: host (direct access to localhost:11434 for Ollama)
+- **Services**: main.py (monitoring) + sentinel_api.py (REST API)
+- **Startup**: Both services launch via docker-startup.sh
+- **Ports**: 8000 (API), 8501 (optional dashboard), 11434 (Ollama)
+- **Volumes**: ollama_data (persistent model storage)
 
 ### Production Deployment
 See [DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md) for:
 - SSL/TLS configuration
-- Health checks
-- Resource limits
-- Persistent storage
+- Health checks and monitoring
+- Resource limits and scaling
+- Persistent storage and backups
+- Docker Compose profiles (with-ollama)
 
 ---
 
@@ -449,38 +541,90 @@ See [DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md) for:
 
 ##  Troubleshooting
 
-### Docker Compose validation errors
+### Docker Issues (v2.2.1 Fixes Applied)
 
-**Error:** `volumes.dashboard value does not match` or `depends_on contains unsupported option: 'required'`
+**1. Docker Compose Validation Errors** ✅ FIXED
 
+**Error:** `'network_mode' and 'networks' cannot be combined`
 ```bash
-# Validate configuration
-docker-compose config --quiet
-
-# Fix: Remove 'required: false' from depends_on
-# Ensure all service properties are nested under 'services:'
-# Ensure all volume properties are nested under 'volumes:'
+# Fixed in v2.2.1: Removed 'networks' section (incompatible with network_mode:host)
+# Verify fix:
+docker-compose config --quiet  # Should have no errors
 ```
 
-See [DOCKER_TROUBLESHOOTING.md](docs_markdown/DOCKER_TROUBLESHOOTING.md#0-docker-compose-validation-errors) for detailed fixes.
+**Error:** `"host" network_mode is incompatible with port_bindings`
+```bash
+# Fixed in v2.2.1: Removed 'ports' section (not needed with host mode)
+# Ports are directly accessible: http://localhost:8000
+```
 
-### Docker service won't start
+**Error:** `Unsupported config option for services.sentinel-agent: 'driver'`
+```bash
+# Fixed in v2.2.1: Restored proper YAML volumes section structure
+# volumes: should be at root level, not under services
+```
+
+**2. Container Unhealthy / API Not Responding** ✅ FIXED
+
+**Symptoms:** Container shows "Up (unhealthy)", `curl http://localhost:8000/api/health` fails
+
+```bash
+# Fixed in v2.2.1: Created docker-startup.sh to run both services
+# - main.py (monitoring) runs in background
+# - sentinel_api.py (API) runs in foreground
+
+# Verify both services are running:
+docker-compose logs sentinel-agent | grep "Starting"
+# Should show:
+# [1/2] Starting Sentinel Agent monitor (main.py)...
+# [2/2] Starting REST API server (sentinel_api.py on port 8000)...
+
+# If still unhealthy, rebuild:
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+**3. Ollama Connection Issues**
+
+```bash
+# Check if host Ollama is running:
+curl http://localhost:11434/api/tags
+
+# If not running, start Ollama:
+ollama serve  # In separate terminal
+
+# Verify container can reach it:
+docker-compose logs sentinel-agent | grep -i ollama
+# Should show: "Ollama connectivity check passed"
+```
+
+**4. General Docker Troubleshooting**
+
 ```bash
 # View detailed logs
 docker-compose logs sentinel-agent
 
 # Check port conflicts
 docker-compose ps
+netstat -an | grep 8000
 
-# Full reset
+# Full reset (WARNING: Deletes data!)
 docker-compose down -v
 docker-compose build --no-cache
-docker-compose --profile with-ollama up -d
+docker-compose up -d
+
+# Check container health status
+docker inspect sentinel-agent | grep -i health
 ```
 
-See [DOCKER_TROUBLESHOOTING.md](docs_markdown/DOCKER_TROUBLESHOOTING.md) for comprehensive Docker help.
+ **Comprehensive Guide:** [DOCKER_TROUBLESHOOTING.md](docs_markdown/DOCKER_TROUBLESHOOTING.md)
 
-### API won't start
+---
+
+### Traditional Installation Issues
+
+**API won't start**
 ```bash
 # Check if port is in use
 netstat -an | grep 8000
@@ -492,7 +636,7 @@ pkill -f "python sentinel_api.py"
 python sentinel_api.py --port 8001
 ```
 
-### "Module not found" error
+**"Module not found" error**
 ```bash
 # Verify Python path
 python -c "import sys; print(sys.path)"
