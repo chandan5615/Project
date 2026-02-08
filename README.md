@@ -97,7 +97,38 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-### Expected Output & Logs
+### ⚡ Automated Setup (Recommended!)
+
+**Instead of manual commands, use automation tools:**
+
+```bash
+# Python (easiest - Windows, Mac, Linux)
+python3 sentinel_auto.py setup
+python3 sentinel_auto.py demo
+python3 sentinel_auto.py status
+
+# OR Bash (Linux/macOS)
+chmod +x sentinel_setup.sh
+./sentinel_setup.sh setup
+./sentinel_setup.sh demo
+./sentinel_setup.sh status
+```
+
+**What gets automated:**
+- ✅ Password extraction from logs
+- ✅ API token generation  
+- ✅ Container health verification
+- ✅ All attack simulations
+- ✅ Incident detection verification
+- ✅ Test result reports
+
+**Time saved: 48 minutes → 2 minutes!**
+
+👉 **[AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)** - Complete automation guide
+
+---
+
+### Manual Setup (If Preferred)
 
 **After `docker-compose up -d`:**
 ```
@@ -493,8 +524,11 @@ Sentinel/Project/
 
 All essential documentation is in [`docs_markdown/`](docs_markdown/) folder:
 
+### ⚡ Automation (Recommended - Save 90% of setup time!)
+- [**AUTOMATION_GUIDE.md**](AUTOMATION_GUIDE.md) - ⭐ **Automated setup & testing (Python or Bash)**
+
 ### For End Users
-- [**USER_GUIDE.md**](docs_markdown/USER_GUIDE.md) - ⭐ **START HERE** - Features, access, and tasks
+- [**USER_GUIDE.md**](docs_markdown/USER_GUIDE.md) - Features, access, and tasks
 - [**README_FEATURES.md**](docs_markdown/README_FEATURES.md) - Feature overview
 - [**QUICK_REFERENCE.md**](docs_markdown/QUICK_REFERENCE.md) - Command reference
 
