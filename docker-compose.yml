@@ -3,11 +3,13 @@
 # ============================================================================
 # Complete automated setup for Sentinel Agent
 # 
-# QUICK START:
-#   docker-compose up -d
+# QUICK START (with host Ollama):
+#   1. Ensure Ollama is running: ollama serve
+#   2. docker-compose up -d
 #
-# With Ollama (AI engine):
-#   docker-compose --profile with-ollama up -d
+# To use Docker Ollama instead:
+#   - Uncomment ollama and ollama-pull services below
+#   - Run: docker-compose --profile with-ollama up -d
 #
 # Production setup:
 #   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -28,72 +30,44 @@ services:
   # ========================================================================
   # OLLAMA - LLM Server (AI Engine)
   # ========================================================================
-  # Provides the language model for Sentinel Agent
-  # Optional - only starts with --profile with-ollama flag
-  ollama:
-    image: ollama/ollama:latest
-    container_name: sentinel-ollama
-    restart: unless-stopped
-    profiles:
-      - with-ollama  # Only start with: docker-compose --profile with-ollama up
-    ports:
-      - "${OLLAMA_PORT:-11434}:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0:11434
-    # Uncomment for GPU support (requires nvidia-docker)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
-    networks:
-      - sentinel-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
+  # NOTE: Using host Ollama (already installed on Ubuntu)
+  # If you want to use Ollama in Docker instead, uncomment this service:
+  #
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: sentinel-ollama
+  #   restart: unless-stopped
+  #   profiles:
+  #     - with-ollama
+  #   ports:
+  #     - "${OLLAMA_PORT:-11434}:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0:11434
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 120s
+  #   networks:
+  #     - sentinel-network
+  #
   # ========================================================================
   # MODEL PULLER - Download LLM Model
   # ========================================================================
-  # Automatically pulls llama3:8b model after Ollama starts
-  # Only runs with --profile with-ollama flag
-  ollama-pull:
-    image: ollama/ollama:latest
-    container_name: sentinel-ollama-pull
-    profiles:
-      - with-ollama
-    depends_on:
-      ollama:
-        condition: service_healthy
-    entrypoint: /bin/sh
-    command:
-      - -c
-      - |
-        echo "⏳ Pulling Ollama model: ${OLLAMA_MODEL:-llama3:8b}..."
-        sleep 5
-        OLLAMA_HOST=http://ollama:11434 ollama pull ${OLLAMA_MODEL:-llama3:8b}
-        echo "✅ Model download complete!"
-        echo "Waiting for Sentiment Agent to start..."
-        sleep 30
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b}
-    restart: "no"
-    networks:
-      - sentinel-network
-
+  # NOTE: Only use if running Ollama in Docker (uncomment above)
+  #
+  # ollama-pull:
+  #   image: ollama/ollama:latest
+  #   container_name: sentinel-ollama-pull
+  #   profiles:
+  #     - with-ollama
+  #   depends_on:
+  #     ollama:
+  #       condition: service_healthy
+  #
   # ========================================================================
   # SENTINEL AGENT - Main Security Monitoring System
   # ========================================================================
@@ -118,10 +92,10 @@ services:
     
     # Environment variables
     environment:
-      # Ollama Configuration
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://127.0.0.1:11434}
+      # Ollama Configuration (using host Ollama on localhost)
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3:8b}
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
       
       # System Configuration
       AUTH_LOG_PATH: ${AUTH_LOG_PATH:-/var/log/auth.log}
@@ -160,13 +134,9 @@ services:
     entrypoint: /usr/local/bin/docker-entrypoint.sh
     command: python main.py
     
-    # Dependency ordering (v2.2 fix: removed unsupported 'required' keyword for version compatibility)
-    depends_on:
-      ollama:
-        condition: service_healthy
-    
-    networks:
-      - sentinel-network
+    # NOTE: Using host Ollama (already installed on Ubuntu)
+    # Removed 'depends_on' and 'networks' since network_mode:host is used
+    # The container can access localhost:11434 for Ollama
     
     # Logging configuration
     logging:
