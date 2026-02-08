@@ -2,6 +2,18 @@
 
 Copy & paste these commands. That's it!
 
+> ⚠️ **Fresh Clone from GitHub?** First reset the database:
+> ```bash
+> docker-compose down
+> rm -f data/auth.db data/INITIAL_CREDENTIALS.txt
+> docker-compose build --no-cache
+> docker-compose up -d
+> sleep 5
+> ```
+> Then follow the steps below.
+> 
+> **📖 For complete guide:** See [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md)
+
 ---
 
 ## 🚀 Option A: Python (Recommended - All Systems)

@@ -2,6 +2,16 @@
 
 Complete automation for setup, testing, and monitoring. No manual commands needed!
 
+> **⚠️ Fresh Clone?** If you just cloned this repo, reset the database first:
+> ```bash
+> docker-compose down
+> rm -f data/auth.db data/INITIAL_CREDENTIALS.txt
+> docker-compose build --no-cache
+> docker-compose up -d
+> sleep 5
+> ```
+> Then proceed below. See [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) for complete instructions.
+
 ---
 
 ## 🚀 Quick Start (5 Minutes)

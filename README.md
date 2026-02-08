@@ -2,6 +2,48 @@
 
 An autonomous, multi-agent AI Security Operations Center (SOC) analyst designed for Linux systems. Sentinel Agent uses CrewAI for orchestration and local Ollama (Llama 3) as the LLM engine to monitor, analyze, and respond to security threats in real-time.
 
+> 🎉 **NEW:** Complete documentation has been added! 
+> - **First time?** → [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) (20 min setup)
+> - **In a hurry?** → [QUICK_START_AUTOMATION.md](QUICK_START_AUTOMATION.md) (5 min)
+> - **Need help?** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (common issues)
+> - **What's new?** → [UPDATE_SUMMARY.md](UPDATE_SUMMARY.md) (overview of changes)
+> - **Navigation?** → [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md) (all docs)
+
+---
+
+## 🚀 Quick Start for Fresh Clone
+
+**If you just cloned this repo from GitHub, follow these steps exactly:**
+
+```bash
+# 1. Reset database (critical for fresh credentials)
+docker-compose down
+rm -f data/auth.db data/INITIAL_CREDENTIALS.txt data/*.json data/*.db
+
+# 2. Start Ollama on host (in another terminal)
+ollama serve
+
+# 3. Build and start container
+docker-compose build --no-cache
+docker-compose up -d
+
+# 4. Get password from logs
+sleep 5
+docker-compose logs sentinel-agent | grep -A 2 "DEFAULT ADMIN CREDENTIALS"
+
+# 5. Run automated setup
+python3 sentinel_auto.py setup
+python3 sentinel_auto.py demo
+```
+
+**📖 For Complete Step-by-Step Guide:** See [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) ← **START HERE!**
+
+**🔍 Quick Verification:** Run `bash verify_setup.sh` to check all prerequisites
+
+**🐛 Having Issues?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for solutions
+
+⚠️ **Important:** Always reset the database when cloning from GitHub because the repo includes old `.db` files!
+
 ---
 
 ## Installation (Choose One - All Are Clean & No-Mess!)
