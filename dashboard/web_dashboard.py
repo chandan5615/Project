@@ -11,6 +11,7 @@ from pathlib import Path
 import logging
 from typing import Dict, List, Tuple
 import json
+import os
 
 # Configure page
 st.set_page_config(
@@ -19,6 +20,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Default database path (matches data_engine.py)
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR", "./data")
+DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH", os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db"))
 
 # Dark theme CSS
 st.markdown("""
@@ -51,9 +56,61 @@ st.markdown("""
 class DashboardDataManager:
     """Manages SQLite database access for dashboard metrics"""
     
-    def __init__(self, db_path: str = "sentinel_intel.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        self.db_path = db_path or DEFAULT_DB_PATH
         self.logger = logging.getLogger(__name__)
+        self._ensure_database_initialized()
+    
+    def _ensure_database_initialized(self):
+        """Ensure the database and tables exist"""
+        try:
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Create incidents table if not exists
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS incidents (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT,
+                    source_ip TEXT,
+                    attack_type TEXT,
+                    severity TEXT,
+                    raw_log TEXT,
+                    threat_type TEXT,
+                    action TEXT,
+                    details TEXT
+                )
+            """)
+            
+            # Create actions table if not exists
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS actions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    incident_id INTEGER,
+                    action_type TEXT,
+                    details TEXT,
+                    success INTEGER,
+                    timestamp TEXT
+                )
+            """)
+            
+            # Create threat_intel table if not exists
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS threat_intel (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ip TEXT UNIQUE,
+                    reputation_score INTEGER,
+                    details TEXT,
+                    last_checked TEXT
+                )
+            """)
+            
+            conn.commit()
+            conn.close()
+            self.logger.info(f"Database initialized at {self.db_path}")
+        except Exception as e:
+            self.logger.error(f"Error initializing database: {e}")
     
     def get_connection(self):
         """Get database connection"""
@@ -260,7 +317,7 @@ def render_incident_feed(data_manager: DashboardDataManager):
     df = data_manager.get_incident_feed(limit=20)
     
     if df.empty:
-        st.info("STATUS: No recent incidents")
+        st.info("STATUS: No recent DEFAULT_DB_PATH
     else:
         # Format for display
         display_df = df.copy()
