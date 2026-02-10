@@ -153,7 +153,10 @@ class SentinelAgent:
                 source_ip=ip_address,
                 attack_type=attack_info.get("attack_type", "unknown"),
                 raw_log=log_line,
-                severity=attack_info.get("severity", "medium")
+                severity=attack_info.get("severity", "medium"),
+                threat_type=attack_info.get("attack_type", "unknown"),
+                action="blocked",
+                details=attack_info.get("details", "")
             )
         except Exception as e:
             logger.error(f"Error inserting incident into DB: {e}")

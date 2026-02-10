@@ -30,7 +30,10 @@ class DataEngine:
                     source_ip TEXT,
                     attack_type TEXT,
                     severity TEXT,
-                    raw_log TEXT
+                    raw_log TEXT,
+                    threat_type TEXT,
+                    action TEXT,
+                    details TEXT
                 )
                 """
             )
@@ -58,12 +61,12 @@ class DataEngine:
                 """
             )
 
-    def insert_incident(self, source_ip: str, attack_type: str, raw_log: str, severity: str = "unknown") -> int:
+    def insert_incident(self, source_ip: str, attack_type: str, raw_log: str, severity: str = "unknown", threat_type: str = None, action: str = None, details: str = None) -> int:
         ts = datetime.utcnow().isoformat()
         with self._conn:
             cur = self._conn.execute(
-                "INSERT INTO incidents (timestamp, source_ip, attack_type, severity, raw_log) VALUES (?, ?, ?, ?, ?)",
-                (ts, source_ip, attack_type, severity, raw_log)
+                "INSERT INTO incidents (timestamp, source_ip, attack_type, severity, raw_log, threat_type, action, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (ts, source_ip, attack_type, severity, raw_log, threat_type or attack_type, action or "blocked", details or "")
             )
             return cur.lastrowid
 
