@@ -1,6 +1,19 @@
 """
-Sentinel Agent - Main Entry Point
-Autonomous multi-agent AI SOC analyst for Linux.
+Sentinel Agent v2.2 - Main Entry Point
+Autonomous multi-agent AI SOC analyst for Linux systems.
+Production-ready enterprise security operations center.
+
+Features:
+- Feature 2: Offline threat intelligence with IP reputation
+- Feature 3: JWT token-based authentication & API keys
+- Feature 4: IP/pattern whitelist and blacklist management
+- Feature 7: Real-time performance metrics tracking
+- Feature 8: 20+ REST API endpoints for external integration
+- Feature 10: 4-factor ML-based anomaly scoring algorithm
+
+Author: Sentinel Security Team
+Version: 2.2.0
+GitHub: https://github.com/[your-username]/sentinel-agent
 """
 
 import json
