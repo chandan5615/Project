@@ -54,9 +54,10 @@ def ensure_results_dir():
     """Create results directory if it doesn't exist"""
     Path(RESULTS_DIR).mkdir(exist_ok=True)
 
-def wait_for_container(max_retries: int = 30) -> bool:
-    """Wait for container to be healthy"""
+def wait_for_container(max_retries: int = 60) -> bool:
+    """Wait for container to be healthy (up to 2 minutes)"""
     print_status("⏳", "Waiting for Sentinel Agent to be healthy...")
+    print_status("ℹ️", "This may take up to 2 minutes for initial startup...")
     
     for i in range(max_retries):
         try:
@@ -70,7 +71,7 @@ def wait_for_container(max_retries: int = 30) -> bool:
                 print_status("✓", "Container is healthy")
                 return True
             
-            if (i + 1) % 5 == 0:
+            if (i + 1) % 10 == 0:
                 print_status("⏳", f"Attempt {i+1}/{max_retries}...")
         except Exception as e:
             print_status("⏳", f"Checking... ({i+1}/{max_retries})")
@@ -78,6 +79,7 @@ def wait_for_container(max_retries: int = 30) -> bool:
         time.sleep(2)
     
     print_status("✗", "Container did not become healthy")
+    print_status("💡", "Run './diagnose.sh' to check container logs and status")
     return False
 
 def extract_password() -> Optional[str]:

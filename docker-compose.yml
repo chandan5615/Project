@@ -132,6 +132,14 @@ services:
     entrypoint: /usr/local/bin/docker-entrypoint.sh
     command: /usr/local/bin/docker-startup.sh
     
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
     # NOTE: Using host Ollama (already installed on Ubuntu)
     # Removed 'depends_on' and 'networks' since network_mode:host is used
     # The container can access localhost:11434 for Ollama
