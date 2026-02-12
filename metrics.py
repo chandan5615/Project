@@ -18,6 +18,9 @@ class PerformanceMetrics:
     
     def __init__(self, db_path: str = "/app/data/metrics.db"):
         """Initialize metrics tracker."""
+        # Ensure db_path is valid
+        if not db_path or db_path.isspace():
+            db_path = "/app/data/metrics.db"
         self.db_path = db_path
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._init_db()

@@ -22,8 +22,8 @@ st.set_page_config(
 )
 
 # Default database path (matches data_engine.py)
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR", "./data")
-DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH", os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db"))
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "./data"
+DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 
 # Dark theme CSS
 st.markdown("""

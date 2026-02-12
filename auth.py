@@ -21,6 +21,9 @@ class DashboardAuthenticator:
     
     def __init__(self, db_path: str = "/app/data/auth.db"):
         """Initialize authenticator."""
+        # Ensure db_path is valid
+        if not db_path or db_path.isspace():
+            db_path = "/app/data/auth.db"
         self.db_path = db_path
         self.security = get_security_manager()
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)

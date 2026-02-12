@@ -9,13 +9,19 @@ import sqlite3
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR", "/app/data")
-DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH", os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db"))
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
+DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 
 class DataEngine:
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or DEFAULT_DB_PATH
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        # Ensure db_path is valid and not empty
+        if not self.db_path or self.db_path.isspace():
+            self.db_path = DEFAULT_DB_PATH
+        
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:  # Only create directory if path has a directory component
+            os.makedirs(db_dir, exist_ok=True)
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._init_db()

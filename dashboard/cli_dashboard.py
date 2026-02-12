@@ -5,6 +5,7 @@ Provides formatted terminal-based monitoring of security incidents with live upd
 
 import sqlite3
 import logging
+import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Set
 from pathlib import Path
@@ -20,8 +21,8 @@ import time
 import os
 
 # Default database path (matches data_engine.py)
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR", "./data")
-DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH", os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db"))
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "./data"
+DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 
 
 class AntiSpamFilter:
@@ -69,7 +70,18 @@ class CLIDashboardDataManager:
     def _ensure_database_initialized(self):
         """Ensure the database and tables exist"""
         try:
-            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            # Ensure db_path is valid
+            if not self.db_path or self.db_path.isspace():
+                self.db_path = DEFAULT_DB_PATH
+                self.logger.warning(f"Empty database path detected, using default: {self.db_path}")
+            
+            db_dir = os.path.dirname(self.db_path)
+            if db_dir:  # Only create if there's a directory component
+                os.makedirs(db_dir, exist_ok=True)
+            else:
+                # If no directory component, use current dir + data/
+                self.db_path = os.path.join("./data", "sentinel_intel.db")
+                os.makedirs("./data", exist_ok=True)
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
@@ -525,6 +537,51 @@ def start_cli_dashboard(db_path: str = "sentinel_intel.db",
         raise
 
 
+def main():
+    """Main entry point for CLI dashboard with database initialization"""
+    import sys
+    
+    # Ensure databases are initialized before starting dashboard
+    print("=" * 60)
+    print("Sentinel Agent - CLI Dashboard")
+    print("=" * 60)
+    print()
+    print("Initializing databases...")
+    
+    try:
+        # Try to initialize all databases
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from init_database import initialize_all_databases
+        initialize_all_databases()
+        print("✓ Databases initialized")
+    except Exception as e:
+        print(f"⚠ Database initialization warning: {e}")
+        print("Attempting to continue with local initialization...")
+        # If init_database fails, at least ensure the main DB is initialized
+        try:
+            data_mgr = CLIDashboardDataManager()
+            print("✓ Local database initialized")
+        except Exception as e2:
+            print(f"✗ Error: {e2}")
+            print("\nPlease run: python3 init_database.py")
+            return 1
+    
+    print()
+    print("Starting dashboard (press Ctrl+C to exit)...")
+    print()
+    
+    try:
+        start_cli_dashboard(live_mode=False, refresh_interval=10.0)
+    except KeyboardInterrupt:
+        print("\nDashboard stopped")
+    except Exception as e:
+        print(f"\n✗ Dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+    
+    return 0
+
+
 if __name__ == "__main__":
-    # Example usage
-    start_cli_dashboard(live_mode=False, refresh_interval=10.0)
+    sys.exit(main())

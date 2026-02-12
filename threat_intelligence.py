@@ -19,6 +19,9 @@ class OfflineThreatIntelligence:
     
     def __init__(self, db_path: str = "/app/data/threat_intel.db"):
         """Initialize offline threat intelligence system."""
+        # Ensure db_path is valid
+        if not db_path or db_path.isspace():
+            db_path = "/app/data/threat_intel.db"
         self.db_path = db_path
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
