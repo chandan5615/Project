@@ -1,505 +1,583 @@
-# Sentinel Agent v2.2 - Fresh Start Complete Guide
+# Fresh Start Guide - Complete Setup
 
-## Overview
-This guide walks you through setting up Sentinel Agent from a fresh clone, including handling the cloned database that may contain stale credentials.
+**Goal:** Set up Sentinel Agent from scratch with full understanding of each step.
 
----
-
-## ⚡ Quick Start (5 Minutes)
-
-### For Ubuntu/Linux:
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/chandan5615/Project.git
-cd Project
-
-# 2. Reset the database to generate fresh credentials
-docker-compose down
-rm -f data/auth.db data/INITIAL_CREDENTIALS.txt
-rm -rf data/attack_records.json data/sentinel_intel.db data/metrics.db
-
-# 3. Start Ollama on host machine (in another terminal)
-ollama serve
-
-# 4. Build and start the container
-docker-compose build --no-cache
-docker-compose up -d
-
-# 5. Wait for startup and get the password
-sleep 5
-docker-compose logs sentinel-agent | grep -A 2 "DEFAULT ADMIN"
-
-# 6. Run automated setup
-python3 sentinel_auto.py setup
-python3 sentinel_auto.py demo
-
-# Done! Check results
-python3 sentinel_auto.py status
-```
+**Time Required:** 15-20 minutes
 
 ---
 
 ## 📋 Prerequisites
 
-### System Requirements
-- **Docker & Docker Compose** installed
-- **Python 3.7+** (for host machine automation)
-- **Ollama** running on host machine (port 11434)
-- **Ubuntu/Linux** recommended (Windows WSL2 also works)
-- **Ports available**: 8000 (API), 8501 (Dashboard), 11434 (Ollama)
+### Required Software
+- ✅ **Ubuntu 20.04+** or similar Linux distribution
+- ✅ **Docker & Docker Compose** installed
+- ✅ **Ollama** installed with llama3:8b model
+- ✅ **Python 3.8+** for automation scripts
 
-### Installation Check
+### Install Prerequisites
 
+**1. Install Docker**
 ```bash
-# Verify Docker
+# Update package list
+sudo apt update
+
+# Install Docker
+sudo apt install -y docker.io docker-compose
+
+# Add user to docker group (no need for sudo)
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Verify
 docker --version
 docker-compose --version
-
-# Verify Python
-python3 --version
-
-# Verify Ollama (should be running)
-curl http://localhost:11434/api/tags
 ```
 
----
+**2. Install Ollama**
+```bash
+# Download and install
+curl -fsSL https://ollama.ai/install.sh | sh
 
-## 🔧 Fresh Setup (Step-by-Step)
+# Pull model
+ollama pull llama3:8b
 
-### Step 1: Clone the Repository
+# Verify
+ollama list
+# Should show: llama3:8b
+```
 
+**3. Clone Repository**
 ```bash
 cd ~
-git clone https://github.com/chandan5615/Project.git
+git clone <your-repo-url> Project
 cd Project
 ```
 
-**Expected output:**
-```
-Cloning into 'Project'...
-Receiving objects: 100% (480/480), 21.98 MiB | 1.54 MiB/s, done.
-```
+---
 
-### Step 2: Clean Database (CRITICAL!)
+## 🚀 Installation Methods
 
-The cloned repo includes existing database files. Reset them:
+### Method 1: Quick Rebuild Script ⭐ (Recommended)
+
+**Easiest and fastest method!**
 
 ```bash
-# Stop any running container
-docker-compose down
-
-# Remove old database files
-rm -f data/auth.db
-rm -f data/INITIAL_CREDENTIALS.txt
-rm -f data/attack_records.json
-rm -f data/sentinel_intel.db
-rm -f data/metrics.db
-
-# Optional: Remove old logs
-rm -rf logs/*
-```
-
-**Why?** The old `auth.db` contains stored credentials. Removing it forces the container to create a NEW admin user with a NEW password that gets logged.
-
-### Step 3: Start Ollama on Host (CRITICAL!)
-
-Open a **separate terminal**:
-
-```bash
-# Start Ollama (keep running in background)
+# 1. Start Ollama (Terminal 1)
 ollama serve
+# Keep this running
 
-# Expected output:
-# 2026/02/08 17:00:00 Listening on 127.0.0.1:11434 (http)
+# 2. Run setup script (Terminal 2)
+cd ~/Project
+chmod +x quick-rebuild.sh
+./quick-rebuild.sh
 ```
 
-Pull the model if needed:
-```bash
-ollama pull llama3:8b
-```
-
-**Leave this terminal open!** Docker needs to reach Ollama at `http://127.0.0.1:11434`
-
-### Step 4: Build Docker Image
-
-```bash
-cd Project
-docker-compose build --no-cache
-```
+**What it does:**
+1. Stops any old containers
+2. Cleans data directories (uses `sudo` for Docker-created files)
+3. Rebuilds container from scratch
+4. Starts with fresh databases
+5. Generates new admin credentials
+6. Waits for healthy status
+7. Shows you the password
 
 **Expected output:**
 ```
-Building sentinel-agent
-[+] Building 3.7s (19/19) FINISHED
+============================================================
+  Quick Rebuild - Adding Missing Dependency
+============================================================
 
-=> [stage-1 10/10] RUN mkdir -p /app/logs /app/data...
-=> naming to docker.io/library/sentinel-agent:2.2
-```
+[1/4] Stopping container...
+[2/4] Cleaning old data (requires sudo)...
+[3/4] Rebuilding container with python-multipart...
+[4/4] Starting container...
 
-### Step 5: Start the Container
-
-```bash
-docker-compose up -d
-```
-
-**Verify startup:**
-```bash
-# Should show: Up (healthy)
-docker-compose ps
-
-# Check full logs
-docker-compose logs sentinel-agent
-```
-
-**Expected in logs** (look for this):
-```
-Detecting Ollama server...
-[SUCCESS] Found Ollama on host at http://127.0.0.1:11434
-[SUCCESS] Model llama3:8b is available
-
-[1/2] Starting Sentinel Agent monitor (main.py)...
-[2/2] Starting REST API server (sentinel_api.py on port 8000)...
-```
-
-### Step 6: Extract Credentials
-
-```bash
-# Get the password from logs
-docker-compose logs sentinel-agent | grep -A 2 "DEFAULT ADMIN CREDENTIALS"
-```
-
-**Expected output:**
-```
-DEFAULT ADMIN CREDENTIALS (SAVE THESE NOW!):
+============================================================
+  ADMIN CREDENTIALS
+============================================================
   Username: admin
-  Password: <RANDOM_32_CHAR_PASSWORD>
-CHANGE PASSWORD IMMEDIATELY AFTER FIRST LOGIN!
+  Password: 8YSUsLUToBj7G8yugQcSuA
+============================================================
+
+Next: Test authentication
+  python3 sentinel_auto.py setup
 ```
 
-Or check the credentials file:
-```bash
-cat data/INITIAL_CREDENTIALS.txt
-```
-
-### Step 7: Test API Connectivity
-
-```bash
-# Test health endpoint
-curl http://localhost:8000/api/health
-
-# Expected output:
-# {"status":"healthy","version":"2.2","timestamp":"2026-02-08T17:57:49.752296"}
-```
-
-### Step 8: Verify Authentication
-
-```bash
-# Test login endpoint
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"YOUR_PASSWORD_HERE"}'
-
-# Expected output:
-# {"token":"<your_api_token>","expires_in":86400}
-```
+**Time:** ~5 minutes
 
 ---
 
-## 🚀 Run Automated Testing
+### Method 2: Manual Setup
 
-### Option A: Python Automation (Recommended for Cross-Platform)
-
-```bash
-# Install requests if needed
-pip3 install requests
-
-# Setup: Extracts password and token
-python3 sentinel_auto.py setup
-
-# Run full demo: SSH + SQL + DDoS tests
-python3 sentinel_auto.py demo
-
-# Check results
-python3 sentinel_auto.py status
-
-# View test results
-cat test_results/incidents.json
-```
-
-### Option B: Bash Automation (Native for Linux/macOS)
+**For those who prefer step-by-step control:**
 
 ```bash
-# Make script executable
-chmod +x sentinel_setup.sh
-
-# Setup
-./sentinel_setup.sh setup
-
-# Run demo
-./sentinel_setup.sh demo
-
-# Check status
-./sentinel_setup.sh status
-```
-
-### Option C: Manual Testing (Step-by-Step)
-
-```bash
-# 1. Get password
-PASS=$(docker-compose logs sentinel-agent | grep "Password:" | awk '{print $NF}')
-echo "Password: $PASS"
-
-# 2. Login to get token
-TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"admin\",\"password\":\"$PASS\"}" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-echo "Token: $TOKEN"
-
-# 3. Test SSH attack detection
-curl -s http://localhost:22 &        # Dummy SSH connection
-curl -s http://localhost:22 &
-# ... repeat several times ...
-
-# 4. Check incidents
-curl -X GET "http://localhost:8000/api/incidents/recent?limit=10" \
-  -H "X-API-Key: $TOKEN"
-
-# 5. View metrics
-curl -X GET "http://localhost:8000/api/metrics/detection" \
-  -H "X-API-Key: $TOKEN"
-```
-
----
-
-## ✅ Verification Checklist
-
-After setup, verify each item:
-
-- [ ] Ollama is running (`curl http://localhost:11434/api/tags` returns model list)
-- [ ] Docker container is healthy (`docker-compose ps` shows "Up (healthy)")
-- [ ] API is responding (`curl http://localhost:8000/api/health` returns JSON)
-- [ ] Password is visible in logs (`docker-compose logs | grep "DEFAULT ADMIN"`)
-- [ ] Login works (`curl /api/auth/login` returns token)
-- [ ] Automation script found password (`sentinel_auto.py setup` succeeds)
-- [ ] Tests ran successfully (`sentiment_auto.py demo` shows attack detection)
-- [ ] Results saved (`ls test_results/` shows JSON files)
-
----
-
-## 🐛 Troubleshooting
-
-### Issue 1: "Container is not healthy"
-
-**Symptoms:**
-```
-docker-compose ps
-# Shows: sentinel-agent    Up (unhealthy)
-```
-
-**Solutions:**
-```bash
-# Check what's wrong
-docker-compose logs sentinel-agent
-
-# Common fixes:
-# 1. Ollama not running on host
+# Terminal 1: Start Ollama
 ollama serve
 
-# 2. Ollama port blocked
-netstat -tuln | grep 11434
+# Terminal 2: Setup Sentinel Agent
 
-# 3. Model not pulled
-ollama pull llama3:8b
+# Step 1: Stop old containers
+docker-compose down -v
 
-# 4. Restart container
-docker-compose restart sentinel-agent
-```
+# Step 2: Clean old data (requires sudo - Docker creates files as root)
+sudo rm -rf data/ logs/
+rm -f .api_token
 
----
+# Step 3: Rebuild container (no cache for fresh build)
+docker-compose build --no-cache
+# Takes ~5 minutes
 
-### Issue 2: "Could not find password in logs"
-
-**Symptoms:**
-```
-python3 sentinel_auto.py setup
-# ✗ Could not find password in logs
-```
-
-**Solutions:**
-```bash
-# Check if auth.db still exists from old clone
-ls -la data/auth.db
-
-# If it exists, the default user was never created
-# Solution: Reset database
-docker-compose down
-rm -f data/auth.db data/INITIAL_CREDENTIALS.txt
+# Step 4: Start container
 docker-compose up -d
-sleep 5
-docker-compose logs sentinel-agent | grep "DEFAULT ADMIN"
-```
 
----
+# Step 5: Wait for startup (60 seconds for initialization)
+sleep 60
 
-### Issue 3: "Connection refused on port 8000"
-
-**Symptoms:**
-```
-curl http://localhost:8000/api/health
-# Connection refused
-```
-
-**Solutions:**
-```bash
-# Check if API is actually running
-docker-compose logs sentinel-agent | grep "Uvicorn running"
-
-# Wait longer for startup
-sleep 10
-curl http://localhost:8000/api/health
-
-# Check port availability
-netstat -tuln | grep 8000
-
-# Restart API service
-docker-compose restart sentinel-agent
-```
-
----
-
-### Issue 4: "Token file not found" after setup
-
-**Symptoms:**
-```
-python3 sentinel_auto.py status
-# ✗ Token file not found. Run: python3 sentinel_auto.py setup
-```
-
-**Solutions:**
-```bash
-# The setup didn't complete successfully
-# Check what went wrong:
-python3 sentinel_auto.py setup
-
-# Get token manually
-PASS=$(cat data/INITIAL_CREDENTIALS.txt | grep Password | awk '{print $NF}')
-TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"admin\",\"password\":\"$PASS\"}" | python3 -c "import sys, json; print(json.load(sys.stdin)['token'])")
-  
-echo "$TOKEN" > .sentinel_token
-echo "$PASS" > .sentinel_password
-```
-
----
-
-### Issue 5: "Ollama connection failed"
-
-**Symptoms:**
-```
-docker-compose logs sentinel-agent
-# ERROR: Could not reach Ollama server
-# http://127.0.0.1:11434
-```
-
-**Solutions:**
-```bash
-# 1. Make sure Ollama is running
-ollama serve
-
-# 2. In a new terminal, verify connectivity
-curl http://localhost:11434/api/tags
-
-# 3. Check if model is available
-ollama list
-
-# 4. If not, pull it
-ollama pull llama3:8b
-
-# 5. Restart container
-docker-compose restart sentinel-agent
-```
-
----
-
-### Issue 6: Permission denied on data files
-
-**Symptoms:**
-```
-rm: cannot remove 'Project/data/auth.db': Permission denied
-```
-
-**Solutions:**
-```bash
-# Use sudo to remove files
-sudo rm -rf Project/data/*
-sudo rm -rf Project/logs/*
-
-# Or change ownership
-sudo chown -R $USER:$USER Project/data
-sudo chown -R $USER:$USER Project/logs
-```
-
----
-
-## 📊 Dashboard Access
-
-After successful setup:
-
-```bash
-# View detected incidents
-curl -X GET "http://localhost:8000/api/incidents/recent?limit=10" \
-  -H "X-API-Key: $(cat .sentinel_token)"
-
-# View detection metrics
-curl -X GET "http://localhost:8000/api/metrics/detection" \
-  -H "X-API-Key: $(cat .sentinel_token)"
-
-# View system health
-curl -X GET "http://localhost:8000/api/system/health" \
-  -H "X-API-Key: $(cat .sentinel_token)"
-```
-
----
-
-## 📚 Next Steps
-
-1. **Read USER_GUIDE.md** - Learn all features and how to use them
-2. **Read ATTACK_TESTING_GUIDE.md** - Understand how to test attack detection
-3. **Read AUTOMATION_GUIDE.md** - Detailed automation tool documentation
-4. **Check QUICK_REFERENCE.md** - API endpoint reference
-
----
-
-## 🆘 Still Having Issues?
-
-```bash
-# Collect debug information
-echo "=== Docker Status ==="
+# Step 6: Check status
 docker-compose ps
+# Should show: sentinel-agent   Up   healthy
 
-echo "=== Container Logs ==="
-docker-compose logs sentinel-agent 2>&1 | tail -50
+# Step 7: View logs
+docker-compose logs sentinel-agent
 
-echo "=== API Health ==="
-curl -s http://localhost:8000/api/health
+# Step 8: Extract admin password
+docker-compose logs sentinel-agent | grep "Password:"
+# Copy the password shown
+```
 
-echo "=== Ollama Status ==="
-curl -s http://localhost:11434/api/tags
+**Time:** ~10 minutes
 
-echo "=== Files ==="
-ls -la data/
-ls -la test_results/
+---
 
-# Share this output when asking for help
+## ✅ Verification
+
+### 1. Check Container Status
+
+```bash
+docker-compose ps
+```
+
+**Expected output:**
+```
+     Name                   Command               State             Ports
+-----------------------------------------------------------------------------------
+sentinel-agent   /usr/local/bin/docker-entr...   Up (healthy)   0.0.0.0:8000->8000/tcp
+```
+
+**Key:** Status should show "**Up (healthy)**"
+
+### 2. Check API Health
+
+```bash
+curl http://localhost:8000/api/health
+```
+
+**Expected output:**
+```json
+{"status":"healthy","version":"2.2"}
+```
+
+### 3. View Logs
+
+```bash
+docker-compose logs --tail=50 sentinel-agent
+```
+
+**Look for:**
+```
+✓ ALL DATABASES INITIALIZED SUCCESSFULLY
+✓ Monitor started (PID: 20)
+✓ Monitor is running
+INFO:     Uvicorn running on http://0.0.0.0:8000
 ```
 
 ---
 
-## 📞 Support
+## 🔐 Authentication Setup
 
-- **Documentation**: See `docs_markdown/` folder
-- **Quick Reference**: `QUICK_REFERENCE.md`
-- **API Documentation**: `USER_GUIDE.md`
-- **Testing Guide**: `ATTACK_TESTING_GUIDE.md`
+### Automated (Recommended)
+
+```bash
+python3 sentinel_auto.py setup
+```
+
+**What it does:**
+1. Waits for container to be healthy
+2. Extracts password from Docker logs
+3. Tests API connection
+4. Authenticates with admin credentials
+5. Saves JWT token to `.api_token` file
+
+**Expected output:**
+```
+============================================================
+              Sentinel Agent - Complete Setup
+============================================================
+
+⏳ Waiting for Sentinel Agent to be healthy...
+✓ Container is healthy!
+
+Extracting admin credentials...
+✓ Password found: 8YSUsLUToBj7G8yugQcSuA
+
+Testing authentication...
+✓ Successfully authenticated
+✓ Token saved to .api_token
+
+Setup complete! Ready to use.
+```
+
+### Manual Authentication
+
+```bash
+# Get the password
+PASSWORD=$(docker-compose logs sentinel-agent | grep "Password:" | tail -1 | awk '{print $NF}')
+
+echo "Username: admin"
+echo "Password: $PASSWORD"
+
+# Test authentication
+curl -X POST http://localhost:8000/api/auth/login \
+  -d "username=admin&password=$PASSWORD"
+
+# Should return JSON with token
+```
+
+---
+
+## 🎯 Run Security Demo
+
+### Automated Demo
+
+```bash
+python3 sentinel_auto.py demo
+```
+
+**What it does:**
+1. Generates 20 SSH brute force attacks
+2. Generates 20 web application attacks (SQL injection, XSS, etc.)
+3. Waits for AI agents to analyze
+4. Displays detection results
+5. Shows AI recommendations
+6. Provides performance metrics
+
+**Expected output:**
+```
+============================================================
+          Sentinel Agent - Attack Demonstration
+============================================================
+
+Generating simulated attacks...
+✓ Generated 20 SSH brute force attempts
+✓ Generated 20 web attacks
+
+Waiting for AI analysis (this takes ~2 minutes)...
+
+===================  DETECTED INCIDENTS ==================
+
+1. SSH Brute Force Attack
+   Attacker: 192.168.1.100
+   Severity: HIGH
+   AI Analysis: "Detected 15 failed login attempts in 30 seconds.
+                 IP matches known botnet behavior. 
+                 RECOMMEND: Immediate block."
+
+2. SQL Injection Attempt
+   Target: /api/users
+   Severity: CRITICAL
+   AI Analysis: "Classic SQL injection pattern detected.
+                 Attempted to bypass authentication.
+                 RECOMMEND: Block IP and patch vulnerable endpoint."
+
+[... more incidents ...]
+
+Performance Metrics:
+- Detection Time: 1.2s average
+- AI Analysis Time: 8.5s average
+- Total Incidents: 40
+- Blocked: 38
+- Allowed (whitelisted): 2
+```
+
+### Manual Testing
+
+```bash
+# Generate attacks manually
+python3 test_attacks.py --auth-count 50 --web-count 50
+
+# View results
+python3 view_attacks.py
+```
+
+---
+
+## 📊 Access Dashboard
+
+### CLI Dashboard (Rich Terminal UI)
+
+```bash
+python3 run_dashboard.py
+```
+
+**Features:**
+- Real-time incident list
+- Threat intelligence lookups
+- Performance metrics
+- System health status
+- Color-coded severity levels
+- Keyboard navigation
+
+### Web Dashboard (Streamlit)
+
+```bash
+# In separate terminal
+streamlit run dashboard/web_dashboard.py
+```
+
+Then open: http://localhost:8501
+
+**Features:**
+- Interactive charts and graphs
+- Incident timeline
+- Attack heatmap
+- IP geolocation (if enabled)
+- Export to CSV
+
+---
+
+## 🔍 Usage Examples
+
+### REST API
+
+```bash
+# Get auth token (saved during setup)
+TOKEN=$(cat .api_token)
+
+# List all incidents
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/incidents
+
+# Get specific incident
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/incidents/1
+
+# Lookup IP in threat intelligence
+curl http://localhost:8000/api/threat-intel/1.2.3.4
+
+# Add IP to blocklist
+curl -X POST http://localhost:8000/api/lists/blocklist \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ip": "1.2.3.4",
+    "reason": "Brute force attack",
+    "duration": 86400
+  }'
+
+# Remove IP from blocklist
+curl -X DELETE http://localhost:8000/api/lists/blocklist/1.2.3.4 \
+  -H "Authorization: Bearer $TOKEN"
+
+# Get performance metrics
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/metrics/detection
+
+# Get system health
+curl http://localhost:8000/api/health
+```
+
+**API Documentation:** http://localhost:8000/docs (Swagger UI)
+
+---
+
+## 🛠️ Troubleshooting
+
+### Container Won't Start / Keeps Restarting
+
+```bash
+# Check logs for errors
+docker-compose logs --tail=100 sentinel-agent
+
+# Run crash diagnostic
+chmod +x diagnose_crash.sh
+./diagnose_crash.sh
+```
+
+**Common issues:**
+1. **Port 8000 already in use**
+   ```bash
+   sudo lsof -i :8000
+   # Kill the process using the port
+   ```
+
+2. **Ollama not running**
+   ```bash
+   # Check if Ollama is accessible
+   curl http://localhost:11434/api/tags
+   
+   # If not, start it
+   ollama serve
+   ```
+
+3. **Permission errors**
+   ```bash
+   # Docker creates files as root
+   sudo rm -rf data/ logs/
+   ./quick-rebuild.sh
+   ```
+
+### Authentication Fails
+
+```bash
+# Run auth diagnostic
+chmod +x diagnose_auth.sh
+./diagnose_auth.sh
+
+# Or test manually
+python3 test_auth.py
+```
+
+### API Not Responding
+
+```bash
+# Check if API is running inside container
+docker exec -it sentinel-agent curl http://localhost:8000/api/health
+
+# Check processes
+docker exec -it sentinel-agent ps aux | grep python
+
+# Restart container
+docker-compose restart sentinel-agent
+```
+
+### No Incidents Detected
+
+```bash
+# Generate test attacks
+python3 test_attacks.py --auth-count 20 --web-count 20
+
+# Check if monitoring is active
+docker-compose logs sentinel-agent | grep "monitoring: ACTIVE"
+
+# View database directly
+docker exec -it sentinel-agent python3 view_attacks.py
+```
+
+**Full Troubleshooting Guide:** [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+---
+
+## 📁 Understanding The System
+
+### What's Monitoring?
+
+```
+/var/log/auth.log         → SSH attempts, sudo commands, authentication
+/var/log/apache2/access.log → Web requests, SQL injection, XSS, etc.
+```
+
+### Attack Detection Flow
+
+```
+Log Entry → Sensor → Pattern Matcher → Whitelist Check → Threat Intel →
+ML Scoring → AI Agents → Response → Database → API/Dashboard
+```
+
+### AI Agents (4 Specialists)
+
+1. **Triage Analyst**
+   - Classifies attack type
+   - Assigns severity level
+   - Prioritizes for investigation
+
+2. **Threat Intel Researcher**
+   - Looks up IP in threat database
+   - Checks attack history
+   - Identifies patterns
+
+3. **Incident Responder**
+   - Analyzes impact
+   - Recommends actions
+   - Creates response plan
+
+4. **Enforcer**
+   - Executes iptables blocks
+   - Updates blocklists
+   - Monitors effectiveness
+
+### Databases (6 SQLite DBs)
+
+```
+data/
+├── sentinel_intel.db    # Incidents, actions, detections
+├── auth.db              # Users, sessions, API keys
+├── threat_intel.db      # Known malicious IPs/domains
+├── lists.db             # Allow/block lists
+├── metrics.db           # Performance tracking
+└── anomalies.db         # ML anomaly scores
+```
+
+---
+
+## 🎓 Next Steps
+
+### 1. Explore API Documentation
+```bash
+# Open in browser
+http://localhost:8000/docs
+```
+
+### 2. Monitor Real-Time Logs
+```bash
+docker-compose logs -f sentinel-agent
+```
+
+### 3. Generate Custom Attacks
+```bash
+python3 test_attacks.py \
+  --auth-count 100 \
+  --web-count 100 \
+  --pattern brute-force
+```
+
+### 4. Create Custom Rules
+Edit `defense/attack_detector.py` to add new patterns.
+
+### 5. Integrate with SIEM
+Use REST API to send incidents to your SIEM system.
+
+### 6. Performance Tuning
+Adjust Ollama model size, agent prompts, detection thresholds.
+
+---
+
+## 📚 Additional Resources
+
+- **README.md** - Project overview and quick start
+- **COMPLETE_FIX_SUMMARY.md** - All fixes and improvements
+- **TROUBLESHOOTING.md** - Solutions to common problems
+- **AUTOMATION_GUIDE.md** - Automation scripts reference
+- **DOCUMENTATION_MAP.md** - All available documentation
+
+---
+
+## ✅ Success Checklist
+
+- [ ] Ollama installed and running
+- [ ] Docker and Docker Compose installed
+- [ ] Repository cloned
+- [ ] Container built and started
+- [ ] Container status shows "healthy"
+- [ ] API responds to health check
+- [ ] Admin password extracted
+- [ ] Authentication successful
+- [ ] Demo attacks generated
+- [ ] Incidents detected and displayed
+- [ ] Dashboard accessible
+
+---
+
+**Ready to start?** Run `chmod +x quick-rebuild.sh && ./quick-rebuild.sh` 🚀
+
+For questions or issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) or run the diagnostic scripts.

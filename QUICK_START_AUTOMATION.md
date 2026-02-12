@@ -1,49 +1,70 @@
-# ⚡ QUICK START - 2-Minute Setup
+# ⚡ QUICK START - 5-Minute Setup
 
-Copy & paste these commands. That's it!
-
-> ⚠️ **Fresh Clone from GitHub?** First reset the database:
-> ```bash
-> docker-compose down
-> rm -f data/auth.db data/INITIAL_CREDENTIALS.txt
-> docker-compose build --no-cache
-> docker-compose up -d
-> sleep 5
-> ```
-> Then follow the steps below.
-> 
-> **📖 For complete guide:** See [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md)
+**Easiest way to get Sentinel Agent running!**
 
 ---
 
-## 🚀 Option A: Python (Recommended - All Systems)
+## 🎯 Method 1: One-Command Setup (Recommended)
 
 ```bash
-# 1. Install dependency (one-time)
-pip3 install requests
+# 1. Start Ollama (in separate terminal)
+ollama serve
 
-# 2. Complete setup + demo
+# 2. Run quick rebuild script
+chmod +x quick-rebuild.sh
+./quick-rebuild.sh
+
+# 3. Test authentication
 python3 sentinel_auto.py setup
 python3 sentinel_auto.py demo
-
-# 3. View results
-python3 sentinel_auto.py status
 ```
+
+**Done!** System fully operational in ~5 minutes. ✅
 
 ---
 
-## 🐚 Option B: Bash (Linux/macOS)
+## 📋 What Gets Automated
+
+### quick-rebuild.sh ⭐
+- ✅ Stops old containers
+- ✅ Cleans data (handles sudo for Docker files)
+- ✅ Rebuilds with all dependencies
+- ✅ Starts fresh with new credentials
+- ✅ Shows admin password
+
+### sentinel_auto.py setup
+- ✅ Waits for container health
+- ✅ Extracts password from logs
+- ✅ Authenticates and saves token
+
+### sentinel_auto.py demo
+- ✅ Generates 40+ attacks
+- ✅ Shows AI analysis
+- ✅ Displays performance metrics
+
+---
+
+## 🛠️ Method 2: Manual Setup
 
 ```bash
-# 1. Make executable
-chmod +x sentinel_setup.sh
+# 1. Start Ollama
+ollama serve  # Terminal 1
 
-# 2. Complete setup + demo
-./sentinel_setup.sh setup
-./sentinel_setup.sh demo
+# 2. Clean and rebuild (Terminal 2)
+docker-compose down -v
+sudo rm -rf data/ logs/
+docker-compose build --no-cache
+docker-compose up -d
 
-# 3. View results
-./sentinel_setup.sh status
+# 3. Wait for healthy
+sleep 60
+docker-compose ps  # Should show "healthy"
+
+# 4. Get password
+docker-compose logs sentinel-agent | grep "Password:"
+
+# 5. Authenticate
+python3 sentinel_auto.py setup
 ```
 
 ---
