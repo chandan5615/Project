@@ -38,7 +38,8 @@ echo "✓ Old containers removed"
 
 echo ""
 echo "[2/5] Cleaning old data for fresh start..."
-rm -rf data/ logs/ 2>/dev/null || true
+# Use sudo to remove Docker-created files (owned by root)
+sudo rm -rf data/ logs/ 2>/dev/null || true
 rm -f .api_token 2>/dev/null || true
 echo "✓ Old data cleaned"
 
