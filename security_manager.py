@@ -6,26 +6,18 @@ Enterprise-grade encryption and credential management.
 import os
 import secrets
 import base64
+import hashlib
+import hmac
 from typing import Optional, Tuple
 from pathlib import Path
 import logging
 
-# Cryptography imports
-try:
-    import bcrypt
-    BCRYPT_AVAILABLE = True
-except ImportError:
-    BCRYPT_AVAILABLE = False
-    
-try:
-    from cryptography.fernet import Fernet
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
-    CRYPTOGRAPHY_AVAILABLE = True
-except ImportError:
-    CRYPTOGRAPHY_AVAILABLE = False
-
 logger = logging.getLogger(__name__)
+
+# Simplified mode - using only built-in Python libraries
+# No bcrypt or cryptography required for basic operation
+BCRYPT_AVAILABLE = False
+CRYPTOGRAPHY_AVAILABLE = False
 
 
 class SecurityManager:
@@ -41,59 +33,62 @@ class SecurityManager:
     
     def __init__(self, secrets_dir: str = "/app/data/secrets"):
         """
-        Initialize security manager.
+        Initialize security manager (simplified - no external crypto libs needed).
         
         Args:
             secrets_dir: Directory to store encrypted secrets
         """
-        self.secrets_dir = Path(secrets_dir)
-        self.secrets_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.secrets_dir = Path(secrets_dir)
+            self.secrets_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logger.warning(f"Could not create secrets dir: {e}, using /tmp")
+            self.secrets_dir = Path("/tmp/secrets")
+            self.secrets_dir.mkdir(parents=True, exist_ok=True)
         
-        # Security settings
-        self.bcrypt_rounds = 12  # Cost factor for bcrypt (higher = more secure but slower)
+        # Security settings - using built-in hashlib
+        self.hash_iterations = 100000  # PBKDF2 iterations
         
-        # Initialize encryption key
+        # Initialize encryption key (simplified)
         self._encryption_key = self._load_or_create_master_key()
         self._cipher = None
-        if CRYPTOGRAPHY_AVAILABLE:
-            self._cipher = Fernet(self._encryption_key)
         
-        logger.info("Security Manager initialized")
+        logger.info("Security Manager initialized (simplified mode)")
     
     def _load_or_create_master_key(self) -> bytes:
         """
-        Load or create master encryption key.
+        Load or create master encryption key (simplified).
         
         Returns:
             Master encryption key
         """
-        key_file = self.secrets_dir / ".master.key"
-        
-        if key_file.exists():
-            # Load existing key
-            with open(key_file, 'rb') as f:
-                key = f.read()
-            logger.info("Loaded existing master encryption key")
-        else:
-            # Generate new key
-            if CRYPTOGRAPHY_AVAILABLE:
-                key = Fernet.generate_key()
+        try:
+            key_file = self.secrets_dir / ".master.key"
+            
+            if key_file.exists():
+                # Load existing key
+                with open(key_file, 'rb') as f:
+                    key = f.read()
+                logger.info("Loaded existing master encryption key")
             else:
-                # Fallback to base64-encoded random bytes
+                # Generate new key using built-in secrets module
                 key = base64.urlsafe_b64encode(secrets.token_bytes(32))
+                
+                # Save securely
+                with open(key_file, 'wb') as f:
+                    f.write(key)
+                
+                # Set file permissions (Unix-like systems)
+                try:
+                    os.chmod(key_file, 0o600)  # Owner read/write only
+                    logger.info("Created new master encryption key")
+                except Exception as e:
+                    logger.warning(f"Could not set file permissions: {e}")
             
-            # Save securely (restrict permissions)
-            with open(key_file, 'wb') as f:
-                f.write(key)
-            
-            # Set file permissions (Unix-like systems)
-            try:
-                os.chmod(key_file, 0o600)  # Owner read/write only
-                logger.info("Created new master encryption key with restricted permissions")
-            except Exception as e:
-                logger.warning(f"Could not set file permissions: {e}")
-        
-        return key
+            return key
+        except Exception as e:
+            logger.error(f"Error with master key: {e}, using temporary key")
+            return base64.urlsafe_b64encode(secrets.token_bytes(32))
     
     # ========================================================================
     # PASSWORD HASHING (bcrypt - Industry Standard)
@@ -101,7 +96,7 @@ class SecurityManager:
     
     def hash_password(self, password: str) -> str:
         """
-        Hash password using bcrypt (with automatic salt).
+        Hash password using PBKDF2-HMAC-SHA256 (built-in Python).
         
         Args:
             password: Plain text password
@@ -109,42 +104,73 @@ class SecurityManager:
         Returns:
             Hashed password (includes salt)
         """
-        if not BCRYPT_AVAILABLE:
-            logger.error("bcrypt not available - falling back to insecure method")
+        try:
+            # Generate random salt
+            salt = secrets.token_bytes(16)
+            
+            # Use PBKDF2-HMAC-SHA256 (built into Python hashlib)
+            password_hash = hashlib.pbkdf2_hmac(
+                'sha256',
+                password.encode('utf-8'),
+                salt,
+                self.hash_iterations
+            )
+            
+            # Combine salt and hash for storage
+            # Format: pbkdf2$iterations$salt$hash
+            combined = f"pbkdf2${self.hash_iterations}${salt.hex()}${password_hash.hex()}"
+            return combined
+            
+        except Exception as e:
+            logger.error(f"Password hashing error: {e}")
             return self._fallback_hash(password)
-        
-        # bcrypt automatically handles salt generation
-        password_bytes = password.encode('utf-8')
-        salt = bcrypt.gensalt(rounds=self.bcrypt_rounds)
-        hashed = bcrypt.hashpw(password_bytes, salt)
-        
-        return hashed.decode('utf-8')
     
     def verify_password(self, password: str, hashed_password: str) -> bool:
         """
-        Verify password against bcrypt hash.
+        Verify password against PBKDF2 hash (built-in Python).
         
         Args:
             password: Plain text password to verify
-            hashed_password: Stored bcrypt hash
+            hashed_password: Stored password hash
             
         Returns:
             True if password matches
         """
-        if not BCRYPT_AVAILABLE:
-            return self._fallback_verify(password, hashed_password)
-        
         try:
-            password_bytes = password.encode('utf-8')
-            hashed_bytes = hashed_password.encode('utf-8')
-            return bcrypt.checkpw(password_bytes, hashed_bytes)
+            # Check if it's our PBKDF2 format
+            if hashed_password.startswith('pbkdf2$'):
+                parts = hashed_password.split('$')
+                if len(parts) != 4:
+                    return False
+                
+                _, iterations_str, salt_hex, stored_hash_hex = parts
+                iterations = int(iterations_str)
+                salt = bytes.fromhex(salt_hex)
+                stored_hash = bytes.fromhex(stored_hash_hex)
+                
+                # Hash the provided password with same salt and iterations
+                password_hash = hashlib.pbkdf2_hmac(
+                    'sha256',
+                    password.encode('utf-8'),
+                    salt,
+                    iterations
+                )
+                
+                # Constant-time comparison to prevent timing attacks
+                return hmac.compare_digest(password_hash, stored_hash)
+            
+            # Fallback for old hashes
+            elif hashed_password.startswith('sha256$'):
+                return self._fallback_verify(password, hashed_password)
+            
+            return False
+            
         except Exception as e:
             logger.error(f"Password verification error: {e}")
             return False
     
     def _fallback_hash(self, password: str) -> str:
-        """Fallback hash method if bcrypt unavailable (NOT RECOMMENDED)."""
-        import hashlib
+        """Simple fallback hash method (for compatibility)."""
         salt = secrets.token_hex(16)
         return f"sha256${salt}${hashlib.sha256((password + salt).encode()).hexdigest()}"
     

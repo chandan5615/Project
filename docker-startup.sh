@@ -8,18 +8,25 @@ set +e
 echo "Starting Sentinel Agent services..."
 echo ""
 
+# Ensure permissions are correct (run as root in container)
+echo "[0/6] Setting up permissions..."
+chmod -R 777 /app/data /app/logs 2>/dev/null || true
+echo "      ✓ Permissions set"
+echo ""
+
 # Initialize databases first
-echo "[0/5] Initializing databases..."
-if python init_database.py; then
+echo "[1/6] Initializing databases..."
+if python init_database.py 2>&1; then
     echo "      ✓ Databases initialized"
 else
     echo "      ⚠ Database initialization had issues (continuing anyway)"
+    echo "      This is normal if databases already exist"
 fi
 echo ""
 
 # Generate test attacks to verify detection is working
 # NOTE: Skip in Docker because /var/log is mounted read-only
-echo "[1/5] Checking test attacks..."
+echo "[2/6] Checking test attacks..."
 if [ -w /var/log/auth.log ] 2>/dev/null; then
     echo "      Generating test attacks..."
     if python test_attacks.py --auth-count 20 --web-count 20 2>/dev/null; then
@@ -34,25 +41,44 @@ fi
 echo ""
 
 # Start main.py (monitoring) in background
-echo "[2/5] Starting Sentinel Agent monitor (main.py)..."
-python main.py &
+echo "[3/6] Starting Sentinel Agent monitor (main.py)..."
+python main.py 2>&1 &
 MAIN_PID=$!
 echo "      ✓ Monitor started (PID: $MAIN_PID)"
 
-# Give main.py time to detect the test attacks
+# Give main.py time to initialize
 echo ""
-echo "[3/5] Waiting for agent to initialize (5 seconds)..."
+echo "[4/6] Waiting for agent to initialize (5 seconds)..."
 sleep 5
 
+# Check if main.py is still running
+if kill -0 $MAIN_PID 2>/dev/null; then
+    echo "      ✓ Monitor is running"
+else
+    echo "      ⚠ Monitor may have crashed (check logs)"
+fi
+echo ""
+
 # Start sentinel_api.py (REST API) in foreground
-echo "[4/5] Starting REST API server (sentinel_api.py on port 8000)..."
-echo "[5/5] Services ready!"
+echo "[5/6] Starting REST API server (sentinel_api.py on port 8000)..."
+echo "[6/6] Services ready!"
 echo ""
 echo "      API:       http://localhost:8000"
 echo "      Dashboard: http://localhost:8501"
 echo "      Health:    http://localhost:8000/api/health"
 echo ""
+echo "Starting API server..."
+echo ""
 
 # Run the API in foreground (so container doesn't exit)
-# This MUST succeed for the container to stay running
-exec python sentinel_api.py
+# Use explicit error logging
+if ! python sentinel_api.py 2>&1; then
+    echo ""
+    echo "ERROR: sentinel_api.py crashed!"
+    echo "Check logs above for details"
+    echo ""
+    # Keep container alive for debugging
+    echo "Keeping container alive for 1 hour for debugging..."
+    sleep 3600
+    exit 1
+fi

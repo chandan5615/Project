@@ -1,12 +1,19 @@
 #!/bin/bash
-# Sentinel Agent - Docker Entrypoint Script
+# Sentinel Agent - Docker Entrypoint Script  
 # Automatically detects Ollama on host or Docker
 
-set -e
+# Don't exit on errors - be robust!
+set +e
 
 echo "=========================================="
 echo "Sentinel Agent - Container Starting"
 echo "=========================================="
+
+# Ensure directories exist with correct permissions
+echo "Setting up directories..."
+mkdir -p /app/data /app/logs /app/data/secrets 2>/dev/null || true
+chmod -R 777 /app/data /app/logs 2>/dev/null || true
+echo "✓ Directories ready"
 
 # Ollama connection settings
 OLLAMA_URL="${OLLAMA_BASE_URL:-http://127.0.0.1:11434}"

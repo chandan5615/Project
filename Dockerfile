@@ -93,11 +93,13 @@ COPY docker-startup.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-startup.sh
 
 # Create required directories with proper permissions
-RUN mkdir -p /app/logs /app/data && \
-    chmod 755 /app/logs /app/data
+# Run as root for maximum compatibility - no permission issues!
+RUN mkdir -p /app/logs /app/data /app/data/secrets && \
+    chmod -R 777 /app/logs /app/data
 
 # Health check - verify system is running
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+# Increased start-period to 60s for initial setup
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Expose ports

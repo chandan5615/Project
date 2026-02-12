@@ -9,9 +9,8 @@ langchain-community>=0.0.20
 watchdog>=3.0.0
 crewai-tools>=0.1.0
 
-# Security & Encryption
-bcrypt>=4.0.0
-cryptography>=41.0.0
+# Security & Encryption - Using built-in Python libraries (hashlib, hmac, secrets)
+# Removed bcrypt and cryptography to simplify dependencies
 
 # Runtime dependencies
 uvicorn[standard]>=0.20.0
