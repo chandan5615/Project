@@ -3,11 +3,12 @@ Sentinel Agent - REST API Module
 FastAPI endpoints for external system integration.
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Header, status
+from fastapi import FastAPI, HTTPException, Depends, Header, status, Form
 from fastapi.responses import JSONResponse
 from typing import Optional, List
 from datetime import datetime
 import logging
+from pydantic import BaseModel
 
 from auth import get_authenticator, DashboardAuthenticator
 from metrics import get_metrics, PerformanceMetrics
@@ -346,14 +347,38 @@ def get_incidents_by_ip(
 
 # ============ AUTHENTICATION ENDPOINTS ============
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 @app.post("/api/auth/login")
 def login(
-    username: str,
-    password: str,
+    username: str = Form(...),
+    password: str = Form(...),
     auth: DashboardAuthenticator = Depends(get_auth)
 ):
-    """Login and get session token."""
+    """Login and get session token (accepts form data or query params)."""
     success, token = auth.authenticate(username, password)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
+    
+    return {
+        "token": token,
+        "type": "bearer",
+        "expires_in": 86400  # 24 hours
+    }
+
+@app.post("/api/auth/login-json")
+def login_json(
+    request: LoginRequest,
+    auth: DashboardAuthenticator = Depends(get_auth)
+):
+    """Login and get session token (JSON format)."""
+    success, token = auth.authenticate(request.username, request.password)
     
     if not success:
         raise HTTPException(

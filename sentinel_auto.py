@@ -122,6 +122,7 @@ def get_api_token(password: str) -> Optional[str]:
     try:
         for attempt in range(10):
             try:
+                # Try form data first (standard method)
                 response = requests.post(
                     f"{API_URL}/api/auth/login",
                     data={"username": "admin", "password": password},
@@ -136,13 +137,26 @@ def get_api_token(password: str) -> Optional[str]:
                         masked = token[:20] + "..." if len(token) > 20 else token
                         print_status("✓", f"API token obtained: {masked}")
                         return token
+                elif response.status_code == 401:
+                    print_status("✗", f"Authentication failed: Invalid credentials")
+                    print_status("ℹ️", f"Username: admin, Password: {password[:8]}...{password[-4:]}")
+                    return None
+                else:
+                    print_status("⚠", f"Status {response.status_code}: {response.text[:100]}")
+            except requests.exceptions.ConnectionError as e:
+                if attempt < 9:
+                    print_status("⏳", f"Connection attempt {attempt+1}/10... (API may still be starting)")
+                    time.sleep(2)
+                    continue
+                else:
+                    print_status("✗", f"Connection failed: {e}")
             except Exception as e:
                 if attempt < 9:
-                    print_status("⏳", f"Attempt {attempt+1}/10...")
+                    print_status("⏳", f"Attempt {attempt+1}/10... ({e})")
                     time.sleep(2)
                     continue
         
-        print_status("✗", "Failed to authenticate")
+        print_status("✗", "Failed to authenticate after all attempts")
         return None
     
     except Exception as e:
