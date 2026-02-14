@@ -187,7 +187,7 @@ def get_baseline(token: str) -> Dict[str, Any]:
     try:
         response = requests.get(
             f"{API_URL}/api/metrics/detection",
-            headers={"X-API-Key": token},
+            headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
         
@@ -299,7 +299,7 @@ def check_results(token: str) -> Dict[str, Any]:
     try:
         response = requests.get(
             f"{API_URL}/api/incidents/recent",
-            headers={"X-API-Key": token},
+            headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
         
@@ -350,7 +350,7 @@ def show_dashboard(token: str):
         print(f"\n{Colors.YELLOW}Detection Metrics:{Colors.RESET}")
         response = requests.get(
             f"{API_URL}/api/metrics/detection",
-            headers={"X-API-Key": token},
+            headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
         if response.status_code == 200:
@@ -363,7 +363,7 @@ def show_dashboard(token: str):
         print(f"\n{Colors.YELLOW}Recent Incidents:{Colors.RESET}")
         response = requests.get(
             f"{API_URL}/api/incidents/recent",
-            headers={"X-API-Key": token},
+            headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
         if response.status_code == 200:
@@ -378,7 +378,7 @@ def show_dashboard(token: str):
         print(f"\n{Colors.YELLOW}IP Lists:{Colors.RESET}")
         response = requests.get(
             f"{API_URL}/api/lists/summary",
-            headers={"X-API-Key": token},
+            headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
         if response.status_code == 200:
