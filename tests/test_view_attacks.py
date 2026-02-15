@@ -1,4 +1,10 @@
 import logging
+import sys
+import os
+
+# Add parent directory to path to import root-level modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import view_attacks
 from defense.attack_logger import AttackLogger
 

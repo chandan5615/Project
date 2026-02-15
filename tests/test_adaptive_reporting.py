@@ -12,6 +12,9 @@ import logging
 import os
 import sys
 
+# Add parent directory to path to import root-level modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Test environment_detector
 from environment_detector import EnvironmentDetector
 

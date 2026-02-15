@@ -1,9 +1,13 @@
 import os
+import sys
 from types import SimpleNamespace
 import pytest
 
 # Ensure agents does not do network checks at import time
 os.environ['SENTINEL_SKIP_OLLAMA_CHECK'] = '1'
+
+# Add parent directory to path to import root-level modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import SentinelAgent
 

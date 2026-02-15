@@ -1,7 +1,11 @@
 import os
+import sys
 import re
 import base64
 import pytest
+
+# Add parent directory to path to import root-level modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Set fake credentials BEFORE importing app module
 os.environ['DASHBOARD_USER'] = 'test'
