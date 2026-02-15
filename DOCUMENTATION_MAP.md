@@ -38,8 +38,7 @@
 
 | Document | When to Use |
 |----------|-------------|
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Container issues, authentication failures, common problems |
-| [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) | Complete rebuild instructions |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Container issues, authentication failures, common problems || [DATABASE_INIT_ISSUES.md](DATABASE_INIT_ISSUES.md) | Web dashboard database errors (no such table, missing DB) || [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) | Complete rebuild instructions |
 
 ---
 
