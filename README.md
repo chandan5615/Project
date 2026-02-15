@@ -222,11 +222,11 @@ python3 sentinel_auto.py status
 # No dependencies, works everywhere
 ```
 
-**2. Rich Terminal Dashboard**
+**2. Rich Terminal Dashboard** 
 ```bash
-python3 dashboard/cli_dashboard.py
-# Shows: formatted incidents, metrics, threat intel
-# Works on Linux/Mac terminals
+docker exec -it sentinel-agent python3 -m dashboard.cli_dashboard
+# Shows: formatted incidents, metrics, threat intel (live updates)
+# Perfect for SSH terminals and headless environments
 ```
 
 **3. Web Dashboard (Streamlit) - Full Featured** ✅
@@ -240,7 +240,7 @@ docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.
 
 **Features:** Interactive plots, threat analysis, incident feed, performance metrics
 
-**See [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) for complete dashboard guide**
+**See:** [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | [CLI_DASHBOARD_GUIDE.md](CLI_DASHBOARD_GUIDE.md) for complete guides
 
 ### API Examples
 

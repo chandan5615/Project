@@ -23,6 +23,7 @@
 |----------|---------|
 | [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) | Complete automation guide for `sentinel_auto.py` |
 | [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | Web dashboard (Streamlit) setup and usage |
+| [CLI_DASHBOARD_GUIDE.md](CLI_DASHBOARD_GUIDE.md) | CLI dashboard (Rich terminal) setup and usage |
 | [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes (auth, dashboard, API) |
 | [PROJECT_STATUS_2026_FEB_15.md](PROJECT_STATUS_2026_FEB_15.md) | Complete project status and achievements |
 
