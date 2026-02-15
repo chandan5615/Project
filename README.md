@@ -2,22 +2,26 @@
 
 An autonomous, multi-agent AI SOC analyst for Linux systems. Uses CrewAI orchestration with local Ollama (Llama 3) to monitor, analyze, and respond to security threats in real-time.
 
-## 🎯 Quick Start (3 Commands!)
+## 🎯 Quick Start (Fully Automated - No Human Interaction!)
 
 ```bash
 # 1. Start Ollama (in separate terminal)
 ollama serve
 
-# 2. Run setup script
-chmod +x quick-rebuild.sh
-./quick-rebuild.sh
+# 2. Clone and deploy (one command)
+git clone <your-repo> sentinel-agent && cd sentinel-agent
+docker-compose up -d --build
 
-# 3. Test authentication
-python3 sentinel_auto.py setup
-python3 sentinel_auto.py demo
+# 3. Wait for healthy status (30 seconds)
+sleep 30
+
+# 4. Run automated demo (generates attacks and displays results)
+python3 sentinel_auto.py setup  # Auto-extracts password & gets token
+python3 sentinel_auto.py demo   # Runs full security demo
+python3 sentinel_auto.py status # View dashboard
 ```
 
-**Done!** Container running with all features active. ✅
+**Done!** Fully automated - no passwords to remember, no manual config. ✅
 
 ---
 
@@ -26,10 +30,11 @@ python3 sentinel_auto.py demo
 | Document | Purpose |
 |----------|---------|
 | **README.md** (this file) | Quick start and overview |
-| [COMPLETE_FIX_SUMMARY.md](COMPLETE_FIX_SUMMARY.md) | All fixes explained (password hashing, permissions) |
+| [QUICK_START_AUTOMATION.md](QUICK_START_AUTOMATION.md) | Fully automated setup (zero human interaction) |
+| [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) | Automation scripts usage & sentinel_auto.py |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common problems and solutions |
 | [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) | Complete step-by-step setup guide |
-| [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) | Automation scripts usage |
+| [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes and improvements |
 | [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md) | All available documentation |
 
 ---
@@ -78,26 +83,40 @@ ollama pull llama3:8b
 ollama serve  # Keep running in separate terminal
 ```
 
-### Method 1: Quick Rebuild Script (Recommended)
+### Method 1: Automated Setup (Recommended - Zero Human Interaction)
 
 ```bash
 # Clone repository
 git clone <your-repo> sentinel-agent
 cd sentinel-agent
 
-# Run automated setup
-chmod +x quick-rebuild.sh
-./quick-rebuild.sh
+# Build and start container
+docker-compose up -d --build
+
+# Wait for system to initialize (30 seconds)
+sleep 30
+
+# Auto-setup authentication and run demo
+python3 sentinel_auto.py setup  # Extracts password, generates token automatically
+python3 sentinel_auto.py demo   # Runs security tests
+python3 sentinel_auto.py status # View results
 ```
 
 **What it does:**
-1. Stops old containers
-2. Cleans data (uses `sudo` for Docker-created files)
-3. Rebuilds container with all dependencies
-4. Starts fresh with new credentials
-5. Displays admin password
+1. Builds container with all dependencies
+2. Initializes 6 databases with 18 tables
+3. Generates secure admin credentials automatically
+4. Extracts password from logs (no manual copying)
+5. Authenticates and gets API token
+6. Runs full security demonstration
 
-**Time:** ~5 minutes
+**Features:**
+- ✅ No manual password entry
+- ✅ No configuration files to edit
+- ✅ Token saved to `.sentinel_token` file
+- ✅ Works on both Windows (via SSH) and Linux
+
+**Time:** ~3 minutes
 
 ### Method 2: Manual Setup
 
@@ -139,14 +158,26 @@ curl http://localhost:8000/api/health
 docker-compose logs -f sentinel-agent
 ```
 
-### Authenticate
+### Authenticate (Fully Automated)
 
 ```bash
-# Automatic authentication (recommended)
+# ONE command does everything - no passwords needed!
 python3 sentinel_auto.py setup
-# Extracts password from logs and gets API token
+```
 
-# Manual authentication
+**What happens automatically:**
+1. ✅ Waits for container to be healthy
+2. ✅ Tests API connectivity
+3. ✅ Extracts admin password from Docker logs
+4. ✅ Authenticates with API
+5. ✅ Gets Bearer token (JWT)
+6. ✅ Saves token to `.sentinel_token` file
+7. ✅ Validates token works
+
+**Token lasts 24 hours** - re-run `setup` if it expires.
+
+```bash
+# Manual verification (optional)
 python3 test_auth.py
 # Tests health, password extraction, login
 ```
@@ -154,21 +185,38 @@ python3 test_auth.py
 ### Run Security Demonstrations
 
 ```bash
-# Full demo (generates 40+ attacks, shows AI analysis)
+# Full automated demo (zero interaction)
 python3 sentinel_auto.py demo
+```
+
+**What it does:**
+1. Captures baseline metrics
+2. Runs SSH brute force (15 attempts)
+3. Tests SQL injection (4 payloads)
+4. Simulates DDoS (50 requests)
+5. Waits for AI analysis
+6. Shows detected incidents
+
+```bash
+# View live status dashboard
+python3 sentinel_auto.py status
 
 # Manual attack generation
 python3 test_attacks.py --auth-count 50 --web-count 50
 
-# View results
+# View all detected attacks
 python3 view_attacks.py
 ```
 
 ### Access Dashboard
 
 ```bash
+# Quick status dashboard
+python3 sentinel_auto.py status
+# Shows: health, metrics, incidents, IP lists
+
 # CLI Dashboard (Rich terminal UI)
-python3 run_dashboard.py
+python3 dashboard/cli_dashboard.py
 # Shows: incidents, metrics, threat intel, system status
 
 # Web Dashboard (Streamlit)
@@ -179,28 +227,36 @@ streamlit run dashboard/web_dashboard.py
 ### API Examples
 
 ```bash
-# Authenticate
-TOKEN=$(curl -X POST http://localhost:8000/api/auth/login \
+# Automated authentication (recommended)
+python3 sentinel_auto.py setup  # Saves token to .sentinel_token
+TOKEN=$(cat .sentinel_token)
+
+# Manual authentication
+TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/login \
   -d "username=admin&password=YOUR_PASSWORD" \
   | jq -r '.token')
 
-# List incidents
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/incidents
+# List recent incidents
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/incidents/recent | jq
 
-# Get threat intel for IP
-curl http://localhost:8000/api/threat-intel/1.2.3.4
+# Get detection metrics
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/metrics/detection | jq
 
 # Add IP to blocklist
-curl -X POST http://localhost:8000/api/lists/blocklist \
+curl -s -X POST http://localhost:8000/api/lists/blocklist \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"ip":"1.2.3.4","reason":"Brute force"}'
+  -d '{"ip":"1.2.3.4","reason":"Brute force"}' | jq
 
-# Get metrics
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/metrics/detection
+# Get threat intel for IP
+curl -s http://localhost:8000/api/threat-intel/1.2.3.4 | jq
 ```
+
+**Authentication Methods:**
+- `Authorization: Bearer <token>` (recommended - session tokens)
+- `X-API-Key: <api_key>` (legacy - API keys)
 
 **API Documentation:** http://localhost:8000/docs (Swagger UI)
 
@@ -214,27 +270,30 @@ curl -H "Authorization: Bearer $TOKEN" \
 # View crash logs
 docker-compose logs --tail=100 sentinel-agent
 
-# Run diagnostics
-chmod +x diagnose_crash.sh
-./diagnose_crash.sh
+# Check container status
+docker-compose ps
 ```
 
 **Common fixes:**
-- **Import errors** → `docker-compose build --no-cache`
+- **Import errors** → `docker-compose build --no-cache && docker-compose up -d`
 - **Port conflict** → `sudo lsof -i :8000` and kill process
-- **Ollama not found** → Start `ollama serve`
-- **Database errors** → `sudo rm -rf data/` and rebuild
+- **Ollama not found** → Start `ollama serve` in separate terminal
+- **Database errors** → `docker-compose down -v && docker-compose up -d --build`
 
 ### Authentication Fails
 
 ```bash
-# Test authentication
-python3 test_auth.py
+# Re-run automated setup
+python3 sentinel_auto.py setup
 
-# Full diagnostic
-chmod +x diagnose_auth.sh
-./diagnose_auth.sh
+# Test authentication manually
+python3 test_auth.py
 ```
+
+**Common issues:**
+- Token expired (24hr) → Re-run `sentinel_auto.py setup`
+- Container restarted → New password generated, run setup again
+- Wrong API endpoint → Verify `http://localhost:8000/api/health`
 
 ### Permission Denied
 

@@ -1,53 +1,42 @@
 # Docker Quick Start - Sentinel Agent v2.2
 
-##  Installation (Choose One)
+## 🚀 Quick Start (3 Minutes)
 
-### Option A: Host Ollama (Production - Recommended) ⭐
 ```bash
-# Terminal 1: Start Ollama
+# 1. Start Ollama (Terminal 1)
 ollama serve
 
-# Terminal 2: Start Sentinel Agent
-cd sentinel-agent
-docker-compose up -d
+# 2. Deploy Sentinel Agent (Terminal 2)
+git clone <your-repo> sentinel-agent && cd sentinel-agent
+docker-compose up -d --build && sleep 30
+
+# 3. Auto-setup and demo
+python3 sentinel_auto.py setup   # Auto-extract password, get token
+python3 sentinel_auto.py demo    # Run security tests
+python3 sentinel_auto.py status  # View results
 ```
 
-### Option B: Docker Ollama (Alternative)
-```bash
-cd sentinel-agent
-# Uncomment ollama and ollama-pull services in docker-compose.yml
-docker-compose --profile with-ollama up -d
-```
-
-### Option C: Production (with SSL/Nginx)
-```bash
-cd sentinel-agent
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
+**Done!** Zero manual configuration. ✅
 
 ---
 
 ## ✅ Verify Installation
 
 ```bash
-# Check all services running
+# Check container status
 docker-compose ps
+# Expected: sentinel-agent   Up (healthy)
 
-# Test API health (ports directly accessible via host network)
+# Test API health
 curl http://localhost:8000/api/health
 
-# Check Ollama connectivity
-curl http://localhost:11434/api/tags
-
 # View logs
-docker-compose logs -f sentinel-agent
+docker-compose logs sentinel-agent
 ```
 
 ---
 
-##  Accessing the Application
-
-When using `network_mode: host`, ports are **directly accessible** without port forwarding:
+## 🎯 Common Tasks
 
 | Service | URL | Access |
 |---------|-----|--------|

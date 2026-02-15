@@ -44,16 +44,24 @@ def get_perf_metrics() -> PerformanceMetrics:
 
 def verify_api_key(
     x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None),
     auth: DashboardAuthenticator = Depends(get_auth)
 ) -> str:
-    """Verify API key from headers."""
-    if not x_api_key:
+    """Verify API key from headers (supports both X-API-Key and Authorization Bearer)."""
+    # Try Authorization header first (standard JWT Bearer)
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]  # Remove "Bearer " prefix
+    elif x_api_key:
+        token = x_api_key
+    
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing API key"
         )
     
-    valid, username = auth.verify_api_key(x_api_key)
+    valid, username = auth.verify_api_key(token)
     if not valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

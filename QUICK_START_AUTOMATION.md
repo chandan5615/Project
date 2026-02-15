@@ -1,46 +1,65 @@
-# ⚡ QUICK START - 5-Minute Setup
+# ⚡ QUICK START - Zero Human Interaction Setup
 
-**Easiest way to get Sentinel Agent running!**
+**Fully automated deployment - no passwords to remember, no manual config!**
 
 ---
 
-## 🎯 Method 1: One-Command Setup (Recommended)
+## 🎯 Fully Automated Setup (Zero Interaction)
 
 ```bash
 # 1. Start Ollama (in separate terminal)
 ollama serve
 
-# 2. Run quick rebuild script
-chmod +x quick-rebuild.sh
-./quick-rebuild.sh
+# 2. Clone and deploy
+git clone <your-repo> sentinel-agent && cd sentinel-agent
+docker-compose up -d --build
 
-# 3. Test authentication
-python3 sentinel_auto.py setup
-python3 sentinel_auto.py demo
+# 3. Wait for initialization (30 seconds)
+sleep 30
+
+# 4. Run automated setup and demo
+python3 sentinel_auto.py setup   # Auto-extracts password, gets token
+python3 sentinel_auto.py demo    # Runs full security demo
+python3 sentinel_auto.py status  # View results
 ```
 
-**Done!** System fully operational in ~5 minutes. ✅
+**Done!** System fully operational in ~3 minutes with ZERO manual steps. ✅
+
+**Features:**
+- ✅ No password copying/pasting
+- ✅ No token management
+- ✅ No configuration files to edit
+- ✅ Works on Windows (via SSH) and Linux
+- ✅ Token auto-saved to `.sentinel_token`
 
 ---
 
 ## 📋 What Gets Automated
 
-### quick-rebuild.sh ⭐
-- ✅ Stops old containers
-- ✅ Cleans data (handles sudo for Docker files)
-- ✅ Rebuilds with all dependencies
-- ✅ Starts fresh with new credentials
-- ✅ Shows admin password
+### docker-compose up -d --build
+- ✅ Builds container with all dependencies
+- ✅ Initializes 6 databases (18 tables)
+- ✅ Generates secure random admin password
+- ✅ Starts all services (API, monitors, agents)
+- ✅ Healthcheck until ready
 
-### sentinel_auto.py setup
-- ✅ Waits for container health
-- ✅ Extracts password from logs
-- ✅ Authenticates and saves token
+### sentinel_auto.py setup ⭐
+- ✅ Waits for container to be healthy
+- ✅ Tests API connectivity
+- ✅ Extracts admin password from logs (no human copy/paste!)
+- ✅ Authenticates with API automatically
+- ✅ Gets Bearer token (JWT)
+- ✅ Saves token to `.sentinel_token` file
+- ✅ Validates authentication works
 
 ### sentinel_auto.py demo
-- ✅ Generates 40+ attacks
-- ✅ Shows AI analysis
-- ✅ Displays performance metrics
+- ✅ Captures baseline metrics
+- ✅ Runs SSH brute force (15 attempts)
+- ✅ Tests SQL injection (4 payloads)
+- ✅ Simulates DDoS (50 requests)
+- ✅ Waits for AI analysis
+- ✅ Displays detected incidents
+- ✅ Shows performance metrics
 
 ---
 

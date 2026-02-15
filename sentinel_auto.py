@@ -367,7 +367,8 @@ def show_dashboard(token: str):
             timeout=5
         )
         if response.status_code == 200:
-            incidents = response.json()
+            data = response.json()
+            incidents = data.get('incidents', [])
             if incidents:
                 for incident in incidents[:3]:
                     print(f"  • {incident.get('type')} ({incident.get('severity')})")

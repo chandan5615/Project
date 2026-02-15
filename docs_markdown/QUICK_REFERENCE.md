@@ -1,50 +1,58 @@
 # Sentinel Agent v2.2 - Quick Reference Guide
 
 **Version**: 2.2 (Production Ready)  
-**Release Date**: February 8, 2026  
-**Status**: Production Ready ✅
+**Release Date**: February 15, 2026  
+**Status**: Production Ready with Zero Interaction Setup ✅
 
 ---
 
-##  Quick Start (Docker - Recommended)
+## 🚀 Complete Deployment (3 Minutes)
 
-### With Host Ollama (Production)
 ```bash
 # Terminal 1: Start Ollama
 ollama serve
 
-# Terminal 2: Deploy Sentinel Agent
+# Terminal 2: Deploy and verify
 cd ~/Project
-docker-compose up -d
-
-# Verify
-curl http://localhost:8000/api/health
+docker-compose up -d --build && sleep 30
+python3 sentinel_auto.py setup   # Auto-extract password, get token
+python3 sentinel_auto.py demo    # Run security tests
+python3 sentinel_auto.py status  # View dashboard
 ```
 
-### Traditional Setup (Linux/macOS)
+**Done!** Zero manual configuration. ✅
+
+---
+
+## 📋 Automation Commands
+
 ```bash
-# Setup
-./setup.sh && source venv/bin/activate
+# Setup & Demo
+python3 sentinel_auto.py setup      # Auto-authenticate (zero interaction)
+python3 sentinel_auto.py demo       # Run all security tests
+python3 sentinel_auto.py status     # Live dashboard
 
-# Ensure Ollama is running (Terminal 1)
-ollama serve
+# Individual Tests
+python3 sentinel_auto.py test-ssh   # SSH brute force (15 attempts)
+python3 sentinel_auto.py test-sql   # SQL injection (4 payloads)
+python3 sentinel_auto.py test-ddos  # DDoS simulation (50 requests)
 
-# Start agent (Terminal 2)
-sudo python main.py
+# Utilities
+python3 sentinel_auto.py check      # Check for incidents
+python3 sentinel_auto.py help       # Show help
 ```
 
 ---
 
-##  Docker Compose Commands (v2.2)
+## 🐳 Docker Compose Commands
 
 | Command | Purpose |
 |---------|---------|
-| `docker-compose up -d` | Start with host Ollama |
-| `docker-compose down` | Stop all services |
-| `docker-compose ps` | List running services |
+| `docker-compose up -d --build` | Start with auto-build |
+| `docker-compose ps` | Show container status |
 | `docker-compose logs -f sentinel-agent` | View live logs |
-| `docker-compose --profile with-ollama up -d` | Start with Docker Ollama (alternative) |
-| `docker-compose config --quiet` | Validate configuration |
+| `docker-compose down -v` | Stop and remove volumes |
+| `docker-compose restart sentinel-agent` | Restart container |
 
 ---
 

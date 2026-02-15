@@ -244,10 +244,10 @@ class DashboardAuthenticator:
     
     def verify_api_key(self, api_key: str) -> Tuple[bool, Optional[str]]:
         """
-        Verify encrypted API key.
+        Verify encrypted API key or session token.
         
         Args:
-            api_key: API key to verify
+            api_key: API key or session token to verify
             
         Returns:
             Tuple of (valid, username)
@@ -255,7 +255,23 @@ class DashboardAuthenticator:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Fetch all API key hashes and verify with bcrypt
+        # First, check if it's a valid session token (plain text comparison)
+        cursor.execute("""
+            SELECT s.token, u.username, s.expires_at
+            FROM sessions s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.token = ?
+        """, (api_key,))
+        
+        session = cursor.fetchone()
+        if session:
+            token, username, expires_at = session
+            # Check if session is still valid
+            if datetime.fromisoformat(expires_at) > datetime.now():
+                conn.close()
+                return True, username
+        
+        # If not a session token, check if it's an API key (bcrypt hashed)
         cursor.execute("""
             SELECT ak.key_hash, u.username 
             FROM api_keys ak

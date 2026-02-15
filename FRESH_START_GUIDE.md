@@ -1,8 +1,8 @@
 # Fresh Start Guide - Complete Setup
 
-**Goal:** Set up Sentinel Agent from scratch with full understanding of each step.
+**Goal:** Set up Sentinel Agent from scratch with full understanding.
 
-**Time Required:** 15-20 minutes
+**Time Required:** 20-30 minutes for full setup and understanding
 
 ---
 
@@ -24,7 +24,7 @@ sudo apt update
 # Install Docker
 sudo apt install -y docker.io docker-compose
 
-# Add user to docker group (no need for sudo)
+# Add user to docker group (no sudo needed)
 sudo usermod -aG docker $USER
 newgrp docker
 
@@ -55,29 +55,47 @@ cd Project
 
 ---
 
-## 🚀 Installation Methods
+## 🚀 Installation (Automated)
 
-### Method 1: Quick Rebuild Script ⭐ (Recommended)
-
-**Easiest and fastest method!**
+### The Recommended Way - Zero Human Interaction
 
 ```bash
 # 1. Start Ollama (Terminal 1)
 ollama serve
-# Keep this running
+# Keep this running in background
 
-# 2. Run setup script (Terminal 2)
+# 2. Deploy and setup (Terminal 2)
 cd ~/Project
-chmod +x quick-rebuild.sh
-./quick-rebuild.sh
+docker-compose up -d --build
+sleep 30  # Wait for initialization
+
+# 3. Auto-setup (one command, zero interaction)
+python3 sentinel_auto.py setup
 ```
 
-**What it does:**
-1. Stops any old containers
-2. Cleans data directories (uses `sudo` for Docker-created files)
-3. Rebuilds container from scratch
-4. Starts with fresh databases
-5. Generates new admin credentials
+**What `setup` does automatically:**
+1. ✅ Waits for container to be healthy
+2. ✅ Tests API connectivity
+3. ✅ Extracts admin password from logs
+4. ✅ Authenticates with API
+5. ✅ Gets Bearer token (24hr validity)
+6. ✅ Saves token to `.sentinel_token` file
+7. ✅ Validates authentication works
+
+**Output:**
+```
+✓ Container is healthy
+✓ API is healthy (v2.2)
+✓ Password extracted: s3cur3***...***xyz
+✓ API token obtained: eyJ***...***abc
+✓ Token saved to .sentinel_token
+✅ Setup complete!
+```
+
+**Time:** ~3 minutes
+**Manual steps:** 0 ✅
+
+---
 6. Waits for healthy status
 7. Shows you the password
 

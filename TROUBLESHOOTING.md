@@ -1,83 +1,54 @@
 # Sentinel Agent v2.2 - Troubleshooting Guide
 
-Complete troubleshooting for common issues when setting up Sentinel Agent from a fresh clone.
+Fix common issues - most have a one-command solution!
 
 ---
 
-## 🔧 Common Issues & Solutions
+## 🔧 Quick Fixes
 
-### 1. Container Unhealthy After Fresh Clone
+### Container Unhealthy
 
-**Symptom:**
+**Symptoms:**
 ```bash
 docker-compose ps
 # Shows: sentinel-agent   Up (unhealthy)
 ```
 
-**Root Cause:** Container can't reach Ollama on host, or database initialization failed
-
-**Solution:**
+**Fix:**
 ```bash
-# Check Ollama is running on host
-curl http://localhost:11434/api/tags
-# Should return model list
-
-# If not running, start Ollama (in another terminal):
-ollama serve
-
-# Then restart container
-docker-compose restart sentinel-agent
-
-# Wait and check
-sleep 5
-docker-compose ps  # Should show "Up (healthy)"
-```
-
----
-
-### 2. "Could not find password in logs"
-
-**Symptom:**
-```bash
-python3 sentinel_auto.py setup
-# ✗ Could not find password in logs
-```
-
-**Root Cause:** The cloned repo contains an old `auth.db` file, so the default user already exists from previous initialization.
-
-**Solution:**
-```bash
-# Stop container
-docker-compose down
-
-# Remove old database
-rm -f data/auth.db
-rm -f data/INITIAL_CREDENTIALS.txt
-
 # Rebuild and restart
-docker-compose build --no-cache
-docker-compose up -d
-
-# Wait for startup
-sleep 5
-
-# Check for password in logs
-docker-compose logs sentinel-agent | grep -A 2 "DEFAULT ADMIN CREDENTIALS"
-
-# If found, try setup again
+docker-compose down -v
+docker-compose up -d --build
+sleep 30
 python3 sentinel_auto.py setup
 ```
 
-**Why?** The cloned database contains a stored admin user. When the container starts, it checks if the user exists and skips password logging if found.
+---
+
+### Authentication Failed / Invalid API Key
+
+**Symptoms:**
+```bash
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/incidents
+# 401 Unauthorized
+```
+
+**Cause:** Token expired (24hr limit) or container restarted
+
+**Fix:**
+```bash
+# Just re-run setup (takes 10 seconds)
+python3 sentinel_auto.py setup
+```
 
 ---
 
-### 3. "Connection refused" on port 8000
+### Connection Refused (port 8000)
 
-**Symptom:**
+**Symptoms:**
 ```bash
 curl http://localhost:8000/api/health
-# Connection refused
+# curl: (7) Failed to connect
 ```
 
 **Root Cause:** API hasn't started yet, or Docker container isn't healthy
