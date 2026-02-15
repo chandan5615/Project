@@ -434,6 +434,8 @@ class SentinelAgent:
         try:
             logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
             logger.info(f"  Status: Processing...\n")
+
+            perf_metrics = get_metrics()
             
             # Record response start time for metrics
             response_start = perf_metrics.get_current_timestamp()

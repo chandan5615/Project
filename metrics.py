@@ -154,6 +154,10 @@ class PerformanceMetrics:
         finally:
             conn.close()
     
+    def get_current_timestamp(self) -> int:
+        """Get current timestamp in milliseconds."""
+        return int(time.time() * 1000)
+    
     def get_detection_stats(self, hours: int = 24) -> Dict:
         """
         Get detection statistics for last N hours.

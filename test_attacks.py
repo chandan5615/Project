@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 class TestAttackGenerator:
     """Generates simulated attacks for testing the Sentinel Agent"""
+
+    __test__ = False
     
     # Common attacking IPs to use
     ATTACKING_IPS = [

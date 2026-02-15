@@ -141,6 +141,10 @@ class EnvironmentDetector:
         
         return config
 
+    def get_environment_config(self) -> dict:
+        """Compatibility wrapper for tests expecting this name."""
+        return self.get_config()
+
 
 # Singleton instance
 _detector = None

@@ -41,8 +41,13 @@ class AdaptiveLogger:
     
     def _setup_logging(self):
         """Setup logging handlers based on mode"""
-        # Clear existing handlers
-        self.logger.handlers.clear()
+        # Clear existing handlers and release file locks
+        for handler in list(self.logger.handlers):
+            self.logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:
+                pass
         self.logger.setLevel(logging.DEBUG)
         
         # Create logs directory if it doesn't exist
@@ -84,6 +89,7 @@ class AdaptiveLogger:
             
             console_handler.setFormatter(console_formatter)
             self.logger.addHandler(console_handler)
+        self.logger.propagate = False
     
     def heartbeat(self, threat_count: int = 0, blocked_ips: int = 0):
         """Log heartbeat message (for GUI mode)
@@ -153,6 +159,21 @@ class AdaptiveLogger:
     def get_logger(self) -> logging.Logger:
         """Get the underlying logger object"""
         return self.logger
+
+    def close(self):
+        """Close logger handlers to release file locks (Windows-safe)."""
+        for handler in list(self.logger.handlers):
+            self.logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:
+                pass
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
 
 
 class AdaptivePrinter:

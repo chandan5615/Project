@@ -1,15 +1,22 @@
 import os
 import re
+import base64
 import pytest
+
+# Set fake credentials BEFORE importing app module
+os.environ['DASHBOARD_USER'] = 'test'
+os.environ['DASHBOARD_PASS'] = 'test'
+
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 import dashboard.app as app_mod
 
-# Set fake credentials for tests
-os.environ['DASHBOARD_USER'] = 'test'
-os.environ['DASHBOARD_PASS'] = 'test'
-
 client = TestClient(app_mod.app)
+
+
+def _basic_auth_header(username: str, password: str) -> dict:
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    return {"Authorization": f"Basic {token}"}
 
 
 def test_api_summary_unauthorized():
@@ -18,14 +25,14 @@ def test_api_summary_unauthorized():
 
 
 def test_api_summary_authorized():
-    r = client.get('/api/summary', auth=('test', 'test'))
+    r = client.get('/api/summary', headers=_basic_auth_header('test', 'test'))
     assert r.status_code == 200
     data = r.json()
     assert 'severity_counts' in data
 
 
 def test_index_and_websocket_token():
-    r = client.get('/', auth=('test', 'test'))
+    r = client.get('/', headers=_basic_auth_header('test', 'test'))
     assert r.status_code == 200
     html = r.text
     # Token is embedded in page as WS_TOKEN

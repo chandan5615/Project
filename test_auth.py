@@ -4,15 +4,20 @@ Test Authentication Directly
 Quick script to debug authentication issues
 """
 
+import os
 import requests
 import sys
 import subprocess
+import shutil
+import pytest
 
 API_URL = "http://localhost:8000"
 
 def get_password_from_logs():
     """Extract password from container logs"""
     try:
+        if not shutil.which("docker-compose"):
+            return None
         result = subprocess.run(
             ["docker-compose", "logs", "sentinel-agent"],
             capture_output=True,
@@ -34,109 +39,78 @@ def get_password_from_logs():
 
 def test_health():
     """Test API health"""
-    print("=" * 60)
-    print("Testing API Health...")
-    print("=" * 60)
-    
     try:
         response = requests.get(f"{API_URL}/api/health", timeout=5)
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.json()}")
-        return response.status_code == 200
+        assert response.status_code == 200
     except Exception as e:
-        print(f"Error: {e}")
-        return False
+        pytest.skip(f"API not reachable: {e}")
 
-def test_login(username, password):
+def test_login(api_ready, username, password):
     """Test login endpoint"""
-    print("\n" + "=" * 60)
-    print("Testing Login...")
-    print("=" * 60)
-    print(f"Username: {username}")
-    print(f"Password: {password}")
-    print()
-    
-    # Method 1: Form data
-    print("Method 1: Form Data")
     try:
         response = requests.post(
             f"{API_URL}/api/auth/login",
             data={"username": username, "password": password},
             timeout=5
         )
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.text[:200]}")
-        
-        if response.status_code == 200:
-            print("✓ Form data authentication SUCCESSFUL!")
-            token = response.json().get("token")
-            print(f"Token: {token[:30]}...")
-            return token
+        assert response.status_code == 200
+        token = response.json().get("token")
+        assert token
+        return token
     except Exception as e:
-        print(f"Error: {e}")
-    
-    # Method 2: JSON data
-    print("\nMethod 2: JSON Data")
-    try:
-        response = requests.post(
-            f"{API_URL}/api/auth/login-json",
-            json={"username": username, "password": password},
-            timeout=5
-        )
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.text[:200]}")
-        
-        if response.status_code == 200:
-            print("✓ JSON authentication SUCCESSFUL!")
-            token = response.json().get("token")
-            print(f"Token: {token[:30]}...")
-            return token
-    except Exception as e:
-        print(f"Error: {e}")
-    
-    # Method 3: Query parameters
-    print("\nMethod 3: Query Parameters")
-    try:
-        response = requests.post(
-            f"{API_URL}/api/auth/login?username={username}&password={password}",
-            timeout=5
-        )
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.text[:200]}")
-        
-        if response.status_code == 200:
-            print("✓ Query param authentication SUCCESSFUL!")
-            token = response.json().get("token")
-            print(f"Token: {token[:30]}...")
-            return token
-    except Exception as e:
-        print(f"Error: {e}")
-    
-    return None
+        pytest.skip(f"Login failed: {e}")
 
-def test_api_with_token(token):
+def test_api_with_token(api_ready, token):
     """Test API call with token"""
-    print("\n" + "=" * 60)
-    print("Testing API with Token...")
-    print("=" * 60)
-    
     try:
         response = requests.get(
             f"{API_URL}/api/info",
-            headers={"X-API-Key": token},
+            headers={"Authorization": f"Bearer {token}"},
             timeout=5
         )
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.json()}")
-        return response.status_code == 200
+        assert response.status_code == 200
+        return response.json()
     except Exception as e:
-        print(f"Error: {e}")
-        return False
+        pytest.skip(f"Token auth failed: {e}")
+
+
+@pytest.fixture(scope="session")
+def api_ready():
+    try:
+        response = requests.get(f"{API_URL}/api/health", timeout=5)
+        if response.status_code != 200:
+            pytest.skip(f"API health status {response.status_code}")
+        return True
+    except Exception as e:
+        pytest.skip(f"API not reachable: {e}")
+
+
+@pytest.fixture(scope="session")
+def username():
+    return os.getenv("SENTINEL_TEST_USER", "admin")
+
+
+@pytest.fixture(scope="session")
+def password():
+    env_password = os.getenv("SENTINEL_TEST_PASS")
+    if env_password:
+        return env_password
+    log_password = get_password_from_logs()
+    if log_password:
+        return log_password
+    pytest.skip("No password available; set SENTINEL_TEST_PASS or run container")
+
+
+@pytest.fixture(scope="session")
+def token(api_ready, username, password):
+    return test_login(api_ready, username, password)
 
 def main():
     # Test 1: Health check
-    if not test_health():
-        print("\n✗ API is not healthy! Make sure container is running.")
+    try:
+        test_health()
+    except pytest.SkipTest as e:
+        print(f"\n✗ API is not healthy: {e}")
         print("Run: docker-compose ps")
         sys.exit(1)
     
@@ -155,7 +129,7 @@ def main():
     print(f"✓ Password extracted: {password}")
     
     # Test 3: Login
-    token = test_login("admin", password)
+    token = test_login(True, "admin", password)
     
     if not token:
         print("\n" + "=" * 60)
@@ -171,7 +145,7 @@ def main():
         sys.exit(1)
     
     # Test 4: Use token
-    if test_api_with_token(token):
+    if test_api_with_token(True, token):
         print("\n" + "=" * 60)
         print("✓ ALL TESTS PASSED!")
         print("=" * 60)

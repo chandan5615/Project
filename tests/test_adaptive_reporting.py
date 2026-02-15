@@ -272,10 +272,13 @@ class TestAdaptiveReportingIntegration:
         detector = EnvironmentDetector()
         config = detector.get_environment_config()
         
-        # Create logger
-        with tempfile.NamedTemporaryFile(suffix=".log") as f:
+        # Create logger with temp file (Windows-safe)
+        with tempfile.NamedTemporaryFile(suffix=".log", delete=False) as f:
+            temp_log_path = f.name
+        
+        try:
             config_with_log = config.copy()
-            config_with_log["log_path"] = f.name
+            config_with_log["log_path"] = temp_log_path
             
             logger = create_adaptive_logger(config_with_log)
             
@@ -284,6 +287,11 @@ class TestAdaptiveReportingIntegration:
             logger.log_threat_detected("Brute Force", "192.168.1.100", "BLOCK")
             logger.log_system_status("Monitoring", "All systems operational")
             logger.log_error("Test error", None)
+            
+            logger.close()
+        finally:
+            if Path(temp_log_path).exists():
+                Path(temp_log_path).unlink()
     
     def test_printer_with_config(self):
         """Test printer created from config"""

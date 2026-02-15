@@ -32,10 +32,10 @@ data_engine = get_engine()
 
 @app.get("/api/summary")
 def api_summary(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_user = secrets.compare_digest(credentials.username, DASHBOARD_USER)
-    correct_pass = secrets.compare_digest(credentials.password, DASHBOARD_PASS)
+    correct_user = secrets.compare_digest(credentials.username.encode('utf-8'), DASHBOARD_USER.encode('utf-8'))
+    correct_pass = secrets.compare_digest(credentials.password.encode('utf-8'), DASHBOARD_PASS.encode('utf-8'))
     if not (correct_user and correct_pass):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
 
     incidents = data_engine.query_incidents(limit=1000)
 
@@ -70,10 +70,10 @@ def api_summary(credentials: HTTPBasicCredentials = Depends(security)):
 
 @app.get("/api/records")
 def api_records(credentials: HTTPBasicCredentials = Depends(security), ip: str = None, limit: int = 100, offset: int = 0):
-    correct_user = secrets.compare_digest(credentials.username, DASHBOARD_USER)
-    correct_pass = secrets.compare_digest(credentials.password, DASHBOARD_PASS)
+    correct_user = secrets.compare_digest(credentials.username.encode('utf-8'), DASHBOARD_USER.encode('utf-8'))
+    correct_pass = secrets.compare_digest(credentials.password.encode('utf-8'), DASHBOARD_PASS.encode('utf-8'))
     if not (correct_user and correct_pass):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
 
     records = data_engine.query_incidents(limit=limit, offset=offset)
     if ip:
@@ -83,10 +83,10 @@ def api_records(credentials: HTTPBasicCredentials = Depends(security), ip: str =
 
 @app.get("/api/network")
 def api_network(credentials: HTTPBasicCredentials = Depends(security), limit: int = 200):
-    correct_user = secrets.compare_digest(credentials.username, DASHBOARD_USER)
-    correct_pass = secrets.compare_digest(credentials.password, DASHBOARD_PASS)
+    correct_user = secrets.compare_digest(credentials.username.encode('utf-8'), DASHBOARD_USER.encode('utf-8'))
+    correct_pass = secrets.compare_digest(credentials.password.encode('utf-8'), DASHBOARD_PASS.encode('utf-8'))
     if not (correct_user and correct_pass):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
 
     # Build a simple node-link between IPs and attack types
     incidents = data_engine.query_incidents(limit=limit)
@@ -153,10 +153,10 @@ async def websocket_summary(websocket: WebSocket):
 @app.get("/", response_class=HTMLResponse)
 def index(credentials: HTTPBasicCredentials = Depends(security)):
     # Validate basic auth
-    correct_user = secrets.compare_digest(credentials.username, DASHBOARD_USER)
-    correct_pass = secrets.compare_digest(credentials.password, DASHBOARD_PASS)
+    correct_user = secrets.compare_digest(credentials.username.encode('utf-8'), DASHBOARD_USER.encode('utf-8'))
+    correct_pass = secrets.compare_digest(credentials.password.encode('utf-8'), DASHBOARD_PASS.encode('utf-8'))
     if not (correct_user and correct_pass):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
 
     # Generate short-lived websocket token
     token = str(uuid.uuid4())

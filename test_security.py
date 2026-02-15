@@ -7,31 +7,42 @@ Tests all security features to ensure proper installation
 import sys
 from pathlib import Path
 
+
+def _check_dependencies() -> bool:
+    """Check that required dependencies are installed."""
+    required_modules = [
+        ("fastapi", "fastapi"),
+        ("requests", "requests"),
+        ("watchdog", "watchdog"),
+        ("dotenv", "python-dotenv"),
+        ("multipart", "python-multipart"),
+        ("uvicorn", "uvicorn"),
+        ("langchain_community", "langchain-community"),
+        ("crewai", "crewai"),
+        ("rich", "rich"),
+        ("streamlit", "streamlit"),
+        ("pandas", "pandas"),
+    ]
+
+    for module_name, package_name in required_modules:
+        try:
+            __import__(module_name)
+            print(f"✅ {package_name} installed")
+        except ImportError as e:
+            print(f"❌ {package_name} NOT installed: {e}")
+            return False
+    return True
+
 def test_dependencies():
     """Test that security dependencies are installed."""
     print("\n" + "="*60)
     print("1. Testing Security Dependencies")
     print("="*60)
-    
-    try:
-        import bcrypt
-        print("✅ bcrypt installed:", bcrypt.__version__)
-    except ImportError as e:
-        print("❌ bcrypt NOT installed:", str(e))
-        return False
-    
-    try:
-        from cryptography.fernet import Fernet
-        import cryptography
-        print("✅ cryptography installed:", cryptography.__version__)
-    except ImportError as e:
-        print("❌ cryptography NOT installed:", str(e))
-        return False
-    
-    return True
+
+    assert _check_dependencies() is True
 
 
-def test_security_manager():
+def _check_security_manager() -> bool:
     """Test security manager initialization."""
     print("\n" + "="*60)
     print("2. Testing Security Manager")
@@ -70,7 +81,12 @@ def test_security_manager():
         return False
 
 
-def test_encryption():
+def test_security_manager():
+    """Test security manager initialization."""
+    assert _check_security_manager() is True
+
+
+def _check_encryption() -> bool:
     """Test encryption/decryption."""
     print("\n" + "="*60)
     print("3. Testing Encryption")
@@ -103,7 +119,12 @@ def test_encryption():
         return False
 
 
-def test_credential_storage():
+def test_encryption():
+    """Test encryption/decryption."""
+    assert _check_encryption() is True
+
+
+def _check_credential_storage() -> bool:
     """Test credential storage."""
     print("\n" + "="*60)
     print("4. Testing Credential Storage")
@@ -144,7 +165,12 @@ def test_credential_storage():
         return False
 
 
-def test_password_strength():
+def test_credential_storage():
+    """Test credential storage."""
+    assert _check_credential_storage() is True
+
+
+def _check_password_strength() -> bool:
     """Test password strength validation."""
     print("\n" + "="*60)
     print("5. Testing Password Strength Validation")
@@ -183,7 +209,12 @@ def test_password_strength():
         return False
 
 
-def test_auth_module():
+def test_password_strength():
+    """Test password strength validation."""
+    assert _check_password_strength() is True
+
+
+def _check_auth_module() -> bool:
     """Test auth module with new security."""
     print("\n" + "="*60)
     print("6. Testing Auth Module Integration")
@@ -206,7 +237,12 @@ def test_auth_module():
         return False
 
 
-def test_token_generation():
+def test_auth_module():
+    """Test auth module with new security."""
+    assert _check_auth_module() is True
+
+
+def _check_token_generation() -> bool:
     """Test token and API key generation."""
     print("\n" + "="*60)
     print("7. Testing Token Generation")
@@ -241,7 +277,12 @@ def test_token_generation():
         return False
 
 
-def test_master_key():
+def test_token_generation():
+    """Test token and API key generation."""
+    assert _check_token_generation() is True
+
+
+def _check_master_key() -> bool:
     """Test master key creation and permissions."""
     print("\n" + "="*60)
     print("8. Testing Master Key")
@@ -280,6 +321,11 @@ def test_master_key():
         return False
 
 
+def test_master_key():
+    """Test master key creation and permissions."""
+    assert _check_master_key() is True
+
+
 def main():
     """Run all tests."""
     print("\n" + "="*60)
@@ -287,14 +333,14 @@ def main():
     print("="*60)
     
     tests = [
-        ("Dependencies", test_dependencies),
-        ("Security Manager", test_security_manager),
-        ("Encryption", test_encryption),
-        ("Credential Storage", test_credential_storage),
-        ("Password Strength", test_password_strength),
-        ("Auth Integration", test_auth_module),
-        ("Token Generation", test_token_generation),
-        ("Master Key", test_master_key),
+        ("Dependencies", _check_dependencies),
+        ("Security Manager", _check_security_manager),
+        ("Encryption", _check_encryption),
+        ("Credential Storage", _check_credential_storage),
+        ("Password Strength", _check_password_strength),
+        ("Auth Integration", _check_auth_module),
+        ("Token Generation", _check_token_generation),
+        ("Master Key", _check_master_key),
     ]
     
     results = []
