@@ -21,7 +21,7 @@ import time
 import os
 
 # Default database path (matches data_engine.py)
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "./data"
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 
 
@@ -70,18 +70,19 @@ class CLIDashboardDataManager:
     def _ensure_database_initialized(self):
         """Ensure the database and tables exist"""
         try:
-            # Ensure db_path is valid
+            # Ensure db_path is valid and not empty
             if not self.db_path or self.db_path.isspace():
+                self.logger.warning(f"Empty database path detected, using default: {DEFAULT_DB_PATH}")
                 self.db_path = DEFAULT_DB_PATH
-                self.logger.warning(f"Empty database path detected, using default: {self.db_path}")
             
+            # Create directory if needed
             db_dir = os.path.dirname(self.db_path)
-            if db_dir:  # Only create if there's a directory component
+            if db_dir:
                 os.makedirs(db_dir, exist_ok=True)
-            else:
-                # If no directory component, use current dir + data/
-                self.db_path = os.path.join("./data", "sentinel_intel.db")
-                os.makedirs("./data", exist_ok=True)
+                self.logger.info(f"Database directory ensured: {db_dir}")
+            
+            self.logger.info(f"Using database at: {self.db_path}")
+            
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
@@ -125,9 +126,10 @@ class CLIDashboardDataManager:
             
             conn.commit()
             conn.close()
-            self.logger.info(f"Database initialized at {self.db_path}")
+            self.logger.info(f"Database initialized successfully at {self.db_path}")
         except Exception as e:
             self.logger.error(f"Error initializing database: {e}")
+            raise
     
     def get_connection(self):
         """Get database connection"""
