@@ -10,6 +10,7 @@
 |----------|----------|------|----------|
 | [README.md](README.md) | Complete overview & quick start | 10 min | ✅ Zero interaction setup |
 | [QUICK_START_AUTOMATION.md](QUICK_START_AUTOMATION.md) | Fastest automated setup | 3 min | ✅ One-command deployment |
+| [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | Web dashboard usage (LIVE) | 5 min | ✅ Interactive dashboards |
 | [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) | Detailed step-by-step guide | 20 min | ✅ Full explanations |
 
 **Recommendation:** Start with `README.md`, deploy with `docker-compose up -d --build`, then run `python3 sentinel_auto.py setup`.
@@ -21,7 +22,9 @@
 | Document | Purpose |
 |----------|---------|
 | [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) | Complete automation guide for `sentinel_auto.py` |
-| [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes and improvements |
+| [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | Web dashboard (Streamlit) setup and usage |
+| [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes (auth, dashboard, API) |
+| [PROJECT_STATUS_2026_FEB_15.md](PROJECT_STATUS_2026_FEB_15.md) | Complete project status and achievements |
 
 **Key Scripts:**
 - `sentinel_auto.py` - Main automation tool (setup, demo, status)

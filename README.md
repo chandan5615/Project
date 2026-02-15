@@ -32,9 +32,11 @@ python3 sentinel_auto.py status # View dashboard
 | **README.md** (this file) | Quick start and overview |
 | [QUICK_START_AUTOMATION.md](QUICK_START_AUTOMATION.md) | Fully automated setup (zero human interaction) |
 | [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) | Automation scripts usage & sentinel_auto.py |
+| [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | Web dashboard setup and usage ✅ |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common problems and solutions |
 | [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) | Complete step-by-step setup guide |
-| [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes and improvements |
+| [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes (auth, dashboard, API) |
+| [PROJECT_STATUS_2026_FEB_15.md](PROJECT_STATUS_2026_FEB_15.md) | Complete project completion summary |
 | [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md) | All available documentation |
 
 ---
@@ -210,19 +212,34 @@ python3 view_attacks.py
 
 ### Access Dashboard
 
+**3 Dashboard Options:**
+
+**1. Quick Status (CLI) - Easiest** ⭐
 ```bash
-# Quick status dashboard
 python3 sentinel_auto.py status
 # Shows: health, metrics, incidents, IP lists
-
-# CLI Dashboard (Rich terminal UI)
-python3 dashboard/cli_dashboard.py
-# Shows: incidents, metrics, threat intel, system status
-
-# Web Dashboard (Streamlit)
-streamlit run dashboard/web_dashboard.py
-# Opens: http://localhost:8501
+# No dependencies, works everywhere
 ```
+
+**2. Rich Terminal Dashboard**
+```bash
+python3 dashboard/cli_dashboard.py
+# Shows: formatted incidents, metrics, threat intel
+# Works on Linux/Mac terminals
+```
+
+**3. Web Dashboard (Streamlit) - Full Featured** ✅
+```bash
+# Run inside container
+docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.py \
+  --server.port=8501 \
+  --server.address=0.0.0.0
+```
+**Access:** http://localhost:8501 or http://10.104.252.89:8501
+
+**Features:** Interactive plots, threat analysis, incident feed, performance metrics
+
+**See [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) for complete dashboard guide**
 
 ### API Examples
 

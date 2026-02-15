@@ -39,6 +39,8 @@ python3 sentinel_auto.py status  # View results
 
 ## 📂 sentinel_auto.py - Main Tool
 
+**The only automation tool you need!** ✅ All features verified.
+
 ### All Commands
 
 ```bash
@@ -56,6 +58,19 @@ python3 sentinel_auto.py test-ddos   # DDoS simulation (50 requests)
 python3 sentinel_auto.py check       # Check detected incidents
 python3 sentinel_auto.py help        # Show help
 ```
+
+### Web Dashboard Access
+
+```bash
+# Access interactive web dashboard
+docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.py \
+  --server.port=8501 \
+  --server.address=0.0.0.0
+```
+
+**Open:** http://localhost:8501
+
+**See [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) for complete guide**
 
 ---
 

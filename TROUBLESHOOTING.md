@@ -6,20 +6,27 @@ Fix common issues - most have a one-command solution!
 
 ## 🔧 Quick Fixes
 
-### Container Unhealthy
+### Container Unhealthy or Not Responding
 
 **Symptoms:**
 ```bash
 docker-compose ps
 # Shows: sentinel-agent   Up (unhealthy)
+# OR curl http://localhost:8000/api/health → Connection refused
 ```
 
 **Fix:**
 ```bash
-# Rebuild and restart
+# Full rebuild
 docker-compose down -v
 docker-compose up -d --build
 sleep 30
+
+# Verify
+docker-compose ps
+curl http://localhost:8000/api/health
+
+# Re-authenticate
 python3 sentinel_auto.py setup
 ```
 
