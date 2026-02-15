@@ -43,6 +43,21 @@
 
 ---
 
+## 🧪 Testing
+
+| Document | Purpose |
+|----------|---------|
+| [TEST_GUIDE.md](TEST_GUIDE.md) | Complete testing guide - running tests, troubleshooting imports, CI/CD |
+
+**Quick Test Commands:**
+```bash
+python3 -m pytest tests/ -v                  # Run all tests
+python3 -m pytest tests/test_view_attacks.py # Run single test
+python3 tests/test_view_attacks.py           # Direct execution
+```
+
+---
+
 ## 🆘 Quick Fixes
 
 ### Container Won't Start

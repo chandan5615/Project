@@ -33,6 +33,7 @@ python3 sentinel_auto.py status # View dashboard
 | [QUICK_START_AUTOMATION.md](QUICK_START_AUTOMATION.md) | Fully automated setup (zero human interaction) |
 | [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) | Automation scripts usage & sentinel_auto.py |
 | [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | Web dashboard setup and usage ✅ |
+| [TEST_GUIDE.md](TEST_GUIDE.md) | Testing guide - running tests, troubleshooting imports |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common problems and solutions |
 | [FRESH_START_GUIDE.md](FRESH_START_GUIDE.md) | Complete step-by-step setup guide |
 | [CODE_FIXES_2026_FEB_15.md](CODE_FIXES_2026_FEB_15.md) | Latest code fixes (auth, dashboard, API) |
