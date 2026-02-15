@@ -124,6 +124,36 @@ ssh ubuntu@10.104.252.89 'cd ~/Project && docker-compose ps && docker exec -it s
 
 ## 🔍 Troubleshooting
 
+### Database Errors: "no such table: incidents"
+**Cause:** Database not initialized before dashboard starts  
+**Fix:**
+```bash
+# Initialize database first
+docker exec -it sentinel-agent python3 init_database.py
+
+# Then run dashboard
+docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.py \
+  --server.port=8501 \
+  --server.address=0.0.0.0
+```
+
+### "Error initializing database: [Errno 2] No such file or directory: ''"
+**Cause:** Database path is empty or misconfigured  
+**Fix:**
+```bash
+# Verify database directory exists
+docker exec sentinel-agent ls -la /app/data/
+
+# Restart container (automatically initializes DB)
+docker-compose restart
+sleep 10
+
+# Then run dashboard
+docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.py \
+  --server.port=8501 \
+  --server.address=0.0.0.0
+```
+
 ### "streamlit: command not found"
 **Cause:** Running on host instead of container  
 **Fix:** Use `docker exec` to run inside container

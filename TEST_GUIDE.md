@@ -144,6 +144,22 @@ docker exec -it sentinel-agent python3 -m pytest /app/tests/ -v
 docker exec -it sentinel-agent python3 -m pytest /app/tests/test_view_attacks.py -v
 ```
 
+### Database Initialization for Web Dashboard
+If running Streamlit web dashboard, ensure database is initialized first:
+
+```bash
+# Initialize database (one-time)
+docker exec -it sentinel-agent python3 init_database.py
+
+# Then run web dashboard
+docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.py --server.port=8501 --server.address=0.0.0.0
+```
+
+**Important:** The database must be initialized before the Streamlit dashboard starts. The initialization happens automatically when:
+- Docker container starts (via docker-startup.sh)
+- `python3 sentinel_auto.py setup` is run
+- `python3 init_database.py` is run manually
+
 ## Continuous Integration
 
 ### GitHub Actions / CI/CD

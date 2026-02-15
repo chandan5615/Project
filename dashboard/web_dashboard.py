@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # Default database path (matches data_engine.py)
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "./data"
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 
 # Dark theme CSS
@@ -64,7 +64,19 @@ class DashboardDataManager:
     def _ensure_database_initialized(self):
         """Ensure the database and tables exist"""
         try:
-            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            # Verify database path is set
+            if not self.db_path or self.db_path.isspace():
+                self.logger.error(f"Invalid database path: {self.db_path}")
+                self.db_path = DEFAULT_DB_PATH
+            
+            # Create directories
+            db_dir = os.path.dirname(self.db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
+                self.logger.info(f"Database directory ensured: {db_dir}")
+            
+            self.logger.info(f"Using database at: {self.db_path}")
+            
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
@@ -108,9 +120,10 @@ class DashboardDataManager:
             
             conn.commit()
             conn.close()
-            self.logger.info(f"Database initialized at {self.db_path}")
+            self.logger.info(f"Database initialized successfully at {self.db_path}")
         except Exception as e:
             self.logger.error(f"Error initializing database: {e}")
+            raise
     
     def get_connection(self):
         """Get database connection"""
@@ -366,9 +379,9 @@ def render_network_health(data_manager: DashboardDataManager):
 def main():
     """Main dashboard application"""
     
-    # Initialize session state
+    # Initialize session state with default database path
     if "db_path" not in st.session_state:
-        st.session_state.db_path = "sentinel_intel.db"
+        st.session_state.db_path = DEFAULT_DB_PATH
     
     # Sidebar configuration
     with st.sidebar:
@@ -394,7 +407,8 @@ def main():
         st.divider()
         st.subheader("📈 Dashboard Info")
         st.text(f"Updated: {datetime.now().strftime('%H:%M:%S')}")
-        st.text(f"Database: {Path(db_path).name}")
+        st.text(f"Database Path: {Path(db_path).name}")
+        st.text(f"Full Path: {db_path}")
     
     # Main header
     st.title("SENTINEL AGENT - SECURITY DASHBOARD")
@@ -402,8 +416,17 @@ def main():
     
     st.divider()
     
-    # Initialize data manager
-    data_manager = DashboardDataManager(st.session_state.db_path)
+    # Initialize data manager with proper error handling
+    try:
+        data_manager = DashboardDataManager(st.session_state.db_path or DEFAULT_DB_PATH)
+    except Exception as e:
+        st.error(f"Failed to initialize database: {e}")
+        st.info(f"Using default database path: {DEFAULT_DB_PATH}")
+        try:
+            data_manager = DashboardDataManager(DEFAULT_DB_PATH)
+        except Exception as e2:
+            st.error(f"Critical error: Cannot initialize database. {e2}")
+            return
     
     # 1. Security State Card
     render_security_state_card(data_manager)
