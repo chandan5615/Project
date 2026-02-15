@@ -317,7 +317,7 @@ def render_incident_feed(data_manager: DashboardDataManager):
     df = data_manager.get_incident_feed(limit=20)
     
     if df.empty:
-        st.info("STATUS: No recent DEFAULT_DB_PATH
+        st.info("STATUS: No recent incidents detected")
     else:
         # Format for display
         display_df = df.copy()
