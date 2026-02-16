@@ -59,6 +59,11 @@ python3 sentinel_auto.py check       # Check detected incidents
 python3 sentinel_auto.py help        # Show help
 ```
 
+### Where to Run Commands
+
+**Run on host (recommended):** `sentinel_auto.py` commands above.  
+**Run inside container:** dashboards and database tools via `docker exec`.
+
 ### Web Dashboard Access
 
 ```bash

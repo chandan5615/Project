@@ -18,6 +18,35 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _is_docker() -> bool:
+    """Detect if running inside a Docker container."""
+    if os.path.exists("/.dockerenv"):
+        return True
+    try:
+        with open("/proc/self/cgroup", "r", encoding="utf-8") as f:
+            return "docker" in f.read()
+    except OSError:
+        return False
+
+
+def _resolve_writable_log_path(path: str, docker_fallback: str) -> str:
+    """Resolve a writable log path, falling back inside Docker if needed."""
+    if not path or path.isspace():
+        path = docker_fallback
+
+    if _is_docker():
+        target_dir = os.path.dirname(path) or "."
+        if os.path.exists(path):
+            if not os.access(path, os.W_OK):
+                logger.warning("Log file not writable in container, using %s", docker_fallback)
+                return docker_fallback
+        elif not os.access(target_dir, os.W_OK):
+            logger.warning("Log directory not writable in container, using %s", docker_fallback)
+            return docker_fallback
+
+    return path
+
+
 class TestAttackGenerator:
     """Generates simulated attacks for testing the Sentinel Agent"""
 
@@ -55,11 +84,13 @@ class TestAttackGenerator:
         '{ip} - - [{timestamp}] "GET /../../../etc/passwd HTTP/1.1" 400 0',
     ]
     
-    def __init__(self, 
+    def __init__(self,
                  auth_log_path: str = "/var/log/auth.log",
                  web_log_path: str = "/var/log/apache2/access.log"):
-        self.auth_log_path = Path(auth_log_path)
-        self.web_log_path = Path(web_log_path)
+        resolved_auth = _resolve_writable_log_path(auth_log_path, "/app/logs/auth.log")
+        resolved_web = _resolve_writable_log_path(web_log_path, "/app/logs/access.log")
+        self.auth_log_path = Path(resolved_auth)
+        self.web_log_path = Path(resolved_web)
         self.attack_count = 0
     
     def generate_auth_log_attacks(self, count: int = 10):
@@ -138,6 +169,11 @@ class TestAttackGenerator:
         logger.info("3. Monitor /app/logs/sentinel.log for results")
         logger.info("")
 
+        if _is_docker() and ("/app/logs" in str(self.auth_log_path) or "/app/logs" in str(self.web_log_path)):
+            logger.info("NOTE: Using /app/logs for test data. Ensure sensors read the same paths:")
+            logger.info("  AUTH_LOG_PATH=/app/logs/auth.log")
+            logger.info("  WEB_LOG_PATH=/app/logs/access.log")
+
 
 def main():
     """Main entry point"""
@@ -146,8 +182,8 @@ def main():
     parser = argparse.ArgumentParser(description="Generate test attacks for Sentinel Agent")
     parser.add_argument("--auth-count", type=int, default=15, help="Number of auth log attacks to generate")
     parser.add_argument("--web-count", type=int, default=15, help="Number of web log attacks to generate")
-    parser.add_argument("--auth-log", default="/var/log/auth.log", help="Path to auth.log")
-    parser.add_argument("--web-log", default="/var/log/apache2/access.log", help="Path to web access log")
+    parser.add_argument("--auth-log", default=os.getenv("AUTH_LOG_PATH", "/var/log/auth.log"), help="Path to auth.log")
+    parser.add_argument("--web-log", default=os.getenv("WEB_LOG_PATH", "/var/log/apache2/access.log"), help="Path to web access log")
     
     args = parser.parse_args()
     

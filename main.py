@@ -38,6 +38,7 @@ from auth import get_authenticator
 from list_manager import get_list_manager
 from metrics import get_metrics
 from anomaly_scorer import get_anomaly_scorer
+from environment_detector import EnvironmentDetector
 
 # Initialize data engine (SQLite)
 data_engine = get_engine()
@@ -68,6 +69,22 @@ root_logger.addHandler(console_handler)
 logger = logging.getLogger(__name__)
 
 
+def _resolve_log_path(preferred_path: Optional[str], default_path: str, docker_fallback: str) -> str:
+    """Resolve log path with Docker-aware fallback when unreadable."""
+    path = preferred_path if preferred_path and not preferred_path.isspace() else default_path
+
+    if EnvironmentDetector.is_docker():
+        if not os.path.exists(path) or not os.access(path, os.R_OK):
+            logger.warning(
+                "Log path not readable in container, falling back: %s -> %s",
+                path,
+                docker_fallback,
+            )
+            return docker_fallback
+
+    return path
+
+
 class SentinelAgent:
     """Main Sentinel Agent orchestrator with multi-vector ingestion."""
     
@@ -79,8 +96,19 @@ class SentinelAgent:
             auth_log_path: Path to the authentication log file
             web_log_path: Path to the web access log file (Apache/Nginx)
         """
-        self.auth_log_path = auth_log_path
-        self.web_log_path = web_log_path
+        auth_env = os.getenv("AUTH_LOG_PATH")
+        web_env = os.getenv("WEB_LOG_PATH")
+
+        self.auth_log_path = _resolve_log_path(
+            auth_env or auth_log_path,
+            "/var/log/auth.log",
+            "/app/logs/auth.log",
+        )
+        self.web_log_path = _resolve_log_path(
+            web_env or web_log_path,
+            "/var/log/apache2/access.log",
+            "/app/logs/access.log",
+        )
         self.auth_sensor = None
         self.web_sensor = None
         self.incident_history = []

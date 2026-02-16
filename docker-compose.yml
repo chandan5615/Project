@@ -98,6 +98,8 @@ services:
       OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
       
       # System Configuration
+      # Default: real host logs (read-only). For test attacks inside container,
+      # set AUTH_LOG_PATH=/app/logs/auth.log and WEB_LOG_PATH=/app/logs/access.log
       AUTH_LOG_PATH: ${AUTH_LOG_PATH:-/var/log/auth.log}
       WEB_LOG_PATH: ${WEB_LOG_PATH:-/var/log/apache2/access.log}
       SENTINEL_LOG_DIR: /app/logs

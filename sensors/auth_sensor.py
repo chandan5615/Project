@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class AuthLogHandler(FileSystemEventHandler):
     """Handler for monitoring auth.log file changes."""
     
-    def __init__(self, callback: Callable[[str, str, dict], None], log_path: str = "/var/log/auth.log"):
+    def __init__(self, callback: Callable[[str, str, dict], None], log_path: Optional[str] = None):
         """
         Initialize the auth log handler.
         
@@ -34,6 +34,8 @@ class AuthLogHandler(FileSystemEventHandler):
             log_path: Path to the auth.log file
         """
         super().__init__()
+        if not log_path or log_path.isspace():
+            log_path = os.getenv("AUTH_LOG_PATH", "/var/log/auth.log")
         self.callback = callback
         self.log_path = Path(log_path)
         self.last_position = 0
@@ -146,7 +148,7 @@ class AuthLogHandler(FileSystemEventHandler):
 class AuthSensor:
     """Sensor for monitoring authentication logs."""
     
-    def __init__(self, callback: Callable[[str, str, dict], None], log_path: str = "/var/log/auth.log"):
+    def __init__(self, callback: Callable[[str, str, dict], None], log_path: Optional[str] = None):
         """
         Initialize the authentication sensor.
         
@@ -155,6 +157,8 @@ class AuthSensor:
                      Signature: callback(ip_address, log_line, attack_info)
             log_path: Path to the auth.log file
         """
+        if not log_path or log_path.isspace():
+            log_path = os.getenv("AUTH_LOG_PATH", "/var/log/auth.log")
         self.callback = callback
         self.log_path = log_path
         self.observer = None

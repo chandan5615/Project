@@ -137,6 +137,21 @@ docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.
   --server.address=0.0.0.0
 ```
 
+### No incidents showing in dashboard
+**Cause:** Sensors read `/var/log/*` but test attacks were written to `/app/logs/*`  
+**Fix:** Generate attacks to `/app/logs` and let sensors use the same path:
+```bash
+docker exec -it sentinel-agent bash -lc "cd /app && python3 test_attacks.py \
+  --auth-log /app/logs/auth.log \
+  --web-log /app/logs/access.log \
+  --auth-count 50 --web-count 50"
+```
+
+### Can the container access host web pages?
+**Yes.** This setup uses `network_mode: host`, so the container can access host services at:
+- `http://localhost:<port>`
+- `http://<host-ip>:<port>`
+
 ### "Error initializing database: [Errno 2] No such file or directory: ''"
 **Cause:** Database path is empty or misconfigured  
 **Fix:**

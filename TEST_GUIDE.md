@@ -90,6 +90,16 @@ cd ~/Project
 python3 -m pytest tests/test_name.py -v
 ```
 
+### Test attacks not detected in dashboard
+**Cause:** Attacks written to `/app/logs/*` but sensors reading `/var/log/*`  
+**Fix:** Generate attacks in `/app/logs` inside the container:
+```bash
+docker exec -it sentinel-agent bash -lc "cd /app && python3 test_attacks.py \
+   --auth-log /app/logs/auth.log \
+   --web-log /app/logs/access.log \
+   --auth-count 50 --web-count 50"
+```
+
 **Option B: Set PYTHONPATH**
 ```bash
 cd ~/Project

@@ -182,6 +182,24 @@ docker exec sentinel-agent ps aux | grep cli_dashboard
 
 ## 🔍 Troubleshooting
 
+### Logs not detected (empty dashboard)
+**Cause:** Sensors read `/var/log/*` but test attacks were written to `/app/logs/*`  
+**Fix:** Generate test logs in `/app/logs`:
+```bash
+docker exec -it sentinel-agent bash -lc "cd /app && python3 test_attacks.py \
+    --auth-log /app/logs/auth.log \
+    --web-log /app/logs/access.log \
+    --auth-count 50 --web-count 50"
+```
+
+### Override log paths (env)
+You can force sensors to read from specific paths:
+```bash
+docker exec -it sentinel-agent env | grep LOG_PATH
+# AUTH_LOG_PATH=/var/log/auth.log
+# WEB_LOG_PATH=/var/log/apache2/access.log
+```
+
 ### "no such table: incidents"
 **Cause:** Database not initialized  
 **Fix:**

@@ -242,6 +242,21 @@ docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.
 
 **See:** [WEB_DASHBOARD_SETUP.md](WEB_DASHBOARD_SETUP.md) | [CLI_DASHBOARD_GUIDE.md](CLI_DASHBOARD_GUIDE.md) for complete guides
 
+### Where to Run Commands (Host vs Container)
+
+**Run on host (recommended):**
+- `python3 sentinel_auto.py setup`
+- `python3 sentinel_auto.py demo`
+- `python3 sentinel_auto.py status`
+
+**Run inside container:**
+- `docker exec -it sentinel-agent python3 -m dashboard.cli_dashboard`
+- `docker exec -it sentinel-agent python3 -m streamlit run dashboard/web_dashboard.py ...`
+- `docker exec -it sentinel-agent python3 init_database.py`
+
+**Container access to host web pages:**
+This project uses `network_mode: host`, so the container can access host services at `http://localhost:<port>` or the host IP (e.g., `http://10.104.252.89:8501`).
+
 ### API Examples
 
 ```bash

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class WebLogHandler(FileSystemEventHandler):
     """Handler for monitoring web access log file changes."""
     
-    def __init__(self, callback: Callable[[str, str, dict], None], log_path: str = "/var/log/apache2/access.log"):
+    def __init__(self, callback: Callable[[str, str, dict], None], log_path: Optional[str] = None):
         """
         Initialize the web log handler.
         
@@ -34,6 +34,8 @@ class WebLogHandler(FileSystemEventHandler):
             log_path: Path to the access log file (Apache or Nginx)
         """
         super().__init__()
+        if not log_path or log_path.isspace():
+            log_path = os.getenv("WEB_LOG_PATH", "/var/log/apache2/access.log")
         self.callback = callback
         self.log_path = Path(log_path)
         self.last_position = 0
@@ -131,7 +133,7 @@ class WebLogHandler(FileSystemEventHandler):
 class WebSensor:
     """Sensor for monitoring web access logs."""
     
-    def __init__(self, callback: Callable[[str, str, dict], None], log_path: str = "/var/log/apache2/access.log"):
+    def __init__(self, callback: Callable[[str, str, dict], None], log_path: Optional[str] = None):
         """
         Initialize the web access log sensor.
         
@@ -140,6 +142,8 @@ class WebSensor:
                      Signature: callback(ip_address, log_line, attack_info)
             log_path: Path to the access log file
         """
+        if not log_path or log_path.isspace():
+            log_path = os.getenv("WEB_LOG_PATH", "/var/log/apache2/access.log")
         self.callback = callback
         self.log_path = log_path
         self.observer = None

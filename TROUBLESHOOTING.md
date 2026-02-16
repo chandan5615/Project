@@ -295,6 +295,28 @@ docker-compose logs sentinel-agent | grep -i "detection\|incident\|alert"
 
 ---
 
+### 9a. Security Console Empty (No Incidents)
+
+**Symptom:**
+```bash
+dashboard shows no incidents
+```
+
+**Root Cause:** Sensors read `/var/log/*` but test attacks were written to `/app/logs/*`
+
+**Solution:** Generate test logs in `/app/logs` and let sensors read the same files:
+```bash
+docker exec -it sentinel-agent bash -lc "cd /app && python3 test_attacks.py \
+  --auth-log /app/logs/auth.log \
+  --web-log /app/logs/access.log \
+  --auth-count 50 --web-count 50"
+
+# Re-open the CLI dashboard
+docker exec -it sentinel-agent python3 -m dashboard.cli_dashboard
+```
+
+---
+
 ### 10. "requests library not found"
 
 **Symptom:**
