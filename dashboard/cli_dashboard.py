@@ -282,7 +282,7 @@ class CLIDashboardDataManager:
 class CLIDashboard:
     """Rich CLI Dashboard renderer with anti-spam filtering"""
     
-    def __init__(self, db_path: str = "sentinel_intel.db"):
+    def __init__(self, db_path: str = DEFAULT_DB_PATH):
         self.console = Console()
         self.data_manager = CLIDashboardDataManager(db_path)
         self.logger = logging.getLogger(__name__)
@@ -459,7 +459,7 @@ class CLIDashboard:
             Panel(
                 Text(
                     f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | "
-                    f"Database: sentinel_intel.db | Press Ctrl+C to exit",
+                    f"Database: {Path(self.data_manager.db_path).name} | Press Ctrl+C to exit",
                     justify="center",
                     style="dim white"
                 )
@@ -517,7 +517,7 @@ class CLIDashboard:
             self.console.print("\n[yellow]Dashboard stopped[/yellow]")
 
 
-def start_cli_dashboard(db_path: str = "sentinel_intel.db", 
+def start_cli_dashboard(db_path: str = DEFAULT_DB_PATH, 
                        live_mode: bool = True,
                        refresh_interval: float = 5.0):
     """Start the CLI dashboard

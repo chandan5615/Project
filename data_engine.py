@@ -8,9 +8,14 @@ import os
 import sqlite3
 from datetime import datetime
 from typing import Optional, Dict, Any, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
+
+logger.info(f"Data Engine initialized with DB path: {DEFAULT_DB_PATH}")
 
 class DataEngine:
     def __init__(self, db_path: Optional[str] = None):
@@ -27,54 +32,67 @@ class DataEngine:
         self._init_db()
 
     def _init_db(self):
-        with self._conn:
-            self._conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS incidents (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    timestamp TEXT,
-                    source_ip TEXT,
-                    attack_type TEXT,
-                    severity TEXT,
-                    raw_log TEXT,
-                    threat_type TEXT,
-                    action TEXT,
-                    details TEXT
+        try:
+            with self._conn:
+                self._conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS incidents (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp TEXT,
+                        source_ip TEXT,
+                        attack_type TEXT,
+                        severity TEXT,
+                        raw_log TEXT,
+                        threat_type TEXT,
+                        action TEXT,
+                        details TEXT
+                    )
+                    """
                 )
-                """
-            )
-            self._conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS actions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    incident_id INTEGER,
-                    action_type TEXT,
-                    details TEXT,
-                    success INTEGER,
-                    timestamp TEXT
+                logger.info(f"✓ incidents table created/verified in {self.db_path}")
+                self._conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS actions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        incident_id INTEGER,
+                        action_type TEXT,
+                        details TEXT,
+                        success INTEGER,
+                        timestamp TEXT
+                    )
+                    """
                 )
-                """
-            )
-            self._conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS threat_intel (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ip TEXT UNIQUE,
-                    reputation_score INTEGER,
-                    details TEXT,
-                    last_checked TEXT
+                logger.info(f"✓ actions table created/verified in {self.db_path}")
+                self._conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS threat_intel (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ip TEXT UNIQUE,
+                        reputation_score INTEGER,
+                        details TEXT,
+                        last_checked TEXT
+                    )
+                    """
                 )
-                """
-            )
+                logger.info(f"✓ threat_intel table created/verified in {self.db_path}")
+        except Exception as e:
+            logger.error(f"Error creating tables in {self.db_path}: {e}")
+            raise
 
     def insert_incident(self, source_ip: str, attack_type: str, raw_log: str, severity: str = "unknown", threat_type: str = None, action: str = None, details: str = None) -> int:
         ts = datetime.utcnow().isoformat()
-        with self._conn:
-            cur = self._conn.execute(
-                "INSERT INTO incidents (timestamp, source_ip, attack_type, severity, raw_log, threat_type, action, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (ts, source_ip, attack_type, severity, raw_log, threat_type or attack_type, action or "blocked", details or "")
-            )
-            return cur.lastrowid
+        try:
+            with self._conn:
+                cur = self._conn.execute(
+                    "INSERT INTO incidents (timestamp, source_ip, attack_type, severity, raw_log, threat_type, action, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (ts, source_ip, attack_type, severity, raw_log, threat_type or attack_type, action or "blocked", details or "")
+                )
+                incident_id = cur.lastrowid
+                logger.info(f"✓ Incident #{incident_id} inserted for {source_ip} ({attack_type})")
+                return incident_id
+        except Exception as e:
+            logger.error(f"Failed to insert incident for {source_ip}: {e}")
+            raise
 
     def insert_action(self, incident_id: int, action_type: str, details: str, success: bool = True) -> int:
         ts = datetime.utcnow().isoformat()

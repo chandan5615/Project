@@ -4,6 +4,7 @@ Simple ML-based scoring for attack anomalies and pattern recognition.
 """
 
 import json
+import os
 from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 import sqlite3
@@ -256,21 +257,22 @@ class AnomalyScorer:
         time_score = 0.7 if off_hours else 0.3
         
         # Check rapid succession (within 5 minutes of last attack)
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         ip = incident.get("source_ip", "unknown")
         cutoff = (datetime.now() - timedelta(minutes=5)).isoformat()
-        
-        cursor.execute("""
-            SELECT COUNT(*) FROM anomaly_scores 
-            WHERE incident_id IN (
-                SELECT id FROM incidents WHERE source_ip = ? AND timestamp > ?
+
+        incidents_db_path = os.getenv("SENTINEL_DB_PATH") or "/app/data/sentinel_intel.db"
+        try:
+            conn = sqlite3.connect(incidents_db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM incidents WHERE source_ip = ? AND timestamp > ?",
+                (ip, cutoff)
             )
-        """, (ip, cutoff))
-        
-        recent_count = cursor.fetchone()[0] or 0
-        conn.close()
+            recent_count = cursor.fetchone()[0] or 0
+            conn.close()
+        except Exception as e:
+            logger.warning(f"Temporal score fallback (incidents query failed): {e}")
+            return time_score
         
         if recent_count > 2:
             # Rapid succession = anomalous

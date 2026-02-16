@@ -54,6 +54,7 @@ Thumbs.db
 test_*.py
 *_test.py
 tests/
+!test_attacks.py
 
 # Temporary files
 *.tmp

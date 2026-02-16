@@ -232,9 +232,14 @@ class SentinelAgent:
                 severity=attack_info.get("severity", "medium")
             )
             
+            # Extract unique agents from tasks (CrewAI Task objects may not expose .agent directly)
+            # For now, import agents directly
+            from agents import triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent
+            agents = [triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent]
+            
             # Create and run the crew
             crew = Crew(
-                agents=[task.agent for task in tasks],
+                agents=agents,
                 tasks=tasks,
                 process=Process.sequential,
                 verbose=True
@@ -601,9 +606,18 @@ class SentinelAgent:
             logger.info("   - Resilience loop: ENABLED")
             logger.info("Press Ctrl+C to stop\n")
             
-            # Keep the main thread alive
+            # Keep the main thread alive with periodic polling fallback
+            poll_interval = 2.0
+            last_poll_time = 0.0
             while True:
                 import time
+                now = time.time()
+                if now - last_poll_time >= poll_interval:
+                    if self.auth_sensor and self.auth_sensor.handler:
+                        self.auth_sensor.handler._process_new_lines()
+                    if self.web_sensor and self.web_sensor.handler:
+                        self.web_sensor.handler._process_new_lines()
+                    last_poll_time = now
                 time.sleep(1)
                 
         except KeyboardInterrupt:
