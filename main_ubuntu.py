@@ -257,71 +257,64 @@ class SentinelAgent:
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
 
-            result = crew.run()
-            
-            # Record AI response completion time
-            ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
-            
-            # Parse and display results
-            final_report = self._extract_final_report(result, ip_address, log_line)
-            
-            # FEATURE 7: Record detection metrics
-            if incident_id:
-                perf_metrics.record_detection(
-                    incident_id=incident_id,
-                    attack_type=attack_info.get("attack_type", "unknown"),
-                    detection_time_ms=detection_start_time,
-                    ai_response_time_ms=ai_response_time,
-                    confidence=anomaly_result.get('anomaly_score', 0)
-                )
-            
-            # Store incident
-            incident_record = {
-                "ip": ip_address,
-                "log_line": log_line,
-                "report": final_report,
-                "timestamp": self._get_timestamp(),
-                "attack_type": attack_info.get("attack_type", "unknown"),
-                "severity": attack_info.get("severity", "medium"),
-                "attack_record_id": attack_record.get("id")
-            }
-            self.incident_history.append(incident_record)
-            
-            # Update attack record with actions taken
-            if attack_record.get("id") and final_report.get("action_required"):
-                action_details = f"Firewall rule: {final_report.get('firewall_rule', 'N/A')}"
-                self.attack_logger.add_action(
-                    attack_id=attack_record["id"],
-                    action_type="firewall_block",
-                    action_details=action_details,
-                    success=final_report.get("firewall_rule_verified", False)
-                )
-            
-            # Check if action is required
-            if final_report.get("action_required", False):
-                self._handle_remediation(final_report, ip_address, incident_id)
-            else:
-                logger.info(OutputFormatter.info_message(
-                    "MONITORING MODE ACTIVE",
-                    ["No immediate action required.", "System is monitoring for additional indicators."]
-                ))
-                if incident_id:
-                    try:
-                        data_engine.insert_action(incident_id, "monitoring", "No action required - monitoring", True)
-                    except Exception as e:
-                        logger.error(f"Error inserting action: {e}")
-            
-            # Update IP profile for anomaly scoring
-            anomaly_scorer.update_ip_profile(ip_address, attack_info.get("severity", "medium"))
-            
-        except Exception as e:
-            logger.error(f"Error processing security event: {e}", exc_info=True)
-    
-    def _extract_final_report(self, result: Any, ip_address: str, log_line: str) -> Dict[str, Any]:
-        """
-        Extract the final report from crew results.
+        result = crew.run()
         
-        Args:
+        # Record AI response completion time
+        ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
+        
+        final_report = self._extract_final_report(result, ip_address, log_line)
+        
+        # FEATURE 7: Record detection metrics
+        if incident_id:
+            perf_metrics.record_detection(
+                incident_id=incident_id,
+                attack_type=attack_info.get("attack_type", "unknown"),
+                detection_time_ms=detection_start_time,
+                ai_response_time_ms=ai_response_time,
+                confidence=anomaly_result.get('anomaly_score', 0)
+            )
+        
+        # Store incident
+        incident_record = {
+            "ip": ip_address,
+            "log_line": log_line,
+            "report": final_report,
+            "timestamp": self._get_timestamp(),
+            "attack_type": attack_info.get("attack_type", "unknown"),
+            "severity": attack_info.get("severity", "medium"),
+            "attack_record_id": attack_record.get("id")
+        }
+        self.incident_history.append(incident_record)
+        
+        # Update attack record with actions taken
+        if attack_record.get("id") and final_report.get("action_required"):
+            action_details = f"Firewall rule: {final_report.get('firewall_rule', 'N/A')}"
+            self.attack_logger.add_action(
+                attack_id=attack_record["id"],
+                action_type="firewall_block",
+                action_details=action_details,
+                success=final_report.get("firewall_rule_verified", False)
+            )
+        
+        # Check if action is required
+        if final_report.get("action_required", False):
+            self._handle_remediation(final_report, ip_address, incident_id)
+        else:
+            logger.info(OutputFormatter.info_message(
+                "MONITORING MODE ACTIVE",
+                ["No immediate action required.", "System is monitoring for additional indicators."]
+            ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "monitoring", "No action required - monitoring", True)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+        
+        # Update IP profile for anomaly scoring
+        anomaly_scorer.update_ip_profile(ip_address, attack_info.get("severity", "medium"))
+        
+    except Exception as e:
+        logger.error(f"Error processing security event: {e}", exc_info=True)
             result: Crew execution result
             ip_address: IP address involved
             log_line: Original log line
