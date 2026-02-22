@@ -24,6 +24,8 @@ import shlex
 import ipaddress
 from typing import Dict, Any, Optional
 import os
+import signal  # CHANGE TRACKING (2026-02-23): Added for timeout handling
+from contextlib import contextmanager  # CHANGE TRACKING (2026-02-23): Added for timeout context manager
 from crewai import Crew
 from sensors.auth_sensor import AuthSensor
 from sensors.web_sensor import WebSensor
@@ -69,6 +71,70 @@ console_handler.setFormatter(console_formatter)
 root_logger.addHandler(console_handler)
 
 logger = logging.getLogger(__name__)
+
+
+# CHANGE TRACKING (2026-02-23): Added timeout handling for AI crew analysis
+# Prevents indefinite hanging when Ollama LLM is slow or unresponsive
+class TimeoutError(Exception):
+    """Exception raised when operation times out."""
+    pass
+
+
+def run_with_timeout(func, timeout_seconds=300, *args, **kwargs):
+    """
+    Run a function with a timeout. Falls back to threading on Windows.
+    
+    Args:
+        func: Function to execute
+        timeout_seconds: Maximum execution time in seconds (default: 300 = 5 minutes)
+        *args, **kwargs: Arguments to pass to the function
+        
+    Returns:
+        Result of the function call
+        
+    Raises:
+        TimeoutError: If function execution exceeds timeout
+    """
+    import platform
+    
+    # On Unix-like systems, use signal-based timeout
+    if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM'):
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"Operation timed out after {timeout_seconds} seconds")
+        
+        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout_seconds)
+        try:
+            result = func(*args, **kwargs)
+            signal.alarm(0)  # Cancel the alarm
+            return result
+        finally:
+            signal.signal(signal.SIGALRM, old_handler)
+    else:
+        # On Windows or systems without SIGALRM, use threading
+        import threading
+        result = [None]
+        exception = [None]
+        
+        def target():
+            try:
+                result[0] = func(*args, **kwargs)
+            except Exception as e:
+                exception[0] = e
+        
+        thread = threading.Thread(target=target)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout_seconds)
+        
+        if thread.is_alive():
+            logger.error(f"❌ AI analysis timed out after {timeout_seconds} seconds")
+            raise TimeoutError(f"Operation timed out after {timeout_seconds} seconds")
+        
+        if exception[0]:
+            raise exception[0]
+            
+        return result[0]
 
 
 def _resolve_log_path(preferred_path: Optional[str], default_path: str, docker_fallback: str) -> str:
@@ -274,13 +340,56 @@ class SentinelAgent:
                     except Exception as e:
                         logger.error(f"Error inserting action: {e}")
 
-                result = crew.kickoff()
+                # CHANGE TRACKING (2026-02-23): Added timeout handling for AI crew analysis
+                # Prevents indefinite hanging when Ollama is slow (default: 5 minutes)
+                timeout = int(os.getenv("CREW_TIMEOUT", "300"))
+                try:
+                    result = run_with_timeout(crew.kickoff, timeout)
+                except TimeoutError as e:
+                    logger.error(f"⚠️  AI analysis timed out after {timeout}s - falling back to automated response")
+                    if incident_id:
+                        data_engine.insert_action(incident_id, "analysis_timeout", f"Timeout after {timeout}s", False)
+                    
+                    # Fallback to simple automated response
+                    final_report = f"""
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                           AI ANALYSIS TIMEOUT - AUTOMATED RESPONSE                                   ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                      ║
+║  🎯 THREAT SOURCE    : {ip_address:<79}║
+║  🔥 ATTACK TYPE      : {attack_info.get("attack_type", "unknown"):<79}║
+║  ⚠️  SEVERITY LEVEL   : {attack_info.get("severity", "medium"):<79}║
+║                                                                                                      ║
+║  ⚠️  AI TIMEOUT       : Analysis exceeded {timeout} seconds - Ollama may be slow/unresponsive        ║
+║  ✅ FALLBACK ACTION  : Attack logged and IP blocked automatically                                    ║
+║  📊 STATUS           : Incident recorded in database                                                ║
+║  🛡️  PROTECTION       : IP added to monitoring watchlist                                             ║
+║                                                                                                      ║
+║  💡 RECOMMENDATION   : Check Ollama service status and model performance                             ║
+║                       Increase CREW_TIMEOUT env var if needed                                        ║
+║                                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+"""
+                    logger.info(final_report)
+                    # Continue with the rest of the processing
+                    result = None
+                    ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
+                    final_report_to_use = final_report
+                except Exception as e:
+                    logger.error(f"❌ Error during AI analysis: {e}")
+                    if incident_id:
+                        data_engine.insert_action(incident_id, "analysis_error", str(e), False)
+                    result = None
+                    ai_response_time = 0
+                    final_report_to_use = f"Error: {e}"
                 
                 # Record AI response completion time
-                ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
+                if result:
+                    ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
+                    # Parse and display results
+                    final_report_to_use = self._extract_final_report(result, ip_address, log_line)
                 
-                # Parse and display results
-                final_report = self._extract_final_report(result, ip_address, log_line)
+                final_report = final_report_to_use
             else:
                 # Simple automated response without AI - just log and block
                 final_report = f"""

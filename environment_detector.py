@@ -107,11 +107,18 @@ class EnvironmentDetector:
         """
         mode = EnvironmentDetector.get_mode()
         
+        # CHANGE TRACKING (2026-02-23): Fixed path detection for non-Docker environments
+        # Use ./data for local development, /app/data for Docker
+        is_docker = EnvironmentDetector.is_docker()
+        default_data_dir = "/app/data" if is_docker else "./data"
+        data_dir = os.environ.get("SENTINEL_DATA_DIR", default_data_dir)
+        
         config = {
             "mode": mode,
             "print_heartbeat": mode in ["gui", "docker"],
             "use_rich_output": mode in ["cli", "docker"],
-            "db_path": os.environ.get("DATA_DIR", "/app/data") + "/sentinel_intel.db",
+            "db_path": os.path.join(data_dir, "sentinel_intel.db"),
+            "data_dir": data_dir,  # CHANGE TRACKING: Added data_dir to config
         }
         
         dashboard_enabled = mode == "gui"

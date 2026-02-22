@@ -76,11 +76,16 @@ if os.getenv('SENTINEL_SKIP_OLLAMA_CHECK', '0') != '1':
 # Get Ollama model from environment or use default
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3:8b")
 
+# CHANGE TRACKING (2026-02-23): Added timeout configuration to prevent hanging
+# Default timeout: 300 seconds (5 minutes) for LLM responses
+OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "300"))
+
 # Initialize LLM with Ollama
 llm = LLM(
     model=f"ollama/{OLLAMA_MODEL}",
     base_url=get_ollama_url(),
-    temperature=0.7
+    temperature=0.7,
+    timeout=OLLAMA_TIMEOUT  # CHANGE TRACKING: Added timeout to prevent hanging
 )
 
 # Keep these as placeholders so CrewAI doesn't look for OpenAI keys

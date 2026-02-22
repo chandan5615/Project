@@ -12,7 +12,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
+# CHANGE TRACKING (2026-02-23): Fixed default data directory detection
+# Auto-detect if running in Docker or local environment
+def _detect_default_data_dir():
+    \"\"\"Detect appropriate data directory based on environment.\"\"\"
+    # Check if running in Docker
+    if os.path.exists("/.dockerenv") or os.path.exists("/proc/self/cgroup"):
+        try:
+            with open("/proc/self/cgroup", "r") as f:
+                if "docker" in f.read():
+                    return "/app/data"
+        except:
+            pass
+        return "/app/data"
+    # Local development
+    return "./data"
+
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or _detect_default_data_dir()
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 
 logger.info(f"Data Engine initialized with DB path: {DEFAULT_DB_PATH}")

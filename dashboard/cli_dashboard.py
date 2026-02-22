@@ -54,8 +54,21 @@ from rich.align import Align
 import time
 import os
 
-# Default database path (matches data_engine.py)
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
+# CHANGE TRACKING (2026-02-23): Fixed database path detection for non-Docker environments
+# Auto-detect if running in Docker or local environment
+def _detect_default_data_dir():
+    """Detect appropriate data directory based on environment."""
+    if os.path.exists("/.dockerenv"):
+        return "/app/data"
+    try:
+        with open("/proc/self/cgroup", "r") as f:
+            if "docker" in f.read():
+                return "/app/data"
+    except:
+        pass
+    return "./data"
+
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or _detect_default_data_dir()
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
 REFRESH_INTERVAL = int(os.getenv("CLI_REFRESH_INTERVAL") or "5")
 
