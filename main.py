@@ -127,6 +127,10 @@ class SentinelAgent:
             attack_info: Attack detection information dictionary
             source: Source of the event ("auth" or "web")
         """
+        # Record processing start time
+        import time
+        processing_start_ms = time.time() * 1000
+        
         # Initialize feature modules
         threat_intel = get_threat_intelligence()
         list_mgr = get_list_manager()
@@ -301,10 +305,13 @@ class SentinelAgent:
             
             # FEATURE 7: Record detection metrics
             if incident_id:
+                import time
+                processing_time_ms = int((time.time() * 1000) - processing_start_ms)
                 perf_metrics.record_detection(
                     incident_id=incident_id,
                     attack_type=attack_info.get("attack_type", "unknown"),
                     detection_time_ms=detection_start_time,
+                    processing_time_ms=processing_time_ms,
                     ai_response_time_ms=ai_response_time,
                     confidence=anomaly_result.get('anomaly_score', 0)
                 )

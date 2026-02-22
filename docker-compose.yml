@@ -83,19 +83,29 @@ services:
     # Security & Networking
     user: root  # Required for iptables and log monitoring
     privileged: true  # Required for firewall control
-    network_mode: host  # Access to all host network interfaces
+    # network_mode: host  # Commented out to enable port mapping
     cap_add:
       - NET_ADMIN  # Network administration
       - SYS_ADMIN  # System administration
+    
+    # Port mappings for external access
+    ports:
+      - "8000:8000"  # API server
+      - "8501:8501"  # Dashboard (Streamlit)
+    
+    # Host resolution for container (to reach host Ollama)
+    extra_hosts:
+      - "host.docker.internal:192.168.31.91"
+      - "ollama-host:192.168.31.91"
     
     restart: unless-stopped  # Auto-restart if crashes
     
     # Environment variables
     environment:
-      # Ollama Configuration (using host Ollama on localhost)
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      # Ollama Configuration (using host Ollama via extra_hosts resolution)
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3:8b}
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
       
       # System Configuration
       # Monitor actual system logs (mounted via /var/log volume)

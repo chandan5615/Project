@@ -42,6 +42,22 @@ OLLAMA_FOUND=false
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     # Check host Ollama (127.0.0.1:11434)
+    # Check host.docker.internal (Linux with extra_hosts setup)
+    if check_ollama "http://host.docker.internal:11434"; then
+        OLLAMA_URL="http://host.docker.internal:11434"
+        OLLAMA_FOUND=true
+        echo "[SUCCESS] Found Ollama via host.docker.internal at ${OLLAMA_URL}"
+        break
+    fi
+    
+    # Check server IP (manual configuration)
+    if check_ollama "http://192.168.31.91:11434"; then
+        OLLAMA_URL="http://192.168.31.91:11434"
+        OLLAMA_FOUND=true
+        echo "[SUCCESS] Found Ollama on server IP at ${OLLAMA_URL}"
+        break
+    fi
+    
     if check_ollama "http://127.0.0.1:11434"; then
         OLLAMA_URL="http://127.0.0.1:11434"
         OLLAMA_FOUND=true
