@@ -105,7 +105,7 @@ curl -X POST http://localhost:8000/api/auth/login \
 
 # Response:
 # {
-#   "token": "eyJhbGciOiJIUzI1NiIs...",
+#   "token": "TOKEN_FROM_LOGIN",
 #   "expires_in": 86400,
 #   "token_type": "Bearer"
 # }
@@ -113,7 +113,7 @@ curl -X POST http://localhost:8000/api/auth/login \
 
 Store the token in an environment variable:
 ```bash
-export TOKEN="eyJhbGciOiJIUzI1NiIs..."
+export TOKEN="TOKEN_FROM_LOGIN"
 ```
 
 ---
@@ -476,11 +476,11 @@ All API calls (except `/health`) require authentication:
 
 ```bash
 # Using token
-curl -H "X-API-Key: YOUR_TOKEN" \
+curl -H "X-API-Key: $TOKEN" \
   http://localhost:8000/api/endpoint
 
 # Or using Bearer token
-curl -H "Authorization: Bearer YOUR_TOKEN" \
+curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/endpoint
 ```
 

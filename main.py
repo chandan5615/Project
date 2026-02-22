@@ -20,6 +20,8 @@ import json
 import sys
 import subprocess
 import re
+import shlex
+import ipaddress
 from typing import Dict, Any, Optional
 import os
 from crewai import Crew, Process
@@ -430,6 +432,40 @@ class SentinelAgent:
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
     
+    def _parse_firewall_rule(self, rule: str, ip_address: str) -> Optional[list]:
+        try:
+            ipaddress.ip_address(ip_address)
+        except ValueError:
+            return None
+
+        try:
+            parts = shlex.split(rule)
+        except ValueError:
+            return None
+
+        if not parts or parts[0] != "iptables":
+            return None
+
+        if ip_address not in parts:
+            return None
+
+        allowed_flags = {"-A", "-I", "-s", "-j", "-m", "--comment", "-w", "--wait"}
+        allowed_tokens = {"iptables", "INPUT", "DROP", "comment", ip_address}
+
+        for idx, token in enumerate(parts):
+            if token in allowed_tokens or token in allowed_flags:
+                continue
+            if token.isdigit() and "-I" in parts:
+                continue
+            if idx > 0 and parts[idx - 1] == "--comment":
+                continue
+            return None
+
+        if "-j" not in parts or "DROP" not in parts:
+            return None
+
+        return parts
+
     def _execute_firewall_rule(self, rule: str, ip_address: str, incident_id: Optional[int] = None):
         """
         Execute firewall rule with additional human confirmation.
@@ -439,8 +475,9 @@ class SentinelAgent:
             ip_address: IP address being blocked
             incident_id: Optional DB incident id for logging actions
         """
-        # Extract just the iptables command (safety check)
-        if not rule.startswith("iptables"):
+        # Parse and validate the iptables command (safety check)
+        command = self._parse_firewall_rule(rule, ip_address)
+        if not command:
             logger.error(OutputFormatter.error_message(
                 "INVALID FIREWALL RULE",
                 "The firewall rule format is invalid. Operation cancelled."
@@ -475,7 +512,7 @@ class SentinelAgent:
             
             # Execute the command
             result = subprocess.run(
-                rule.split(),
+                command,
                 capture_output=True,
                 text=True,
                 timeout=10

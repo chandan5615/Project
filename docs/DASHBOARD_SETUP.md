@@ -43,7 +43,7 @@ Basic Auth and WebSocket token
 - The dashboard requires HTTP Basic credentials defined by environment variables:
   - `DASHBOARD_USER` (default: `sentinel`)
   - `DASHBOARD_PASS` (default: `sentinel`)
-- When you load the dashboard in your browser (after Basic Auth), it generates a short-lived WebSocket token (TTL configurable by `DASHBOARD_WS_TOKEN_TTL`) used to upgrade to `ws://`.
+- When you load the dashboard in your browser (after Basic Auth), it generates a short-lived WebSocket token (TTL configurable by `DASHBOARD_WS_TOKEN_TTL`) used to upgrade to `wss://` for non-localhost access.
 - Do not expose these credentials publicly; change them in production and store secrets securely.
 
 Docker Notes

@@ -93,9 +93,11 @@ COPY docker-startup.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-startup.sh
 
 # Create required directories with proper permissions
-# Run as root for maximum compatibility - no permission issues!
-RUN mkdir -p /app/logs /app/data /app/data/secrets && \
-    chmod -R 777 /app/logs /app/data
+# Create unprivileged user and set permissions
+RUN adduser --system --home /app --shell /usr/sbin/nologin appuser && \
+    mkdir -p /app/logs /app/data /app/data/secrets && \
+    chown -R appuser:appuser /app && \
+    chmod -R 755 /app/logs /app/data
 
 # Health check - verify system is running
 # Increased start-period to 60s for initial setup
@@ -106,6 +108,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # - 8000: REST API (FastAPI)
 # - 8501: Web Dashboard (Streamlit) - optional
 EXPOSE 8000 8501
+
+# Drop privileges
+USER appuser
 
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

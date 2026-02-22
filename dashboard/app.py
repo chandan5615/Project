@@ -116,7 +116,7 @@ def api_network(credentials: HTTPBasicCredentials = Depends(security), limit: in
 
 @app.websocket("/ws/summary")
 async def websocket_summary(websocket: WebSocket):
-    # Validate token passed as query param: ws://host/ws/summary?token=...
+    # Validate token passed as query param: wss://host/ws/summary?token=...
     token = websocket.query_params.get('token')
     if token is None or token not in _active_tokens:
         await websocket.close(code=1008)

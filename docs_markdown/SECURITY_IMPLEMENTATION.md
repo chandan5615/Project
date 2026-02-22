@@ -141,7 +141,7 @@ cat data/INITIAL_CREDENTIALS.txt
 You'll see something like:
 ```
 Username: admin
-Password: Xj7kP9mN4vQ2wR5tY8zL6hB3nV1cF0gS
+Password: INITIAL_PASSWORD_HERE
 ```
 
 ### Step 2: Change Password Immediately
@@ -158,7 +158,7 @@ curl -X POST http://localhost:8000/api/auth/change-password \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
-    "old_password": "Xj7kP9mN4vQ2wR5tY8zL6hB3nV1cF0gS",
+      "old_password": "INITIAL_PASSWORD_HERE",
     "new_password": "MyNewSecurePassword123!"
   }'
 ```

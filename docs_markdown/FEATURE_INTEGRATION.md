@@ -312,10 +312,10 @@ uvicorn sentinel_api:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 # Login to get token
 curl -X POST http://localhost:8000/api/auth/login \
-  -d "username=admin&password=sentinel123"
+   -d "username=admin&password=YOUR_PASSWORD"
 
 # Use token in subsequent requests
-curl -H "X-API-Key: YOUR_TOKEN" http://localhost:8000/api/metrics/dashboard
+curl -H "X-API-Key: $SENTINEL_API_KEY" http://localhost:8000/api/metrics/dashboard
 ```
 
 ---
@@ -383,10 +383,10 @@ curl http://localhost:8000/api/health
 # Login
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=sentinel123"
+   -d "username=admin&password=YOUR_PASSWORD"
 
 # Get metrics (use token from login)
-curl -H "X-API-Key: TOKEN_HERE" http://localhost:8000/api/metrics/dashboard
+curl -H "X-API-Key: $SENTINEL_API_KEY" http://localhost:8000/api/metrics/dashboard
 ```
 
 ---

@@ -5,6 +5,7 @@ Provides CrewAI tools for threat intelligence, system context, and firewall mana
 
 import subprocess
 import re
+import ipaddress
 from typing import Optional
 from pathlib import Path
 try:
@@ -358,12 +359,18 @@ def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
         "final_rule": None,
         "errors": []
     }
+
+    try:
+        ipaddress.ip_address(ip)
+    except ValueError:
+        result["errors"].append("Invalid IP address format")
+        return json.dumps(result, indent=2)
     
     # Different command variations to try
     commands = [
-        f"iptables -A INPUT -s {ip} -j DROP -m comment --comment \"Sentinel Agent: Blocked {ip}\"",
-        f"iptables -I INPUT 1 -s {ip} -j DROP -m comment --comment \"Sentinel Agent: Blocked {ip}\"",
-        f"iptables -A INPUT -s {ip} -j DROP",
+        ["iptables", "-A", "INPUT", "-s", ip, "-j", "DROP", "-m", "comment", "--comment", f"Sentinel Agent: Blocked {ip}"],
+        ["iptables", "-I", "INPUT", "1", "-s", ip, "-j", "DROP", "-m", "comment", "--comment", f"Sentinel Agent: Blocked {ip}"],
+        ["iptables", "-A", "INPUT", "-s", ip, "-j", "DROP"],
     ]
     
     for attempt in range(max_attempts):
@@ -373,7 +380,7 @@ def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
         try:
             # Execute the command
             exec_result = subprocess.run(
-                cmd.split(),
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -386,7 +393,7 @@ def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
                 
                 if verify_data.get("rule_exists"):
                     result["success"] = True
-                    result["final_rule"] = cmd
+                    result["final_rule"] = " ".join(cmd)
                     break
                 else:
                     result["errors"].append(f"Attempt {attempt + 1}: Rule executed but not found in firewall table")
