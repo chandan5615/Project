@@ -485,18 +485,7 @@ class SentinelAgent:
         logger.warning(f"  Firewall Command: {rule}\n")
         final_confirm = input("  Type 'EXECUTE' to proceed, or anything else to cancel: ").strip()
         
-        if final_confirm != "EXECUTE":
-            logger.info(OutputFormatter.info_message(
-                "EXECUTION CANCELLED",
-                ["Operation was cancelled by user."]
-            ))
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "execution_cancelled", "User cancelled execution", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
-            return
-        else:
+        if final_confirm == "EXECUTE":
             try:
                 logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
                 logger.info("  Status: Processing...\n")
@@ -599,6 +588,17 @@ class SentinelAgent:
                         data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
                     except Exception as e:
                         logger.error(f"Error inserting action: {e}")
+        else:
+            logger.info(OutputFormatter.info_message(
+                "EXECUTION CANCELLED",
+                ["Operation was cancelled by user."]
+            ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "execution_cancelled", "User cancelled execution", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+            return
     
     def _get_timestamp(self) -> str:
         """Get current timestamp as string."""
