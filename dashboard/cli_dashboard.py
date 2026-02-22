@@ -80,7 +80,7 @@ class AntiSpamFilter:
         # Prevent memory leaks - keep set bounded
         if len(self.reported_ips) > self.max_history:
             # Remove oldest entries (keep most recent)
-            items = list(self.reported_ips)
+            items = sorted(self.reported_ips)
             self.reported_ips = set(items[-self.max_history:])
     
     def print_new_block_alert(self, ip: str, threat_type: str, action: str):
@@ -368,7 +368,7 @@ class CLIDashboard:
                 try:
                     dt = datetime.fromisoformat(block['timestamp'])
                     time_str = dt.strftime("%H:%M:%S")
-                except:
+                except (ValueError, TypeError, KeyError):
                     time_str = "unknown"
                 
                 table.add_row(
@@ -413,7 +413,7 @@ class CLIDashboard:
                 try:
                     dt = datetime.fromisoformat(alert['timestamp'])
                     time_str = dt.strftime("%H:%M:%S")
-                except:
+                except (ValueError, TypeError, KeyError):
                     time_str = "unknown"
                 
                 table.add_row(

@@ -88,7 +88,7 @@ class OutputFormatter:
     def agent_status(agent_name: str, status: str, message: str = None) -> str:
         """Format agent status update."""
         status_display = f"[{status.upper()}]"
-        output = f"    {status_display:15} {agent_name:30} ", 
+        output = f"    {status_display:15} {agent_name:30} "
         if message:
             output += f" | {message}"
         return "".join(output)

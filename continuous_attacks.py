@@ -130,7 +130,7 @@ def main():
     try:
         r = requests.get(TARGET, timeout=5)
         print_status(f"✓ Connected! Status: {r.status_code}", Colors.GREEN)
-    except:
+    except requests.exceptions.RequestException:
         print_status("✗ Cannot connect to target!", Colors.RED)
         sys.exit(1)
     

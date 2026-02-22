@@ -134,7 +134,18 @@ Auto-installed by `AUTO_INSTALL.sh`:
 - 📋 **[TROUBLESHOOTING_COMPLETE.md](TROUBLESHOOTING_COMPLETE.md)** - Complete troubleshooting guide (all known issues)
 - 🔴 **[configure_ollama_network.sh](configure_ollama_network.sh)** - Fix Ollama connection errors (most common issue)
 
-### **📊 Dashboard & Features:**
+### **� IP Management & Access Control (NEW!):**
+- 🔓 **[IP_UNBLOCK_GUIDE.md](IP_UNBLOCK_GUIDE.md)** - Guide for unblocking IPs blocked by security system
+- 🛡️ **[ip_manager.sh](ip_manager.sh)** - Interactive menu for managing whitelist/blacklist
+- 🔧 **[unblock_ip.py](unblock_ip.py)** - Python utility to programmatically unblock IPs
+- ⚠️ **[UNBLOCK_INSTRUCTIONS.txt](UNBLOCK_INSTRUCTIONS.txt)** - Step-by-step manual unblock commands
+
+**Why your IP might be blocked:**
+- The security system detected repeated connection attempts and classified them as a brute-force attack
+- This is expected during setup/testing and proves the security system is working!
+- To unblock: Run the IP_UNBLOCK_GUIDE or use the ip_manager.sh interactive tool
+
+### **�📊 Dashboard & Features:**
 - 🎨 **[DASHBOARD_GUIDE.md](DASHBOARD_GUIDE.md)** - Complete dashboard tutorial
 - 📝 **[DASHBOARD_UPDATE_SUMMARY.md](DASHBOARD_UPDATE_SUMMARY.md)** - Dashboard features overview
 - ⚙️ **[FEATURE_INTEGRATION.md](docs_markdown/FEATURE_INTEGRATION.md)** - Feature details

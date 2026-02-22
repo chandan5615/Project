@@ -177,6 +177,8 @@ class DashboardDataManager:
             }
         except Exception as e:
             self.logger.error(f"Error fetching incident summary: {e}")
+            if 'conn' in locals():
+                conn.close()
             return {"total_incidents": 0, "last_24h": 0, "unique_sources": 0}
     
     def get_blocked_ips(self, limit: int = 20) -> pd.DataFrame:

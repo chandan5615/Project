@@ -185,7 +185,7 @@ def _check_password_strength() -> bool:
         
         test_cases = [
             ("weak", False, "Should reject weak password"),
-            ("Weak123", False, "Should reject 8-char password"),
+            ("Weak123", False, "Should reject 7-char password"),
             ("StrongPassword123!", True, "Should accept strong password"),
             ("VeryStr0ng!Pass", True, "Should accept strong password"),
         ]

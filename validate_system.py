@@ -65,7 +65,7 @@ def check_module_imports():
             errors.append((module_name, e))
     
     print(f"\n{success_count}/{len(modules)} modules imported successfully")
-    return errors
+    return len(errors) == 0
 
 def check_crewai_compatibility():
     """Check CrewAI API compatibility"""

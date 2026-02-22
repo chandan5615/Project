@@ -37,7 +37,7 @@ for attr in ['kickoff', 'run', 'execute']:
         try:
             sig = inspect.signature(getattr(Crew, attr))
             print(f"\n  Crew.{attr}{sig}")
-        except:
+        except (ValueError, TypeError):
             print(f"\n  Crew.{attr} - Could not get signature")
 
 print("\n" + "="*60)

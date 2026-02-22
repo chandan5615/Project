@@ -107,10 +107,10 @@ class SetupVerifier:
         databases = [
             (os.path.join(self.data_dir, "sentinel_intel.db"), ["incidents", "actions", "threat_intel"]),
             (os.path.join(self.data_dir, "auth.db"), ["users", "sessions", "api_keys"]),
-            (os.path.join(self.data_dir, "threat_intel.db"), ["malicious_ips", "patterns", "safe_ips", "cache"]),
+            (os.path.join(self.data_dir, "threat_intel.db"), ["malicious_ips", "malicious_patterns", "safe_ips", "ip_reputation_cache"]),
             (os.path.join(self.data_dir, "lists.db"), ["ip_whitelist", "ip_blacklist", "pattern_whitelist", "pattern_blacklist"]),
-            (os.path.join(self.data_dir, "metrics.db"), ["detection_metrics", "response_metrics", "hourly_stats", "health_metrics"]),
-            (os.path.join(self.data_dir, "anomalies.db"), ["anomaly_patterns", "anomaly_scores", "ip_profiles"]),
+            (os.path.join(self.data_dir, "metrics.db"), ["detection_metrics", "response_metrics", "hourly_stats", "system_health"]),
+            (os.path.join(self.data_dir, "anomalies.db"), ["baseline_patterns", "anomaly_scores", "ip_profiles"]),
         ]
         
         for db_path, expected_tables in databases:

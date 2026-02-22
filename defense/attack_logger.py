@@ -47,6 +47,12 @@ class AttackLogger:
                 json.dump(self.records, f, indent=2, ensure_ascii=False)
         except IOError as e:
             logger.error(f"Could not save attack records: {e}")
+
+    def _next_id(self) -> int:
+        """Generate next unique record ID."""
+        if not self.records:
+            return 1
+        return max(r.get("id", 0) for r in self.records) + 1
     
     def log_attack(
         self,
@@ -72,7 +78,7 @@ class AttackLogger:
             Attack record dictionary
         """
         record = {
-            "id": len(self.records) + 1,
+            "id": self._next_id(),
             "date": datetime.now().strftime("%Y-%m-%d"),
             "time": datetime.now().strftime("%H:%M:%S"),
             "timestamp": datetime.now().isoformat(),

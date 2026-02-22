@@ -10,3 +10,9 @@ class Observer:
 
     def stop(self):
         pass
+
+    def join(self):
+        pass
+
+    def is_alive(self):
+        return False
