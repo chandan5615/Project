@@ -22,6 +22,11 @@ wget -O- https://raw.githubusercontent.com/chandan5615/Project/main/AUTO_INSTALL
 # OR if you have the files:
 chmod +x AUTO_INSTALL.sh
 sudo ./AUTO_INSTALL.sh --non-interactive
+
+# If you get "not found" errors, fix line endings first:
+sed -i 's/\r$//' AUTO_INSTALL.sh
+chmod +x AUTO_INSTALL.sh
+sudo ./AUTO_INSTALL.sh --non-interactive
 ```
 
 **That's it!** Installer automatically handles:
