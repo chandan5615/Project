@@ -11,15 +11,15 @@ echo ""
 # Ensure permissions are correct (run as root in container)
 echo "[0/6] Setting up permissions..."
 chmod -R 777 /app/data /app/logs 2>/dev/null || true
-echo "      ÃŽâ€œÃ‚Â£ÃƒÂ´ Permissions set"
+echo "      ✓ Permissions set"
 echo ""
 
 # Initialize databases first
 echo "[1/6] Initializing databases..."
 if python init_database.py 2>&1; then
-    echo "      ÃŽâ€œÃ‚Â£ÃƒÂ´ Databases initialized"
+    echo "      ✓ Databases initialized"
 else
-    echo "      ÃŽâ€œÃƒÅ“ÃƒÂ¡ Database initialization had issues (continuing anyway)"
+    echo "      ⚠ Database initialization had issues (continuing anyway)"
     echo "      This is normal if databases already exist"
 fi
 echo ""
@@ -30,12 +30,12 @@ echo "[2/6] Checking test attacks..."
 if [ -w /var/log/auth.log ] 2>/dev/null; then
     echo "      Generating test attacks..."
     if python test_attacks.py --auth-count 20 --web-count 20 2>/dev/null; then
-        echo "      ÃŽâ€œÃ‚Â£ÃƒÂ´ Test attacks generated"
+        echo "      ✓ Test attacks generated"
     else
-        echo "      ÃŽâ€œÃƒÅ“ÃƒÂ¡ Could not generate test attacks"
+        echo "      ⚠ Could not generate test attacks"
     fi
 else
-    echo "      ÃŽâ€œÃƒÅ“ÃƒÂ¡ Skipping test attacks (logs not writable in Docker)"
+    echo "      ⚠ Skipping test attacks (logs not writable in Docker)"
     echo "      You can generate attacks from outside the container"
 fi
 echo ""
@@ -44,7 +44,7 @@ echo ""
 echo "[3/6] Starting Sentinel Agent monitor (main.py)..."
 python main.py 2>&1 &
 MAIN_PID=$!
-echo "      ÃŽâ€œÃ‚Â£ÃƒÂ´ Monitor started (PID: $MAIN_PID)"
+echo "      ✓ Monitor started (PID: $MAIN_PID)"
 
 # Give main.py time to initialize
 echo ""
@@ -53,9 +53,9 @@ sleep 5
 
 # Check if main.py is still running
 if kill -0 $MAIN_PID 2>/dev/null; then
-    echo "      ÃŽâ€œÃ‚Â£ÃƒÂ´ Monitor is running"
+    echo "      ✓ Monitor is running"
 else
-    echo "      ÃŽâ€œÃƒÅ“ÃƒÂ¡ Monitor may have crashed (check logs)"
+    echo "      ⚠ Monitor may have crashed (check logs)"
 fi
 echo ""
 

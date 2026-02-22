@@ -16,7 +16,6 @@ from list_manager import get_list_manager, ListManager
 from threat_intelligence import get_threat_intelligence, OfflineThreatIntelligence
 from anomaly_scorer import get_anomaly_scorer, AnomalyScorer
 from data_engine import get_engine
-import sqlite3
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +280,7 @@ def get_ip_profile(
     username: str = Depends(verify_api_key)
 ):
     """Get behavior profile for IP."""
-    conn = sqlite3.connect(scorer.db_path)
+    conn = __import__('sqlite3').connect(scorer.db_path)
     cursor = conn.cursor()
     
     cursor.execute("""
@@ -328,16 +327,11 @@ def get_incident(
 ):
     """Get specific incident details."""
     engine = get_engine()
-    # Query directly by ID for efficiency
-    conn = sqlite3.connect(engine.db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,))
-    row = cursor.fetchone()
-    conn.close()
+    incidents = engine.query_incidents()
     
-    if row:
-        return dict(row)
+    for incident in incidents:
+        if incident.get('id') == incident_id:
+            return incident
     
     raise HTTPException(status_code=404, detail="Incident not found")
 
@@ -348,14 +342,9 @@ def get_incidents_by_ip(
 ):
     """Get all incidents from specific IP."""
     engine = get_engine()
-    conn = sqlite3.connect(engine.db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM incidents WHERE source_ip = ? ORDER BY timestamp DESC", (ip,))
-    rows = cursor.fetchall()
-    conn.close()
+    incidents = engine.query_incidents()
     
-    matching = [dict(r) for r in rows]
+    matching = [i for i in incidents if i.get('source_ip') == ip]
     
     return {
         "ip": ip,

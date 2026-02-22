@@ -232,7 +232,7 @@ class AnomalyScorer:
                 else:
                     # Consistent pattern = less anomalous
                     behavior_score = 0.3
-            except (json.JSONDecodeError, TypeError):
+            except:
                 behavior_score = 0.5
         else:
             # New IP = moderately anomalous behavior
@@ -249,7 +249,7 @@ class AnomalyScorer:
         - Inter-arrival time (rapid succession = anomalous)
         - Deviation from baseline timing
         """
-        now = datetime.utcnow()
+        now = datetime.now()
         hour = now.hour
         
         # Off-hours detection (0-6 AM, 10 PM-midnight)
@@ -258,7 +258,7 @@ class AnomalyScorer:
         
         # Check rapid succession (within 5 minutes of last attack)
         ip = incident.get("source_ip", "unknown")
-        cutoff = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+        cutoff = (datetime.now() - timedelta(minutes=5)).isoformat()
 
         incidents_db_path = os.getenv("SENTINEL_DB_PATH") or "/app/data/sentinel_intel.db"
         try:
@@ -343,7 +343,7 @@ class AnomalyScorer:
                  last_seen, behavior_pattern)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (ip, new_total, new_avg, attacks_json, 
-                  datetime.utcnow().isoformat(), behavior_pattern))
+                  datetime.now().isoformat(), behavior_pattern))
             conn.commit()
         except Exception as e:
             logger.error(f"Error updating IP profile: {e}")

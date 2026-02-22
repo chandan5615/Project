@@ -13,7 +13,7 @@ echo "=========================================="
 echo "Setting up directories..."
 mkdir -p /app/data /app/logs /app/data/secrets 2>/dev/null || true
 chmod -R 777 /app/data /app/logs 2>/dev/null || true
-echo "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Directories ready"
+echo "✓ Directories ready"
 
 # Ollama connection settings
 OLLAMA_URL="${OLLAMA_BASE_URL:-http://127.0.0.1:11434}"
@@ -136,7 +136,7 @@ if [ "$(id -u)" = "0" ]; then
     # Create sudoers.d directory if it doesn't exist
     mkdir -p /etc/sudoers.d 2>/dev/null || true
     # Write sudoers config silently (ignore errors if permission denied)
-    echo "appuser ALL=(ALL) NOPASSWD: /sbin/iptables, /sbin/iptables-save, /sbin/ip6tables" > /etc/sudoers.d/sentinel-firewall 2>/dev/null || true
+    echo "sentinel ALL=(ALL) NOPASSWD: /sbin/iptables, /sbin/iptables-save, /sbin/ip6tables" > /etc/sudoers.d/sentinel-firewall 2>/dev/null || true
     chmod 0440 /etc/sudoers.d/sentinel-firewall 2>/dev/null || true
 fi
 

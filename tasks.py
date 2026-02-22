@@ -166,6 +166,8 @@ def parse_agent_response(response: str) -> dict:
     """
     try:
         # Try to find JSON in the response
+        json_match = None
+        
         # Look for JSON block
         json_start = response.find('{')
         json_end = response.rfind('}') + 1

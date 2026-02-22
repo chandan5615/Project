@@ -16,17 +16,12 @@ Real-time threat detection and automated response using AI crew analysis. Deploy
 ### Fresh Ubuntu Server
 
 ```bash
-# Download and run automated installer (non-interactive by default)
+# Download and run automated installer
 wget -O- https://raw.githubusercontent.com/chandan5615/Project/main/AUTO_INSTALL.sh | sudo bash
 
 # OR if you have the files:
 chmod +x AUTO_INSTALL.sh
-sudo ./AUTO_INSTALL.sh --non-interactive
-
-# If you get "not found" errors, fix line endings first:
-sed -i 's/\r$//' AUTO_INSTALL.sh
-chmod +x AUTO_INSTALL.sh
-sudo ./AUTO_INSTALL.sh --non-interactive
+sudo ./AUTO_INSTALL.sh
 ```
 
 **That's it!** Installer automatically handles:
@@ -129,20 +124,30 @@ Auto-installed by `AUTO_INSTALL.sh`:
 
 ## 📚 Documentation
 
-### **Getting Started**
-- **[README.md](README.md)** - Main documentation (this file)
-- **[AUTO_INSTALL.sh](AUTO_INSTALL.sh)** - Non-interactive Ubuntu installer
-- **[install.py](install.py)** - Cross-platform installer
+### **🚀 Getting Started:**
+- 📖 **[README.md](README.md)** - Main documentation (you are here)
+- 🎯 **[START_HERE.md](START_HERE.md)** - Quick start guide
+- 🤖 **[AUTOMATION_SUMMARY.md](AUTOMATION_SUMMARY.md)** - What's automated
 
-### **Operations**
-- **[docker-compose.yml](docker-compose.yml)** - Container configuration
-- **[Dockerfile](Dockerfile)** - Container build configuration
-- **[validate_system.py](validate_system.py)** - Validate environment and dependencies
-- **[verify_sentinel_setup.py](verify_sentinel_setup.py)** - Verify databases and logs
-- **[unblock_ip.py](unblock_ip.py)** - Unblock and whitelist IPs
+### **🔧 Troubleshooting (NEW!):**
+- 🆘 **[QUICK_TROUBLESHOOTING.md](QUICK_TROUBLESHOOTING.md)** - **Print this!** Quick reference card for common issues
+- 📋 **[TROUBLESHOOTING_COMPLETE.md](TROUBLESHOOTING_COMPLETE.md)** - Complete troubleshooting guide (all known issues)
+- 🔴 **[configure_ollama_network.sh](configure_ollama_network.sh)** - Fix Ollama connection errors (most common issue)
 
-### **Context Log**
-- **[CONTEXT_LOG.md](CONTEXT_LOG.md)** - Ongoing change log for this workspace
+### **📊 Dashboard & Features:**
+- 🎨 **[DASHBOARD_GUIDE.md](DASHBOARD_GUIDE.md)** - Complete dashboard tutorial
+- 📝 **[DASHBOARD_UPDATE_SUMMARY.md](DASHBOARD_UPDATE_SUMMARY.md)** - Dashboard features overview
+- ⚙️ **[FEATURE_INTEGRATION.md](docs_markdown/FEATURE_INTEGRATION.md)** - Feature details
+
+### **🧪 Testing & Deployment:**
+- 📝 **[ATTACK_TESTING_GUIDE.txt](ATTACK_TESTING_GUIDE.txt)** - How to test the system
+- 🐳 **[DOCKER_DEPLOYMENT.md](docs_markdown/DOCKER_DEPLOYMENT.md)** - Docker deployment details
+- 🚀 **[DEPLOYMENT_GUIDE.md](docs_markdown/DEPLOYMENT_GUIDE.md)** - Production deployment
+
+### **📖 Additional Resources:**
+- 💡 **[QUICK_REFERENCE.md](docs_markdown/QUICK_REFERENCE.md)** - Command cheat sheet
+- 🔐 **[SECURITY_IMPLEMENTATION.md](docs_markdown/SECURITY_IMPLEMENTATION.md)** - Security details
+- 👥 **[USER_GUIDE.md](docs_markdown/USER_GUIDE.md)** - User manual
 
 ### **Key Commands:**
 
@@ -545,7 +550,7 @@ python3 test_web_attacks.py
 docker-compose logs -f | grep -i incident
 
 # Check API
-curl http://localhost:8000/api/health
+curl http://192.168.31.91:8000/api/health
 
 # Query incidents
 sqlite3 data/sentinel_intel.db "SELECT COUNT(*) FROM incidents;"
@@ -555,7 +560,7 @@ sqlite3 data/sentinel_intel.db "SELECT COUNT(*) FROM incidents;"
 
 ```bash
 # CRITICAL: Fix Ollama connection refused error
-# (Most common issue - see validate_system.py for environment checks)
+# (Most common issue - see TROUBLESHOOTING_COMPLETE.md)
 sudo mkdir -p /etc/systemd/system/ollama.service.d/
 sudo tee /etc/systemd/system/ollama.service.d/override.conf > /dev/null <<EOF
 [Service]
@@ -586,7 +591,7 @@ find ~/Project -name "*.sh" -exec sed -i 's/\r$//' {} \;
 # Clean rebuild (if all else fails)
 docker-compose down -v && docker-compose build --no-cache && docker-compose up -d
 
-# See validate_system.py and verify_sentinel_setup.py for guided checks
+# See TROUBLESHOOTING_COMPLETE.md for detailed guide
 ```
 
 ---
@@ -1113,20 +1118,20 @@ cat diagnostic_report.txt
    ```
 
 2. **Check Documentation:**
-  - See `validate_system.py` for environment checks
-  - See `verify_sentinel_setup.py` for database/log verification
-  - See `docker-compose.yml` for container configuration
+   - See `TROUBLESHOOTING.md` for detailed guides
+   - See `DASHBOARD_GUIDE.md` for dashboard issues
+   - See `DOCKER_TROUBLESHOOTING.md` for container issues
 
 3. **Re-run Installer:**
-  ```bash
-  sudo ./AUTO_INSTALL.sh --non-interactive
-  ```
+   ```bash
+   sudo ./AUTO_INSTALL.sh
+   ```
 
 4. **Clean Installation:**
    ```bash
    docker-compose down -v  # WARNING: Deletes data!
    rm -rf data/ logs/
-  sudo ./AUTO_INSTALL.sh --non-interactive
+   sudo ./AUTO_INSTALL.sh
    ```
 
 5. **Report Issues:**

@@ -112,11 +112,11 @@ class AttackDetector:
             },
             "idor": {
                 "patterns": [
-                    r"/user/\d+.*['\";|<>]",
-                    r"/admin/\d+.*['\";|<>]",
-                    r"/api/\d+.*['\";|<>]",
-                    r"id=\d+['\";|<>]",
-                    r"user_id=\d+['\";|<>]",
+                    r"/user/\d+",
+                    r"/admin/\d+",
+                    r"/api/\d+",
+                    r"id=\d+",
+                    r"user_id=\d+",
                 ],
                 "severity": "medium",
                 "description": "IDOR (Insecure Direct Object Reference) attempt detected"
@@ -156,8 +156,8 @@ class AttackDetector:
             },
             "dos": {
                 "patterns": [
-                    r"connection.*reset.*by.*peer",
-                    r"request.*timeout.*exceeded",
+                    r"connection.*reset",
+                    r"timeout",
                     r"too.*many.*requests",
                 ],
                 "severity": "high",
@@ -175,9 +175,9 @@ class AttackDetector:
             },
             "ssrf": {
                 "patterns": [
-                    r"url=.*localhost",
-                    r"url=.*127\.0\.0\.1",
-                    r"url=.*0\.0\.0\.0",
+                    r"localhost",
+                    r"127\.0\.0\.1",
+                    r"0\.0\.0\.0",
                     r"file://",
                     r"gopher://",
                     r"dict://",

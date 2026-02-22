@@ -34,16 +34,16 @@ check_model() {
 # Check if Ollama is running on host
 echo "Checking for Ollama on host system..."
 if check_host_ollama; then
-    echo "ÃŽâ€œÃ‚Â£ÃƒÂ  Ollama is running on host at ${OLLAMA_URL}"
+    echo "✅ Ollama is running on host at ${OLLAMA_URL}"
     
     # Check if model is available
     echo "Checking for model: ${OLLAMA_MODEL}..."
     if check_model "${OLLAMA_URL}"; then
-        echo "ÃŽâ€œÃ‚Â£ÃƒÂ  Model ${OLLAMA_MODEL} is available"
+        echo "✅ Model ${OLLAMA_MODEL} is available"
     else
-        echo "ÃŽâ€œÃƒÅ“ÃƒÂ¡Ã¢Ë†Â©Ã¢â€¢â€¢Ãƒâ€¦  Model ${OLLAMA_MODEL} not found. Pulling..."
+        echo "⚠️  Model ${OLLAMA_MODEL} not found. Pulling..."
         ollama pull "${OLLAMA_MODEL}"
-        echo "ÃŽâ€œÃ‚Â£ÃƒÂ  Model pulled successfully"
+        echo "✅ Model pulled successfully"
     fi
     
     echo ""
@@ -51,7 +51,7 @@ if check_host_ollama; then
     docker compose up -d --build sentinel-agent
     
 else
-    echo "ÃŽâ€œÃ‚Â¥ÃƒÂ® Ollama not found on host"
+    echo "❌ Ollama not found on host"
     echo ""
     echo "Starting Ollama in Docker..."
     
@@ -65,7 +65,7 @@ else
     RETRIES=30
     while [ $RETRIES -gt 0 ]; do
         if docker compose exec -T ollama ollama list > /dev/null 2>&1; then
-            echo "ÃŽâ€œÃ‚Â£ÃƒÂ  Ollama is ready"
+            echo "✅ Ollama is ready"
             break
         fi
         echo "  Waiting... ($RETRIES attempts remaining)"
@@ -74,7 +74,7 @@ else
     done
     
     if [ $RETRIES -eq 0 ]; then
-        echo "ÃŽâ€œÃ‚Â¥ÃƒÂ® Ollama failed to start. Check logs with: docker compose logs ollama"
+        echo "❌ Ollama failed to start. Check logs with: docker compose logs ollama"
         exit 1
     fi
     
@@ -83,9 +83,9 @@ else
     if ! docker compose exec -T ollama ollama list | grep -q "$OLLAMA_MODEL"; then
         echo "Pulling model ${OLLAMA_MODEL}... (this may take a few minutes)"
         docker compose exec -T ollama ollama pull "${OLLAMA_MODEL}"
-        echo "ÃŽâ€œÃ‚Â£ÃƒÂ  Model pulled successfully"
+        echo "✅ Model pulled successfully"
     else
-        echo "ÃŽâ€œÃ‚Â£ÃƒÂ  Model ${OLLAMA_MODEL} is available"
+        echo "✅ Model ${OLLAMA_MODEL} is available"
     fi
 fi
 

@@ -24,11 +24,11 @@ check_item() {
     echo -n "[$check_count] $name... "
     
     if eval "$command" > /dev/null 2>&1; then
-        echo -e "${GREEN}ÃŽâ€œÃ‚Â£ÃƒÂ´${NC}"
+        echo -e "${GREEN}✓${NC}"
         pass_count=$((pass_count + 1))
         return 0
     else
-        echo -e "${RED}ÃŽâ€œÃ‚Â£ÃƒÂ¹${NC}"
+        echo -e "${RED}✗${NC}"
         return 1
     fi
 }
@@ -54,7 +54,7 @@ check_item "Ollama is reachable" "curl -s http://localhost:11434/api/tags > /dev
 if [ $check_count -gt 9 ]; then
     ollama_status=$?
     if [ $ollama_status -ne 0 ]; then
-        echo -e "${YELLOW}ÃŽâ€œÃƒÅ“ÃƒÂ¡ Ollama not running! Start it first:${NC}"
+        echo -e "${YELLOW}⚠ Ollama not running! Start it first:${NC}"
         echo "  ollama serve"
         echo ""
     fi
@@ -67,7 +67,7 @@ check_item "Container running" "docker-compose ps | grep sentinel-agent | grep -
 
 if [ $check_count -gt 12 ]; then
     if docker-compose ps | grep sentinel-agent | grep -q -i "unhealthy"; then
-        echo -e "${YELLOW}ÃŽâ€œÃƒÅ“ÃƒÂ¡ Container is unhealthy. Checking logs...${NC}"
+        echo -e "${YELLOW}⚠ Container is unhealthy. Checking logs...${NC}"
         docker-compose logs sentinel-agent | tail -20
         echo ""
     fi
@@ -94,7 +94,7 @@ echo "Summary: $pass_count/$check_count checks passed"
 echo "=================================================="
 
 if [ $pass_count -eq $check_count ]; then
-    echo -e "${GREEN}ÃŽâ€œÃ‚Â£ÃƒÂ´ All checks passed!${NC}"
+    echo -e "${GREEN}✓ All checks passed!${NC}"
     echo ""
     echo "Next steps:"
     echo "  1. Run: python3 sentinel_auto.py setup"
@@ -102,7 +102,7 @@ if [ $pass_count -eq $check_count ]; then
     echo "  3. Check: python3 sentinel_auto.py status"
     exit 0
 else
-    echo -e "${RED}ÃŽâ€œÃ‚Â£ÃƒÂ¹ Some checks failed. See messages above.${NC}"
+    echo -e "${RED}✗ Some checks failed. See messages above.${NC}"
     echo ""
     echo "Common fixes:"
     echo "  - Ollama not running? Start it: ollama serve"

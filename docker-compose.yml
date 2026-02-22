@@ -90,13 +90,13 @@ services:
     
     # Port mappings - Local network only (not public)
     ports:
-      - "${BIND_IP:-0.0.0.0}:8000:8000"  # API server
-      - "${BIND_IP:-0.0.0.0}:8501:8501"  # Dashboard (Streamlit)
+      - "192.168.31.91:8000:8000"  # API server - Local network only
+      - "192.168.31.91:8501:8501"  # Dashboard (Streamlit) - Local network only
     
     # Host resolution for container (to reach host Ollama)
     extra_hosts:
-      - "host.docker.internal:host-gateway"
-      - "ollama-host:host-gateway"
+      - "host.docker.internal:192.168.31.91"
+      - "ollama-host:192.168.31.91"
     
     restart: unless-stopped  # Auto-restart if crashes
     

@@ -209,7 +209,7 @@ def extract_ip_from_log(log_line: str) -> Optional[str]:
             ip = match.group(1) if match.groups() else match.group(0)
             # Validate IP format
             parts = ip.split('.')
-            if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+            if len(parts) == 4 and all(0 <= int(p) <= 255 for p in parts if p.isdigit()):
                 return ip
     
     return None

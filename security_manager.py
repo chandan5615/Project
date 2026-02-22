@@ -181,11 +181,11 @@ class SecurityManager:
             if hashed.startswith("sha256$"):
                 _, salt, hash_value = hashed.split("$")
                 computed = hashlib.sha256((password + salt).encode()).hexdigest()
-                return hmac.compare_digest(computed, hash_value)
+                return computed == hash_value
             else:
                 # Old unsalted SHA-256 (migrate these!)
-                return hmac.compare_digest(hashlib.sha256(password.encode()).hexdigest(), hashed)
-        except (ValueError, IndexError):
+                return hashlib.sha256(password.encode()).hexdigest() == hashed
+        except:
             return False
     
     # ========================================================================

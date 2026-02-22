@@ -52,6 +52,7 @@ from metrics import get_metrics
 from collections import Counter, defaultdict
 import json
 from datetime import datetime, timedelta
+import os
 import secrets
 import uuid
 import asyncio
@@ -1135,4 +1136,3 @@ setInterval(filterLogs, 8000);         // Every 8 seconds - refresh logs
 </body>
 </html>
 """
-    return HTMLResponse(html.replace('%%WS_TOKEN%%', token))

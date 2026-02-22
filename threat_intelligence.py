@@ -187,18 +187,17 @@ class OfflineThreatIntelligence:
             result["threat_score"] = level_map.get(threat_level, 0)
             result["is_malicious"] = result["threat_score"] >= 50
         
-        # Check reputation cache (only if not found in malicious_ips)
-        if not row:
-            cursor.execute("""
-                SELECT threat_score, is_malicious FROM ip_reputation_cache WHERE ip = ?
-            """, (ip,))
-            
-            cached = cursor.fetchone()
-            if cached:
-                threat_score, is_malicious = cached
-                result["threat_score"] = threat_score
-                result["is_malicious"] = bool(is_malicious)
-                result["threat_level"] = "malicious" if is_malicious else "safe"
+        # Check reputation cache
+        cursor.execute("""
+            SELECT threat_score, is_malicious FROM ip_reputation_cache WHERE ip = ?
+        """, (ip,))
+        
+        cached = cursor.fetchone()
+        if cached:
+            threat_score, is_malicious = cached
+            result["threat_score"] = threat_score
+            result["is_malicious"] = bool(is_malicious)
+            result["threat_level"] = "malicious" if is_malicious else "safe"
         
         conn.close()
         return result
