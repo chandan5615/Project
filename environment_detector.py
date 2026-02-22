@@ -8,6 +8,7 @@ Used to switch between web dashboard and terminal UI modes.
 import os
 import sys
 import logging
+from contextlib import suppress
 from typing import Literal
 
 logger = logging.getLogger(__name__)
@@ -24,27 +25,15 @@ class EnvironmentDetector:
         Returns:
             True if GUI environment detected, False for headless/CLI-only
         """
-        # Check for DISPLAY variable (Unix/Linux GUI)
-        if os.environ.get("DISPLAY"):
-            return True
-        
-        # Check for WAYLAND_DISPLAY (Wayland GUI)
-        if os.environ.get("WAYLAND_DISPLAY"):
-            return True
-        
-        # Windows: Check if running in terminal with GUI capability
-        if sys.platform == "win32":
-            # If running in Windows Terminal, VS Code, or similar: assume GUI capable
-            if os.environ.get("WT_SESSION") or os.environ.get("TERM_PROGRAM"):
-                return True
-        
-        # macOS: Check for GUI environment
-        if sys.platform == "darwin":
-            if os.environ.get("DISPLAY"):
-                return True
-        
-        # Default to headless/CLI
-        return False
+        return bool(
+            os.environ.get("DISPLAY")
+            or os.environ.get("WAYLAND_DISPLAY")
+            or (
+                sys.platform == "win32"
+                and (os.environ.get("WT_SESSION") or os.environ.get("TERM_PROGRAM"))
+            )
+            or (sys.platform == "darwin" and os.environ.get("DISPLAY"))
+        )
 
     @staticmethod
     def is_docker() -> bool:
@@ -59,11 +48,9 @@ class EnvironmentDetector:
             return True
         
         # Check for docker in cgroup
-        try:
+        with suppress(FileNotFoundError, IOError):
             with open("/proc/self/cgroup", "r") as f:
                 return "docker" in f.read()
-        except (FileNotFoundError, IOError):
-            pass
         
         return False
 
@@ -80,11 +67,9 @@ class EnvironmentDetector:
             return True
         
         # Check if parent process is systemd
-        try:
+        with suppress(FileNotFoundError, IOError):
             with open("/proc/1/comm", "r") as f:
                 return "systemd" in f.read()
-        except (FileNotFoundError, IOError):
-            pass
         
         return False
 
@@ -105,10 +90,7 @@ class EnvironmentDetector:
         if EnvironmentDetector.is_docker():
             return "docker"
         
-        if EnvironmentDetector.has_display():
-            return "gui"
-        
-        return "cli"
+        return "gui" if EnvironmentDetector.has_display() else "cli"
 
     @staticmethod
     def get_config() -> dict:
@@ -132,12 +114,9 @@ class EnvironmentDetector:
             "db_path": os.environ.get("DATA_DIR", "/app/data") + "/sentinel_intel.db",
         }
         
-        if mode == "gui":
-            config["dashboard_url"] = "http://127.0.0.1:8501"
-            config["dashboard_enabled"] = True
-        else:
-            config["dashboard_url"] = None
-            config["dashboard_enabled"] = False
+        dashboard_enabled = mode == "gui"
+        config["dashboard_url"] = "http://127.0.0.1:8501" if dashboard_enabled else None
+        config["dashboard_enabled"] = dashboard_enabled
         
         return config
 

@@ -84,7 +84,7 @@ python password_manager.py
 **Method 2: Using API**
 ```bash
 curl -X POST http://localhost:8000/api/auth/change-password \
-  -H "X-API-Key: YOUR_TOKEN" \
+  -H "X-API-Key: $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",

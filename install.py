@@ -70,6 +70,7 @@ def run_command(cmd: List[str], silent: bool = False) -> Tuple[bool, str]:
                 cmd,
                 capture_output=True,
                 text=True,
+                shell=False,
                 check=False
             )
         else:
@@ -77,6 +78,7 @@ def run_command(cmd: List[str], silent: bool = False) -> Tuple[bool, str]:
                 cmd,
                 capture_output=False,
                 text=True,
+                shell=False,
                 check=False
             )
         return result.returncode == 0, result.stdout + result.stderr

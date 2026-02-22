@@ -90,17 +90,17 @@ class TestAdaptiveLogger:
         if Path(path).exists():
             Path(path).unlink()
     
-    def test_logger_creation(self, temp_log_file):
+    @pytest.mark.parametrize("mode", ["gui", "cli", "docker", "systemd"])
+    def test_logger_creation(self, temp_log_file, mode):
         """Test logger creation with different modes"""
-        for mode in ["gui", "cli", "docker", "systemd"]:
-            logger = AdaptiveLogger(
-                mode=mode,
-                log_file=temp_log_file,
-                console_level=logging.WARNING,
-                file_level=logging.DEBUG
-            )
-            assert logger.mode == mode
-            assert logger.logger is not None
+        logger = AdaptiveLogger(
+            mode=mode,
+            log_file=temp_log_file,
+            console_level=logging.WARNING,
+            file_level=logging.DEBUG
+        )
+        assert logger.mode == mode
+        assert logger.logger is not None
     
     def test_heartbeat_logging(self, temp_log_file):
         """Test heartbeat logging"""
@@ -118,16 +118,16 @@ class TestAdaptiveLogger:
         logger.log_system_status("Test Status", "Test details")
         logger.log_error("Test error", None)
     
-    def test_adaptive_printer(self):
+    @pytest.mark.parametrize("mode", ["gui", "cli", "docker", "systemd"])
+    def test_adaptive_printer(self, mode):
         """Test adaptive printer"""
-        for mode in ["gui", "cli", "docker", "systemd"]:
-            printer = AdaptivePrinter(mode=mode)
-            
-            # Should not raise exceptions
-            printer.print_dashboard_header()
-            printer.print_threat_alert("Brute Force", "192.168.1.100", "BLOCK")
-            printer.print_status_message("Test message")
-            printer.print_network_summary(10, 5, 75)
+        printer = AdaptivePrinter(mode=mode)
+        
+        # Should not raise exceptions
+        printer.print_dashboard_header()
+        printer.print_threat_alert("Brute Force", "192.168.1.100", "BLOCK")
+        printer.print_status_message("Test message")
+        printer.print_network_summary(10, 5, 75)
 
 
 # Test dashboard_controller
@@ -139,12 +139,12 @@ from dashboard_controller import DashboardController, DashboardConfig
 class TestDashboardController:
     """Test dashboard controller functionality"""
     
-    def test_config_get_config(self):
+    @pytest.mark.parametrize("mode", ["gui", "cli", "docker", "systemd"])
+    def test_config_get_config(self, mode):
         """Test getting configuration for modes"""
-        for mode in ["gui", "cli", "docker", "systemd"]:
-            config = DashboardConfig.get_config(mode)
-            assert isinstance(config, dict)
-            assert "type" in config
+        config = DashboardConfig.get_config(mode)
+        assert isinstance(config, dict)
+        assert "type" in config
     
     def test_config_merge(self):
         """Test configuration merging"""
@@ -293,8 +293,10 @@ class TestAdaptiveReportingIntegration:
             
             logger.close()
         finally:
-            if Path(temp_log_path).exists():
+            try:
                 Path(temp_log_path).unlink()
+            except FileNotFoundError:
+                pass
     
     def test_printer_with_config(self):
         """Test printer created from config"""

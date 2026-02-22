@@ -299,6 +299,7 @@ def verify_firewall_rule(ip: str) -> str:
             check_cmd,
             capture_output=True,
             text=True,
+            shell=False,
             timeout=5
         )
         
@@ -383,6 +384,7 @@ def execute_iptables_rule(ip: str, max_attempts: int = 3) -> str:
                 cmd,
                 capture_output=True,
                 text=True,
+                shell=False,
                 timeout=10
             )
             
@@ -527,6 +529,7 @@ def change_permissions(file_path: str, permissions: str, recursive: bool = False
             cmd,
             capture_output=True,
             text=True,
+            shell=False,
             timeout=5
         )
         

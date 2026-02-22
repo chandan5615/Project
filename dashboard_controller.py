@@ -30,6 +30,23 @@ class DashboardController:
         self.dashboard_process = None
         self.dashboard_thread = None
     
+    def _build_streamlit_command(self, dashboard_script: Path, port: int) -> list:
+        return [
+            sys.executable, "-m", "streamlit", "run",
+            str(dashboard_script),
+            "--server.port", str(port),
+            "--server.address", "127.0.0.1",
+            "--logger.level", "error",
+            "--client.showErrorDetails", "false"
+        ]
+
+    def _resolve_dashboard_script(self) -> Optional[Path]:
+        dashboard_script = Path(__file__).parent / "dashboard" / "web_dashboard.py"
+        if not dashboard_script.exists():
+            self.logger.error(f"Dashboard script not found: {dashboard_script}")
+            return None
+        return dashboard_script
+    
     def start_web_dashboard(self, port: int = 8501):
         """
         Start Streamlit web dashboard in subprocess
@@ -37,7 +54,7 @@ class DashboardController:
         Args:
             port: Port to run Streamlit on
         """
-        if self.mode == "docker" or self.mode == "systemd":
+        if self.mode in ("docker", "systemd"):
             self.logger.warning("Web dashboard not available in Docker/systemd mode")
             return False
         
@@ -45,27 +62,19 @@ class DashboardController:
             # Check if Streamlit is installed
             import streamlit
             
-            dashboard_script = Path(__file__).parent / "dashboard" / "web_dashboard.py"
-            
-            if not dashboard_script.exists():
-                self.logger.error(f"Dashboard script not found: {dashboard_script}")
+            dashboard_script = self._resolve_dashboard_script()
+            if not dashboard_script:
                 return False
             
             # Build command
-            cmd = [
-                sys.executable, "-m", "streamlit", "run",
-                str(dashboard_script),
-                "--server.port", str(port),
-                "--server.address", "127.0.0.1",
-                "--logger.level", "error",
-                "--client.showErrorDetails", "false"
-            ]
+            cmd = self._build_streamlit_command(dashboard_script, port)
             
             # Start process
             self.dashboard_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                shell=False,
                 cwd=str(Path(__file__).parent)
             )
             

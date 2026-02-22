@@ -68,7 +68,7 @@ class AuthLogHandler(FileSystemEventHandler):
             
             if self._last_inode is not None and current_inode != self._last_inode:
                 # File was rotated, reset position
-                logger.info(f"Log file rotated. Starting from beginning.")
+                logger.info("Log file rotated. Starting from beginning.")
                 self.last_position = 0
             
             self._last_inode = current_inode
@@ -89,20 +89,16 @@ class AuthLogHandler(FileSystemEventHandler):
                     
                     # Check for failed password attempts and detect attack type
                     if self.failed_password_pattern.search(line):
-                        ip = self._extract_ip(line)
-                        if ip:
+                        if ip := self._extract_ip(line):
                             # Detect attack type (brute force)
-                            attack_info = self.attack_detector.detect_attack(line, source="auth")
-                            if not attack_info:
-                                # Create attack info for brute force if not detected
-                                attack_info = {
-                                    "attack_type": "brute_force",
-                                    "severity": "medium",
-                                    "description": "Brute force attack detected",
-                                    "pattern_matched": "Failed password",
-                                    "timestamp": None,
-                                    "source": "auth"
-                                }
+                            attack_info = self.attack_detector.detect_attack(line, source="auth") or {
+                                "attack_type": "brute_force",
+                                "severity": "medium",
+                                "description": "Brute force attack detected",
+                                "pattern_matched": "Failed password",
+                                "timestamp": None,
+                                "source": "auth"
+                            }
                             logger.info(f"🚨 {attack_info['description']} from IP: {ip}")
                             self.callback(ip, line, attack_info)
                         else:
@@ -131,9 +127,8 @@ class AuthLogHandler(FileSystemEventHandler):
         ]
         
         for pattern in ip_patterns:
-            match = re.search(pattern, log_line)
-            if match:
-                ip = match.group(1) if match.groups() else match.group(0)
+            if match := re.search(pattern, log_line):
+                ip = match[1] if match.groups() else match[0]
                 # Validate IP format
                 try:
                     parts = ip.split('.')

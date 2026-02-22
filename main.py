@@ -75,14 +75,13 @@ def _resolve_log_path(preferred_path: Optional[str], default_path: str, docker_f
     """Resolve log path with Docker-aware fallback when unreadable."""
     path = preferred_path if preferred_path and not preferred_path.isspace() else default_path
 
-    if EnvironmentDetector.is_docker():
-        if not os.path.exists(path) or not os.access(path, os.R_OK):
-            logger.warning(
-                "Log path not readable in container, falling back: %s -> %s",
-                path,
-                docker_fallback,
-            )
-            return docker_fallback
+    if EnvironmentDetector.is_docker() and (not os.path.exists(path) or not os.access(path, os.R_OK)):
+        logger.warning(
+            "Log path not readable in container, falling back: %s -> %s",
+            path,
+            docker_fallback,
+        )
+        return docker_fallback
 
     return path
 
@@ -143,15 +142,16 @@ class SentinelAgent:
         detection_start_time = perf_metrics.get_current_timestamp()
         
         # Detect attack type if not provided
-        if not attack_info:
-            attack_info = self.attack_detector.detect_attack(log_line, source=source)
-            if not attack_info:
-                attack_info = {
-                    "attack_type": "unknown",
-                    "severity": "medium",
-                    "description": "Suspicious activity detected",
-                    "source": source
-                }
+        attack_info = (
+            attack_info
+            or self.attack_detector.detect_attack(log_line, source=source)
+            or {
+                "attack_type": "unknown",
+                "severity": "medium",
+                "description": "Suspicious activity detected",
+                "source": source,
+            }
+        )
         
         # FEATURE 2: Check threat intelligence
         threat_result = threat_intel.check_ip_reputation(ip_address)
@@ -339,10 +339,7 @@ class SentinelAgent:
         }
         
         # Try to parse the result
-        if hasattr(result, 'raw'):
-            result_str = str(result.raw)
-        else:
-            result_str = str(result)
+        result_str = str(result.raw) if hasattr(result, 'raw') else str(result)
         
         # Look for JSON in the result using proper brace counting
         try:
@@ -366,7 +363,7 @@ class SentinelAgent:
                 if json_end > json_start:
                     json_str = result_str[json_start:json_end]
                     parsed = json.loads(json_str)
-                    report.update(parsed)
+                    report |= parsed
                 else:
                     report["raw_response"] = result_str
         except json.JSONDecodeError as e:
@@ -376,9 +373,8 @@ class SentinelAgent:
         # Extract firewall rule if present
         if "firewall_rule" not in report or not report["firewall_rule"]:
             # Try to find iptables command in the response
-            iptables_match = re.search(r'iptables\s+[^\n]+', result_str)
-            if iptables_match:
-                report["firewall_rule"] = iptables_match.group(0)
+            if iptables_match := re.search(r'iptables\s+[^\n]+', result_str):
+                report["firewall_rule"] = iptables_match[0]
         
         return report
     
@@ -408,7 +404,7 @@ class SentinelAgent:
         logger.warning(OutputFormatter.subheader("SECURITY ACTION REQUIRES APPROVAL"))
         logger.warning(f"  Target IP Address    : {ip_address}")
         logger.warning(f"  Firewall Command     : {firewall_rule}")
-        logger.warning(f"\n  This action will block the IP address using iptables rules.")
+        logger.warning("\n  This action will block the IP address using iptables rules.")
         logger.warning(f"\n{OutputFormatter.SEPARATOR_MAIN}\n")
 
         if incident_id:
@@ -500,113 +496,127 @@ class SentinelAgent:
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
             return
-        
-        try:
-            logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
-            logger.info(f"  Status: Processing...\n")
+        else:
+            try:
+                logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
+                logger.info("  Status: Processing...\n")
 
-            perf_metrics = get_metrics()
-            
-            # Record response start time for metrics
-            response_start = perf_metrics.get_current_timestamp()
-            
-            # Execute the command
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            response_time = perf_metrics.get_current_timestamp() - response_start
-            success = False
-            
-            if result.returncode == 0:
-                logger.info(OutputFormatter.success_message(
-                    "FIREWALL RULE SUCCESSFULLY APPLIED",
-                    [
-                        f"Blocked IP Address: {ip_address}",
-                        f"Rule Command: {rule}",
-                        f"Status: Active and Verified"
-                    ]
-                ))
-                success = True
-            else:
+                perf_metrics = get_metrics()
+                
+                # Record response start time for metrics
+                response_start = perf_metrics.get_current_timestamp()
+                
+                # Execute the command
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
+                    timeout=10
+                )
+                
+                response_time = perf_metrics.get_current_timestamp() - response_start
+                success = False
+
+                if result.returncode == 0:
+                    logger.info(OutputFormatter.success_message(
+                        "FIREWALL RULE SUCCESSFULLY APPLIED",
+                        [
+                            f"Blocked IP Address: {ip_address}",
+                            f"Rule Command: {rule}",
+                            "Status: Active and Verified"
+                        ]
+                    ))
+                    success = True
+                else:
+                    logger.error(OutputFormatter.error_message(
+                        "FIREWALL RULE EXECUTION FAILED",
+                        f"Error output: {result.stderr}"
+                    ))
+                
+                # FEATURE 7: Record response metrics
+                if incident_id:
+                    perf_metrics.record_response(
+                        incident_id=incident_id,
+                        action_type="firewall_block",
+                        execution_time_ms=response_time,
+                        success=success
+                    )
+                    
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "firewall_execute", rule, success)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
+                    
+            except subprocess.TimeoutExpired:
                 logger.error(OutputFormatter.error_message(
-                    "FIREWALL RULE EXECUTION FAILED",
-                    f"Error output: {result.stderr}"
+                    "COMMAND EXECUTION TIMEOUT",
+                    "The firewall command timed out after 10 seconds."
                 ))
-            
-            # FEATURE 7: Record response metrics
-            if incident_id:
-                perf_metrics.record_response(
-                    incident_id=incident_id,
-                    action_type="firewall_block",
-                    execution_time_ms=response_time,
-                    success=success
-                )
                 
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "firewall_execute", rule, success)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
+                # Record failed response
+                if incident_id:
+                    perf_metrics.record_response(
+                        incident_id=incident_id,
+                        action_type="firewall_block",
+                        execution_time_ms=-1,
+                        success=False
+                    )
                 
-        except subprocess.TimeoutExpired:
-            logger.error(OutputFormatter.error_message(
-                "COMMAND EXECUTION TIMEOUT",
-                "The firewall command timed out after 10 seconds."
-            ))
-            
-            # Record failed response
-            if incident_id:
-                perf_metrics.record_response(
-                    incident_id=incident_id,
-                    action_type="firewall_block",
-                    execution_time_ms=-1,
-                    success=False
-                )
-            
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
-        except FileNotFoundError:
-            logger.error(OutputFormatter.error_message(
-                "IPTABLES NOT FOUND",
-                "Ensure you are on a Linux system with iptables installed and available in PATH."
-            ))
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "firewall_execute", "iptables_not_found", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
-        except PermissionError:
-            logger.error(OutputFormatter.error_message(
-                "PERMISSION DENIED",
-                "This operation requires sudo privileges. Please run with: sudo python main.py"
-            ))
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "firewall_execute", "permission_denied", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
-        except Exception as e:
-            logger.error(OutputFormatter.error_message(
-                "UNEXPECTED ERROR",
-                f"Error executing firewall rule: {str(e)}"
-            ))
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
+            except FileNotFoundError:
+                logger.error(OutputFormatter.error_message(
+                    "IPTABLES NOT FOUND",
+                    "Ensure you are on a Linux system with iptables installed and available in PATH."
+                ))
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "firewall_execute", "iptables_not_found", False)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
+            except PermissionError:
+                logger.error(OutputFormatter.error_message(
+                    "PERMISSION DENIED",
+                    "This operation requires sudo privileges. Please run with: sudo python main.py"
+                ))
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "firewall_execute", "permission_denied", False)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
+            except Exception as e:
+                logger.error(OutputFormatter.error_message(
+                    "UNEXPECTED ERROR",
+                    f"Error executing firewall rule: {str(e)}"
+                ))
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
     
     def _get_timestamp(self) -> str:
         """Get current timestamp as string."""
         from datetime import datetime
         return datetime.now().isoformat()
+
+    def _poll_sensors(self, poll_interval: float) -> None:
+        last_poll_time = 0.0
+        while True:
+            import time
+            now = time.time()
+            if now - last_poll_time >= poll_interval:
+                if (auth_handler := getattr(self.auth_sensor, "handler", None)):
+                    auth_handler._process_new_lines()
+                if (web_handler := getattr(self.web_sensor, "handler", None)):
+                    web_handler._process_new_lines()
+                last_poll_time = now
+            time.sleep(1)
     
     def start(self):
         """Start the Sentinel Defense Module with multi-vector monitoring."""
@@ -614,10 +624,10 @@ class SentinelAgent:
         logger.info(OutputFormatter.section("SYSTEM CONFIGURATION"))
         logger.info(f"  Authentication Log   : {self.auth_log_path}")
         logger.info(f"  Web Access Log       : {self.web_log_path}")
-        logger.info(f"  AI Engine            : Ollama Local LLM (llama3:8b)")
-        logger.info(f"  Analysis Mode        : Multi-Agent AI Investigation")
-        logger.info(f"  Multi-Vector Support : Enabled")
-        logger.info(f"  Human-in-Loop        : Enabled")
+        logger.info("  AI Engine            : Ollama Local LLM (llama3:8b)")
+        logger.info("  Analysis Mode        : Multi-Agent AI Investigation")
+        logger.info("  Multi-Vector Support : Enabled")
+        logger.info("  Human-in-Loop        : Enabled")
         logger.info("")
         
         # Initialize and start both sensors
@@ -644,18 +654,7 @@ class SentinelAgent:
             logger.info("Press Ctrl+C to stop\n")
             
             # Keep the main thread alive with periodic polling fallback
-            poll_interval = 2.0
-            last_poll_time = 0.0
-            while True:
-                import time
-                now = time.time()
-                if now - last_poll_time >= poll_interval:
-                    if self.auth_sensor and self.auth_sensor.handler:
-                        self.auth_sensor.handler._process_new_lines()
-                    if self.web_sensor and self.web_sensor.handler:
-                        self.web_sensor.handler._process_new_lines()
-                    last_poll_time = now
-                time.sleep(1)
+            self._poll_sensors(poll_interval=2.0)
                 
         except KeyboardInterrupt:
             logger.info("\n🛑 Shutting down Sentinel Defense Module...")
@@ -687,20 +686,16 @@ def check_environment():
         logger.warning("⚠️  Not running in a virtual environment!")
         logger.warning("   It's recommended to use a virtual environment for isolation.")
         logger.warning("   Run: python -m venv venv && source venv/bin/activate")
-        response = input("Continue anyway? (yes/no): ").strip().lower()
-        if response not in ['yes', 'y']:
+        if (response := input("Continue anyway? (yes/no): ").strip().lower()) not in ['yes', 'y']:
             logger.info("Exiting. Please activate your virtual environment first.")
             sys.exit(1)
     
     # Check critical dependencies
     required_modules = ['crewai', 'langchain_community', 'watchdog']
-    missing = []
-    
-    for module in required_modules:
-        if importlib.util.find_spec(module) is None:
-            missing.append(module)
-    
-    if missing:
+    if missing := [
+        module for module in required_modules
+        if importlib.util.find_spec(module) is None
+    ]:
         logger.error(f"❌ Missing required modules: {', '.join(missing)}")
         logger.error("   Install with: pip install -r requirements.txt")
         sys.exit(1)
