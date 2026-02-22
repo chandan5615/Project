@@ -39,6 +39,7 @@ wheels/
 logs/
 /app/logs/
 /app/data/
+data/
 *.db
 *.sqlite
 *.sqlite3
@@ -54,6 +55,7 @@ incident_history.json
 test_auth.log
 .env
 .env.local
+.sentinel_token
 
 # Notebooks (not in production)
 *.ipynb

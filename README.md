@@ -7,6 +7,7 @@ Real-time threat detection and automated response using AI crew analysis. Deploy
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
+[![GitHub](https://img.shields.io/badge/GitHub-chandan5615%2FProject-blue?logo=github)](https://github.com/chandan5615/Project)
 
 ---
 
@@ -16,7 +17,7 @@ Real-time threat detection and automated response using AI crew analysis. Deploy
 
 ```bash
 # Download and run automated installer
-wget -O- https://raw.githubusercontent.com/YOUR_REPO/main/AUTO_INSTALL.sh | sudo bash
+wget -O- https://raw.githubusercontent.com/chandan5615/Project/main/AUTO_INSTALL.sh | sudo bash
 
 # OR if you have the files:
 chmod +x AUTO_INSTALL.sh
