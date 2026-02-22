@@ -98,10 +98,9 @@ services:
       OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
       
       # System Configuration
-      # Default to /app/logs inside container (writable). Override to /var/log
-      # if you want to monitor host logs directly.
-      AUTH_LOG_PATH: ${AUTH_LOG_PATH:-/app/logs/auth.log}
-      WEB_LOG_PATH: ${WEB_LOG_PATH:-/app/logs/access.log}
+      # Monitor actual system logs (mounted via /var/log volume)
+      AUTH_LOG_PATH: ${AUTH_LOG_PATH:-/var/log/auth.log}
+      WEB_LOG_PATH: ${WEB_LOG_PATH:-/var/log/apache2/access.log}
       SENTINEL_LOG_DIR: /app/logs
       SENTINEL_DATA_DIR: /app/data
       SENTINEL_DB_PATH: ${SENTINEL_DB_PATH:-/app/data/sentinel_intel.db}
