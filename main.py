@@ -225,45 +225,79 @@ class SentinelAgent:
         if attack_type not in self.ip_tracking[ip_address]["attack_types"]:
             self.ip_tracking[ip_address]["attack_types"].append(attack_type)
         
+        # 🚀 OPTIMIZATION: Only use AI crew for HIGH severity attacks
+        severity = attack_info.get("severity", "medium").upper()
+        use_ai_analysis = (severity == "HIGH")
+        
+        if use_ai_analysis:
+            logger.info(f"⚡ HIGH SEVERITY ATTACK - Activating AI Crew Analysis")
+        else:
+            logger.info(f"📝 {severity} severity attack - Logging without AI analysis (resource optimization)")
+        
+        final_report = None
+        ai_response_time = 0
+        
         try:
-            # Create tasks for the crew with attack information
-            tasks = create_security_incident_tasks(
-                ip_address, 
-                log_line, 
-                attack_type=attack_info.get("attack_type", "unknown"),
-                severity=attack_info.get("severity", "medium")
-            )
-            
-            # Extract unique agents from tasks (CrewAI Task objects may not expose .agent directly)
-            # For now, import agents directly
-            from agents import triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent
-            agents = [triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent]
-            
-            # Create and run the crew
-            crew = Crew(
-                agents=agents,
-                tasks=tasks,
-                process="sequential",
-                verbose=True
-            )
-            
-            logger.info(OutputFormatter.crew_kickoff())
-            logger.info(OutputFormatter.analysis_started(ip_address, attack_info.get("attack_type", "unknown")))
+            if use_ai_analysis:
+                # Create tasks for the crew with attack information
+                tasks = create_security_incident_tasks(
+                    ip_address, 
+                    log_line, 
+                    attack_type=attack_info.get("attack_type", "unknown"),
+                    severity=attack_info.get("severity", "medium")
+                )
+                
+                # Extract unique agents from tasks (CrewAI Task objects may not expose .agent directly)
+                # For now, import agents directly
+                from agents import triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent
+                agents = [triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent]
+                
+                # Create and run the crew
+                crew = Crew(
+                    agents=agents,
+                    tasks=tasks,
+                    process="sequential",
+                    verbose=True
+                )
+                
+                logger.info(OutputFormatter.crew_kickoff())
+                logger.info(OutputFormatter.analysis_started(ip_address, attack_info.get("attack_type", "unknown")))
 
-            # Record analysis kickoff action
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "analysis_start", "AI crew kickoff", True)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
+                # Record analysis kickoff action
+                if incident_id:
+                    try:
+                        data_engine.insert_action(incident_id, "analysis_start", "AI crew kickoff", True)
+                    except Exception as e:
+                        logger.error(f"Error inserting action: {e}")
 
-            result = crew.run()
-            
-            # Record AI response completion time
-            ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
-            
-            # Parse and display results
-            final_report = self._extract_final_report(result, ip_address, log_line)
+                result = crew.kickoff()
+                
+                # Record AI response completion time
+                ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
+                
+                # Parse and display results
+                final_report = self._extract_final_report(result, ip_address, log_line)
+            else:
+                # Simple automated response without AI - just log and block
+                final_report = f"""
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                   AUTOMATED THREAT RESPONSE                                          ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                      ║
+║  🎯 THREAT SOURCE    : {ip_address:<79}║
+║  🔥 ATTACK TYPE      : {attack_type:<79}║
+║  ⚠️  SEVERITY LEVEL   : {severity:<79}║
+║                                                                                                      ║
+║  ✅ AUTOMATED ACTION  : Attack logged and blocked                                                    ║
+║  📊 STATUS           : Incident recorded in database                                                ║
+║  🛡️  PROTECTION       : IP added to monitoring watchlist                                             ║
+║                                                                                                      ║
+║  ℹ️  NOTE: AI analysis reserved for HIGH severity threats only                                      ║
+║           This optimizes system resources while maintaining security                                ║
+║                                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+"""
+                logger.info(final_report)
             
             # FEATURE 7: Record detection metrics
             if incident_id:

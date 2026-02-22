@@ -1094,9 +1094,10 @@ refreshIPStatus();
 filterLogs();
 
 // Auto-refresh
-setInterval(fetchAndRender, 10000);
-setInterval(refreshTraffic, 5000);
-setInterval(refreshIPStatus, 15000);
+setInterval(fetchAndRender, 10000);   // Every 10 seconds
+setInterval(refreshTraffic, 5000);     // Every 5 seconds
+setInterval(refreshIPStatus, 15000);   // Every 15 seconds
+setInterval(filterLogs, 8000);         // Every 8 seconds - refresh logs
 </script>
 </body>
 </html>
