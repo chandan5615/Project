@@ -364,7 +364,7 @@ Contributions welcome! Areas for improvement:
 
 ## 📝 License
 
-MIT License - See LICENSE file for details
+License - See LICENSE file for details
 
 ---
 
