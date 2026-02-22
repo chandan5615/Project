@@ -24,7 +24,7 @@ import shlex
 import ipaddress
 from typing import Dict, Any, Optional
 import os
-from crewai import Crew, Process
+from crewai import Crew
 from sensors.auth_sensor import AuthSensor
 from sensors.web_sensor import WebSensor
 from tasks import create_security_incident_tasks, parse_agent_response
@@ -243,7 +243,7 @@ class SentinelAgent:
             crew = Crew(
                 agents=agents,
                 tasks=tasks,
-                process=Process.sequential,
+                process="sequential",
                 verbose=True
             )
             
