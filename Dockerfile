@@ -84,13 +84,15 @@ WORKDIR /app
 # Copy application code
 COPY . .
 
-# Create entrypoint script
+# Create entrypoint script (fix line endings for Windows compatibility)
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Copy startup script (starts both main.py and sentinel_api.py)
 COPY docker-startup.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-startup.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-startup.sh && \
+    chmod +x /usr/local/bin/docker-startup.sh
 
 # Create required directories with proper permissions
 # Create unprivileged user and set permissions

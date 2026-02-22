@@ -220,6 +220,40 @@ else
     log_success "llama3:8b model downloaded"
 fi
 
+# Configure Ollama for Docker access (CRITICAL FIX)
+log_info "Configuring Ollama network binding for Docker access..."
+
+# Check current binding
+CURRENT_BINDING=$(ss -tlnp 2>/dev/null | grep 11434 | head -n1 || echo "")
+
+if echo "$CURRENT_BINDING" | grep -q "127.0.0.1:11434"; then
+    log_warning "Ollama is bound to localhost only - fixing for Docker access..."
+    
+    # Create systemd override
+    mkdir -p /etc/systemd/system/ollama.service.d/
+    cat > /etc/systemd/system/ollama.service.d/override.conf <<EOF
+# Sentinel Agent - Ollama Network Configuration
+# Makes Ollama accessible to Docker containers
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+EOF
+    
+    # Reload and restart
+    systemctl daemon-reload
+    systemctl restart ollama
+    sleep 3
+    
+    # Verify
+    NEW_BINDING=$(ss -tlnp 2>/dev/null | grep 11434 | head -n1 || echo "")
+    if echo "$NEW_BINDING" | grep -q "\*:11434\|:::11434"; then
+        log_success "✅ Ollama configured for Docker access (listening on all interfaces)"
+    else
+        log_warning "⚠️  Ollama binding may need manual verification"
+    fi
+else
+    log_success "Ollama is already accessible on network"
+fi
+
 ################################################################################
 # STEP 6: Configure firewall (optional)
 ################################################################################
