@@ -2,7 +2,41 @@
 Enhanced Sentinel Admin Dashboard (FastAPI)
 - Advanced security operations center dashboard
 - Features: Log details, IP management, traffic monitoring, real-time analytics
-- Internal-only: bind to 127.0.0.1
+- Internal-only: bind to 127.0.0.1 (local only)
+
+USAGE:
+------
+# Automatic (via Docker)
+docker-compose up -d
+
+# Manual standalone
+python3 dashboard/app.py
+
+# With custom port
+PORT=8000 python3 dashboard/app.py
+
+# With custom host binding
+DASHBOARD_HOST=0.0.0.0 PORT=8000 python3 dashboard/app.py
+
+ACCESS:
+-------
+http://localhost:8000         (local only)
+http://192.168.31.91:8000     (local network, if running standalone)
+
+AUTHENTICATION:
+---------------
+Username: sentinel (configurable via DASHBOARD_USER)
+Password: sentinel (configurable via DASHBOARD_PASS)
+
+ENDPOINTS:
+----------
+GET  /               - HTML dashboard
+GET  /api/summary    - Security summary
+GET  /api/incidents  - Incident list
+GET  /api/ips        - IP information
+POST /api/block-ip   - Block an IP
+POST /api/whitelist  - Add IP to whitelist
+WS   /ws             - WebSocket for real-time updates
 """
 import sys
 import os

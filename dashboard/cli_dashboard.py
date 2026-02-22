@@ -1,6 +1,40 @@
 """
 Sentinel Agent CLI Dashboard - Rich terminal UI for headless environments
 Provides formatted terminal-based monitoring of security incidents with live updates
+
+USAGE:
+------
+# Run from server
+python3 dashboard/cli_dashboard.py
+
+# Run from inside Docker container
+docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
+
+# Run remotely via SSH
+ssh ubuntu@192.168.31.91 "cd ~/Project && python3 dashboard/cli_dashboard.py"
+
+# Run with custom database
+SENTINEL_DB_PATH=/path/to/db.sqlite python3 dashboard/cli_dashboard.py
+
+# Run with custom refresh interval (default: 5 seconds)
+CLI_REFRESH_INTERVAL=3 python3 dashboard/cli_dashboard.py
+
+FEATURES:
+---------
+✓ Real-time incident table (auto-updating every 5 seconds)
+✓ Top attackers ranking
+✓ Attack type statistics
+✓ Security state indicator (🟢 Green / 🟡 Yellow / 🔴 Red)
+✓ System resource usage (CPU, Memory, Disk)
+✓ Color-coded severity levels (RED=High, YELLOW=Medium, CYAN=Low)
+✓ Anti-spam filter (prevents duplicate alerts)
+✓ No authentication required
+
+KEYBOARD:
+---------
+Q or Ctrl+C  - Quit dashboard
+F5           - Force refresh
+C            - Clear screen
 """
 
 import sqlite3
@@ -23,6 +57,7 @@ import os
 # Default database path (matches data_engine.py)
 DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
+REFRESH_INTERVAL = int(os.getenv("CLI_REFRESH_INTERVAL") or "5")
 
 
 class AntiSpamFilter:

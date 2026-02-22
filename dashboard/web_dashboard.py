@@ -1,6 +1,25 @@
 """
 Sentinel Agent Web Dashboard - Streamlit-based GUI for monitoring security incidents
 Provides real-time visualization of attacks, blocked IPs, and security state metrics
+
+USAGE:
+------
+# Run with Docker (automatic)
+docker-compose up -d
+
+# Run standalone (local development)
+streamlit run web_dashboard.py
+
+# Run with custom database
+SENTINEL_DB_PATH=/path/to/db.sqlite streamlit run web_dashboard.py
+
+# Access at:
+http://localhost:8501               (local)
+http://192.168.31.91:8501           (local network)
+
+# Login with:
+Username: sentinel
+Password: sentinel
 """
 
 import streamlit as st
@@ -16,7 +35,7 @@ import os
 # Configure page
 st.set_page_config(
     page_title="Sentinel Agent Dashboard",
-    page_icon="S",
+    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )

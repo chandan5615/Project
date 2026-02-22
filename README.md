@@ -222,37 +222,238 @@ python3 continuous_attacks.py --interval 10 --duration 5
 
 ---
 
-## 🎨 Dashboard Features
+## 🎨 Dashboard Guide
 
-Access at `http://YOUR_SERVER_IP:8501`
+### **Two Dashboard Options Available:**
 
-- 📊 **Real-time Security Metrics**
-  - Security score
-  - Threat counter
-  - Attack feed
-  - Wall of shame
-
-- 📈 **System Monitoring**
-  - CPU, memory, disk usage
-  - Network connections
-  - Traffic statistics
-
-- 📝 **Log Viewer**
-  - Live log entries
-  - Severity filtering
-  - Auto-refresh (8 seconds)
-
-- 🚫 **IP Management**
-  - Block/unblock IPs
-  - Blacklist viewing
-  - Whitelist management
-
-- 📉 **Charts & Analytics**
-  - Attack time series
-  - Severity distribution
-  - Top attackers
+Sentinel Agent provides both a web-based dashboard and a powerful CLI dashboard for different use cases.
 
 ---
+
+## 🌐 **WEB DASHBOARD** (Streamlit UI)
+
+**Best for:** Visual monitoring, executives, non-technical users, GUI preference
+
+### **Quick Start:**
+
+#### **Option 1: Via Docker (Recommended)**
+```bash
+# Already running in container with main system
+# Access at: http://YOUR_SERVER_IP:8501
+# Login: sentinel / sentinel
+
+# View logs (if needed)
+docker-compose logs -f sentinel-agent | head -50
+```
+
+#### **Option 2: Standalone on Your PC/Laptop**
+```bash
+# Clone/download the project
+git clone https://github.com/chandan5615/Project.git
+cd Project
+
+# Install dependencies
+pip install streamlit pandas plotly rich requests
+
+# Copy database from server (or use local)
+# scp ubuntu@192.168.31.91:~/Project/data/sentinel_intel.db ./data/
+
+# Run dashboard locally
+streamlit run dashboard/web_dashboard.py
+
+# Opens automatically at: http://localhost:8501
+```
+
+### **Web Dashboard Features:**
+
+- 📊 **Real-time Security Metrics** - Score, threat count, attack feed
+- 📈 **System Monitoring** - CPU, memory, disk usage, network stats
+- 📝 **Live Log Viewer** - Searchable, filterable incident logs
+- 🚫 **IP Management** - Block/unblock IPs, manage blacklists/whitelists
+- 📉 **Analytics Charts** - Attack timeline, severity distribution, top attackers
+- 🔐 **Authentication** - Basic auth login screen
+- 🎨 **Dark Theme** - Easy on the eyes with professional look
+
+### **Web Dashboard Keyboard Shortcuts:**
+- `R` - Refresh data
+- `I` - IP management panel
+- `L` - Log viewer
+- `M` - Metrics view
+
+---
+
+## 💻 **CLI DASHBOARD** (Rich Terminal UI)
+
+**Best for:** Headless servers, SSH sessions, terminal lovers, minimal bandwidth
+
+### **Quick Start:**
+
+#### **Option 1: From Server**
+```bash
+# SSH into your server
+ssh ubuntu@192.168.31.91
+
+# Navigate to project
+cd ~/Project
+
+# Run CLI dashboard  
+python3 dashboard/cli_dashboard.py
+
+# Auto-refreshes every 5 seconds with:
+# ✓ Real-time incident table
+# ✓ Top attackers with counts
+# ✓ Attack types breakdown
+# ✓ System resource usage
+# ✓ Security state indicator
+# ✓ Color-coded indicators (Red/Yellow/Green)
+```
+
+#### **Option 2: Inside Container**
+```bash
+# Docker exec into container
+docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
+
+# Same features, runs inside container context
+```
+
+#### **Option 3: From Your PC (Remote)**
+```bash
+# SSH tunnel to server
+ssh -L 9000:localhost:9000 ubuntu@192.168.31.91
+
+# Then run (in another terminal)
+ssh ubuntu@192.168.31.91 "cd ~/Project && python3 dashboard/cli_dashboard.py"
+
+# Output streams to your terminal in real-time
+```
+
+### **CLI Dashboard Features:**
+
+```
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    SENTINEL AGENT - CLI DASHBOARD                        ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║                                                                           ║
+║  🔴 SECURITY STATE: CRITICAL (3 incidents in last hour)                  ║
+║                                                                           ║
+║  ┌─────────────────────────────────────────────────────────────────────┐ ║
+║  │ RECENT INCIDENTS (Last 24 Hours)                                    │ ║
+║  ├──────┬────────────────┬───────┬────────┬─────────────────────────┤ ║
+║  │ Time │ IP Address     │ Type  │ Status │ Details                 │ ║
+║  ├──────┼────────────────┼───────┼────────┼─────────────────────────┤ ║
+║  │ 14:23│ 192.168.1.100  │ SSH   │ Blocked│ Brute force - 5 attempts│ ║
+║  │ 14:15│ 10.0.0.50      │ SQL   │ Blocked│ SQL injection detected   │ ║
+║  │ 14:02│ 203.0.113.45   │ XSS   │ Blocked│ Possible XSS payload     │ ║
+║  └──────┴────────────────┴───────┴────────┴─────────────────────────┘ ║
+║                                                                           ║
+║  ┌─────────────────────────────────────────────────────────────────────┐ ║
+║  │ TOP ATTACKERS                                                       │ ║
+║  ├──────────────────┬───────┬──────────────────────────────────────┤ ║
+║  │ IP Address       │ Count │ Latest Attack                        │ ║
+║  ├──────────────────┼───────┼──────────────────────────────────────┤ ║
+║  │ 192.168.1.100    │  12   │ SSH brute force (14:23)             │ ║
+║  │ 203.0.113.45     │   8   │ XSS attempt (14:02)                │ ║
+║  │ 10.0.0.50        │   5   │ SQL injection (14:15)               │ ║
+║  └──────────────────┴───────┴──────────────────────────────────────┘ ║
+║                                                                           ║
+║  ATTACK TYPES:  SSH: 12  │  SQL: 5  │  XSS: 8  │  PATH: 3  │  API: 2   ║
+║  STATUS:        📊 Auto-refresh every 5 seconds                         ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+```
+
+**CLI Dashboard Updates Automatically:**
+- ✅ Real-time incident feed
+- ✅ Top attackers ranking
+- ✅ Attack type statistics
+- ✅ Security state (🟢 Green / 🟡 Yellow / 🔴 Red)
+- ✅ System resource usage (CPU, Memory, Disk)
+- ✅ Color-coded severity levels
+- ✅ Refreshes every 5 seconds
+
+---
+
+## 🚀 **Running Both Dashboards Simultaneously**
+
+```bash
+# Terminal 1: Web Dashboard (for visual monitoring)
+ssh ubuntu@192.168.31.91 "cd ~/Project && \
+  docker exec -d sentinel-agent python3 dashboard/web_dashboard.py"
+
+# Terminal 2: CLI Dashboard (for live terminal updates)
+ssh ubuntu@192.168.31.91 "cd ~/Project && \
+  docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py"
+
+# Terminal 3: Monitor Raw Logs
+docker-compose logs -f sentinel-agent | grep -E "(HIGH|ALERT|Incident)"
+
+# Now you can:
+# - Watch web dashboard at http://192.168.31.91:8501
+# - Monitor CLI dashboard in Terminal 2 (live updates every 5s)
+# - Track raw logs in Terminal 3
+```
+
+---
+
+## 🔧 **Dashboard Configuration**
+
+### **Environment Variables for Dashboards:**
+
+```bash
+# Create .env file or add to docker-compose.yml
+# Web Dashboard Settings
+DASHBOARD_PORT=8501
+DASHBOARD_USER=sentinel
+DASHBOARD_PASS=sentinel
+DASHBOARD_THEME=dark  # or 'light'
+
+# CLI Dashboard Settings
+CLI_REFRESH_INTERVAL=5  # seconds
+CLI_MAX_INCIDENTS=20    # rows to display
+CLI_SHOW_STATS=true     # show summary stats
+
+# Database
+SENTINEL_DB_PATH=/app/data/sentinel_intel.db
+SENTINEL_DATA_DIR=/app/data
+```
+
+### **Accessing External Network Dashboards:**
+
+```bash
+# From another PC on local network (192.168.31.x)
+# Web Dashboard:
+http://192.168.31.91:8501
+
+# API Health Check:
+http://192.168.31.91:8000/api/health
+
+# Via SSH Tunnel (from anywhere):
+ssh -L 8501:localhost:8501 ubuntu@192.168.31.91
+# Then: http://localhost:8501
+```
+
+---
+
+## 📊 Dashboard Comparison
+
+| Feature | Web Dashboard | CLI Dashboard |
+|---------|:----------:|:----------:|
+| **GUI Interface** | ✅ Yes (Streamlit) | ✅ Yes (Rich TUI) |
+| **Real-time Updates** | ✅ 8s refresh | ✅ 5s refresh |
+| **IP Management** | ✅ Block/Unblock | ❌ View only |
+| **Charts & Graphs** | ✅ Interactive | ❌ Table-based |
+| **Mobile Friendly** | ✅ Yes | ❌ No |
+| **SSH Terminal** | ❌ Requires browser | ✅ Full support |
+| **Bandwidth** | 📊 Moderate | 📉 Minimal |
+| **Login Required** | ✅ Yes (auth) | ❌ Direct access |
+| **Dark Theme** | ✅ Available | ✅ Default |
+| **Export Logs** | ✅ CSV/JSON | ✅ Copy/Export |
+| **Performance** | 🟡 Medium | 🟢 Light |
+| **Customizable** | ✅ Yes | ✅ Yes |
+
+---
+
+## 🎨 Dashboard Features
 
 ## 🧪 Testing
 
@@ -275,8 +476,80 @@ docker-compose logs -f | grep -E "(HIGH|AI|crew)"
 # View all detections
 docker-compose logs -f | grep -E "(SQL|XSS|attack)"
 
-# Check dashboard
-open http://YOUR_SERVER_IP:8501
+# Check dashboards
+# Web: http://192.168.31.91:8501
+# CLI: docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
+```
+
+---
+
+## ⚡ Quick Reference Commands
+
+### **Dashboard Access:**
+
+```bash
+# Web Dashboard
+http://192.168.31.91:8501                    # Browser access
+docker-compose logs -f                       # View logs
+
+# CLI Dashboard  
+docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
+
+# Both Dashboards (3 terminals)
+# Terminal 1: Web dashboard (automatic, already running)
+# Terminal 2: CLI - docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
+# Terminal 3: Logs - docker-compose logs -f | grep ALERT
+```
+
+### **System Control:**
+
+```bash
+# Start
+docker-compose up -d
+
+# Stop
+docker-compose down
+
+# Restart
+docker-compose restart sentinel-agent
+
+# Status
+docker-compose ps
+
+# Rebuild
+docker-compose down && docker-compose build --no-cache && docker-compose up -d
+```
+
+### **Testing & Monitoring:**
+
+```bash
+# Generate attacks
+python3 test_web_attacks.py
+
+# Monitor detections
+docker-compose logs -f | grep -i incident
+
+# Check API
+curl http://192.168.31.91:8000/api/health
+
+# Query incidents
+sqlite3 data/sentinel_intel.db "SELECT COUNT(*) FROM incidents;"
+```
+
+### **Troubleshooting:**
+
+```bash
+# Check if Ollama running
+ps aux | grep ollama
+
+# Restart Ollama
+pkill ollama && sleep 2 && ollama serve &
+
+# Check ports
+sudo netstat -tlnp | grep -E "(8000|8501)"
+
+# View container resources
+docker stats sentinel-agent
 ```
 
 ---
