@@ -94,7 +94,7 @@ RUN chmod +x /usr/local/bin/docker-startup.sh
 
 # Create required directories with proper permissions
 # Create unprivileged user and set permissions
-RUN adduser --system --home /app --shell /usr/sbin/nologin appuser && \
+RUN adduser --system --group --home /app --shell /usr/sbin/nologin appuser && \
     mkdir -p /app/logs /app/data /app/data/secrets && \
     chown -R appuser:appuser /app && \
     chmod -R 755 /app/logs /app/data
