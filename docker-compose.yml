@@ -24,7 +24,7 @@
 #   docker-compose down -v
 # ============================================================================
 
-version: '3.9'
+# CHANGE TRACKING (2026-02-23): Removed obsolete version field (Compose v2+ ignores it)
 
 services:
   # ========================================================================
@@ -88,15 +88,17 @@ services:
       - NET_ADMIN  # Network administration
       - SYS_ADMIN  # System administration
     
+    # CHANGE TRACKING (2026-02-23): Bind to all interfaces to avoid host IP bind errors
     # Port mappings - Local network only (not public)
     ports:
-      - "192.168.31.91:8000:8000"  # API server - Local network only
-      - "192.168.31.91:8501:8501"  # Dashboard (Streamlit) - Local network only
+      - "8000:8000"  # API server - Local network only
+      - "8501:8501"  # Dashboard (Streamlit) - Local network only
     
+    # CHANGE TRACKING (2026-02-23): Use host-gateway for Linux Docker host resolution
     # Host resolution for container (to reach host Ollama)
     extra_hosts:
-      - "host.docker.internal:192.168.31.91"
-      - "ollama-host:192.168.31.91"
+      - "host.docker.internal:host-gateway"
+      - "ollama-host:host-gateway"
     
     restart: unless-stopped  # Auto-restart if crashes
     
