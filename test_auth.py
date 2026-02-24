@@ -11,7 +11,8 @@ import subprocess
 import shutil
 import pytest
 
-API_URL = "http://localhost:8000"
+# Updated (2026-02-23): Use Ubuntu server IP 10.76.250.89
+API_URL = os.getenv("SENTINEL_API_URL", "http://10.76.250.89:8000")
 
 def get_password_from_logs():
     """Extract password from container logs"""

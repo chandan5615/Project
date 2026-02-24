@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # CHANGE TRACKING (2026-02-23): Fixed default data directory detection
 # Auto-detect if running in Docker or local environment
 def _detect_default_data_dir():
-    \"\"\"Detect appropriate data directory based on environment.\"\"\"
+    """Detect appropriate data directory based on environment."""
     # Check if running in Docker
     if os.path.exists("/.dockerenv") or os.path.exists("/proc/self/cgroup"):
         try:

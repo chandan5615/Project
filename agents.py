@@ -76,15 +76,20 @@ if os.getenv('SENTINEL_SKIP_OLLAMA_CHECK', '0') != '1':
 # Get Ollama model from environment or use default
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3:8b")
 
-# CHANGE TRACKING (2026-02-23): Added timeout configuration to prevent hanging
-# Default timeout: 300 seconds (5 minutes) for LLM responses
+# CHANGE TRACKING (2026-02-23): Added performance tuning for faster responses
+# Lower temperature and cap tokens for quicker completion
 OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "300"))
+OLLAMA_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.2"))
+OLLAMA_TOP_P = float(os.getenv("OLLAMA_TOP_P", "0.9"))
+OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "512"))
 
 # Initialize LLM with Ollama
 llm = LLM(
     model=f"ollama/{OLLAMA_MODEL}",
     base_url=get_ollama_url(),
-    temperature=0.7,
+    temperature=OLLAMA_TEMPERATURE,
+    top_p=OLLAMA_TOP_P,
+    max_tokens=OLLAMA_MAX_TOKENS,
     timeout=OLLAMA_TIMEOUT  # CHANGE TRACKING: Added timeout to prevent hanging
 )
 
@@ -105,7 +110,7 @@ triage_analyst = Agent(
     verbose=True,
     allow_delegation=False,
     llm=llm,
-    tools=[get_system_context, extract_ip_from_log],
+    tools=[],  # CHANGE TRACKING (2026-02-23): Disable tools for triage to avoid noisy tool output
 )
 
 

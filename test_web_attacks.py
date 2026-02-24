@@ -10,13 +10,16 @@ Requirements:
     pip install requests
 """
 
+import os
 import requests
 import time
 import sys
 from urllib.parse import urljoin
 
 # Configuration
-TARGET = "http://192.168.31.91"
+# CHANGE TRACKING (2026-02-23): Default to Sentinel API port for Docker-based setup
+# Updated (2026-02-23): Fixed target IP to match Ubuntu server at 10.76.250.89
+TARGET = os.getenv("SENTINEL_TEST_TARGET", "http://10.76.250.89:8000")
 DELAY_BETWEEN_ATTACKS = 2  # seconds
 DELAY_BETWEEN_TESTS = 5   # seconds
 
@@ -111,7 +114,7 @@ def test_sql_injection():
             r = requests.get(url, timeout=5)
             print_success(f"Test {i}/{len(SQL_INJECTION)}: {payload[:40]}... → Status: {r.status_code}")
         except requests.exceptions.ConnectionError:
-            print_error(f"Connection failed - Is Apache running at {TARGET}?")
+            print_error(f"Connection failed - Is the target running at {TARGET}?")
             return False
         except Exception as e:
             print_error(f"Error: {e}")

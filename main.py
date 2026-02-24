@@ -72,6 +72,10 @@ root_logger.addHandler(console_handler)
 
 logger = logging.getLogger(__name__)
 
+# CHANGE TRACKING (2026-02-23): Reduce noisy third-party debug logs in Docker
+for noisy_logger in ["LiteLLM", "litellm", "httpx", "httpcore", "urllib3"]:
+    logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+
 
 # CHANGE TRACKING (2026-02-23): Added timeout handling for AI crew analysis
 # Prevents indefinite hanging when Ollama LLM is slow or unresponsive
@@ -323,11 +327,13 @@ class SentinelAgent:
                 agents = [triage_analyst, threat_intel_researcher, incident_responder, enforcer_agent]
                 
                 # Create and run the crew
+                # CHANGE TRACKING (2026-02-23): Make Crew verbosity configurable
+                crew_verbose = os.getenv("CREW_VERBOSE", "0") == "1"
                 crew = Crew(
                     agents=agents,
                     tasks=tasks,
                     process="sequential",
-                    verbose=True
+                    verbose=crew_verbose
                 )
                 
                 logger.info(OutputFormatter.crew_kickoff())

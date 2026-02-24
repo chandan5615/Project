@@ -108,6 +108,19 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3:8b}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # CHANGE TRACKING (2026-02-23): Set Ollama API base for LiteLLM model info calls
+      OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://host.docker.internal:11434}
+      # CHANGE TRACKING (2026-02-23): Pass timeout settings into container
+      CREW_TIMEOUT: ${CREW_TIMEOUT:-60}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-60}
+      # CHANGE TRACKING (2026-02-23): Performance tuning for faster AI responses
+      OLLAMA_TEMPERATURE: ${OLLAMA_TEMPERATURE:-0.2}
+      OLLAMA_TOP_P: ${OLLAMA_TOP_P:-0.9}
+      OLLAMA_MAX_TOKENS: ${OLLAMA_MAX_TOKENS:-512}
+      CREW_VERBOSE: ${CREW_VERBOSE:-0}
+      # CHANGE TRACKING (2026-02-23): Reduce noisy LLM telemetry/logging
+      LITELLM_LOG: ${LITELLM_LOG:-ERROR}
+      CREWAI_TELEMETRY_OPT_OUT: ${CREWAI_TELEMETRY_OPT_OUT:-1}
       
       # System Configuration
       # Monitor actual system logs (mounted via /var/log volume)

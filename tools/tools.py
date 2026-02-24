@@ -8,6 +8,7 @@ import re
 import ipaddress
 from typing import Optional
 from pathlib import Path
+import shutil
 try:
     from crewai_tools import tool
 except Exception:
@@ -97,39 +98,40 @@ def get_system_context() -> str:
     
     try:
         # Get current logged-in users
-        who_result = subprocess.run(
-            ["who"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        if who_result.returncode == 0:
-            context["current_users"] = who_result.stdout.strip().split("\n")
+        if shutil.which("who"):
+            who_result = subprocess.run(
+                ["who"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if who_result.returncode == 0 and who_result.stdout.strip():
+                context["current_users"] = who_result.stdout.strip().split("\n")
         
         # Get recent login history
-        last_result = subprocess.run(
-            ["last", "-n", "5"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        if last_result.returncode == 0:
-            context["recent_logins"] = last_result.stdout.strip().split("\n")[:5]
+        if shutil.which("last"):
+            last_result = subprocess.run(
+                ["last", "-n", "5"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if last_result.returncode == 0 and last_result.stdout.strip():
+                context["recent_logins"] = last_result.stdout.strip().split("\n")[:5]
         
         # Get system uptime
-        uptime_result = subprocess.run(
-            ["uptime"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        if uptime_result.returncode == 0:
-            context["system_info"]["uptime"] = uptime_result.stdout.strip()
+        if shutil.which("uptime"):
+            uptime_result = subprocess.run(
+                ["uptime"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if uptime_result.returncode == 0 and uptime_result.stdout.strip():
+                context["system_info"]["uptime"] = uptime_result.stdout.strip()
             
     except subprocess.TimeoutExpired:
         context["error"] = "Command timeout"
-    except FileNotFoundError:
-        context["error"] = "Command not found (may not be on Linux system)"
     except Exception as e:
         context["error"] = str(e)
     
