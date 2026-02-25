@@ -137,6 +137,7 @@ Auto-installed by `AUTO_INSTALL.sh`:
 ### **📊 Dashboard & Features:**
 - 🎨 **[DASHBOARD_GUIDE.md](DASHBOARD_GUIDE.md)** - Complete dashboard tutorial
 - 📝 **[DASHBOARD_UPDATE_SUMMARY.md](DASHBOARD_UPDATE_SUMMARY.md)** - Dashboard features overview
+- ✨ **[DASHBOARD_FEATURES.md](DASHBOARD_FEATURES.md)** - NEW: Enhanced features guide (v2.0)
 - ⚙️ **[FEATURE_INTEGRATION.md](docs_markdown/FEATURE_INTEGRATION.md)** - Feature details
 
 ### **🧪 Testing & Deployment:**
@@ -290,13 +291,57 @@ SENTINEL_DB_PATH=./data/sentinel_intel.db streamlit run dashboard/web_dashboard.
 
 ### **Web Dashboard Features:**
 
-- 📊 **Real-time Security Metrics** - Score, threat count, attack feed
-- 📈 **System Monitoring** - CPU, memory, disk usage, network stats
-- 📝 **Live Log Viewer** - Searchable, filterable incident logs
-- 🚫 **IP Management** - Block/unblock IPs, manage blacklists/whitelists
-- 📉 **Analytics Charts** - Attack timeline, severity distribution, top attackers
-- 🔐 **Authentication** - Basic auth login screen
-- 🎨 **Dark Theme** - Easy on the eyes with professional look
+#### **🎯 Core Features:**
+- 🛡️ **Wall of Shame** - Real-time blocked IPs monitoring
+- 📋 **Incident Feed** - Live security incident tracking
+- 📈 **Network Health** - Traffic metrics and trends
+- 📊 **Security Score** - Real-time security posture
+
+#### **✨ Enhanced Features (NEW):**
+- 📄 **Log File Viewer** - Tail and search auth logs and Apache logs
+  - Real-time log tailing with configurable line count
+  - Search and filter capabilities
+  - Download log content
+  - Support for custom log paths
+
+- 🌐 **Apache Traffic Analysis** - Comprehensive web server monitoring
+  - Total requests and unique IPs
+  - HTTP status code distribution
+  - Top client IPs and requested URLs
+  - Error rate tracking (4xx/5xx)
+  - User agent analysis
+  - Detailed error request breakdown
+
+- 🚫 **IP Blocking/Unblocking** - Manual firewall control
+  - Block/unblock IPs via UFW or iptables
+  - View currently blocked IPs
+  - IP address validation
+  - Real-time firewall rule updates
+
+- 🎯 **Attack Patterns** - Visual attack trend analysis
+  - Attack type distribution (7-day view)
+  - Hourly attack patterns (24-hour view)
+  - Interactive charts and graphs
+
+- 📊 **Export Reports** - Data export and archival
+  - Export incidents to CSV (flexible time ranges)
+  - Export threat intelligence to JSON
+  - Database statistics dashboard
+  - Timestamped export files
+
+- 💻 **System Information** - Server health monitoring
+  - System uptime tracking
+  - Load average (1m, 5m)
+  - Disk usage with visual progress
+  - Resource monitoring
+
+#### **Access & Configuration:**
+- 🌐 Auto-detected LAN IP display
+- ⚙️ Configurable refresh intervals (5-60 seconds)
+- 🎨 Dark theme with professional styling
+- 📱 Responsive design for all devices
+
+**📚 For detailed feature documentation, see [DASHBOARD_FEATURES.md](DASHBOARD_FEATURES.md)**
 
 ### **Web Dashboard Keyboard Shortcuts:**
 - `R` - Refresh data
@@ -431,7 +476,7 @@ DASHBOARD_PORT=8501
 DASHBOARD_USER=sentinel
 DASHBOARD_PASS=sentinel
 DASHBOARD_THEME=dark  # or 'light'
-DASHBOARD_PUBLIC_HOST=YOUR_SERVER_IP  # optional, shows public URL in dashboard
+DASHBOARD_BIND_IP=0.0.0.0  # set to your LAN IP to restrict access
 
 # CLI Dashboard Settings
 CLI_REFRESH_INTERVAL=5  # seconds
@@ -456,6 +501,19 @@ http://YOUR_SERVER_IP:8000/api/health
 # Via SSH Tunnel (from anywhere):
 ssh -L 8501:localhost:8501 ubuntu@YOUR_SERVER_IP
 # Then: http://localhost:8501
+```
+
+**LAN-only access (recommended):**
+1) Set the host bind IP to your LAN IP in `.env` (or export it before `docker compose up -d`).
+2) Restart Docker.
+
+```bash
+# .env
+DASHBOARD_BIND_IP=YOUR_LAN_IP
+
+# Apply
+docker compose down
+docker compose up -d
 ```
 
 ---

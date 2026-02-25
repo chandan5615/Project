@@ -92,7 +92,7 @@ services:
     # Port mappings - Local network only (not public)
     ports:
       - "8000:8000"  # API server - Local network only
-      - "8501:8501"  # Dashboard (Streamlit) - Local network only
+      - "${DASHBOARD_BIND_IP:-0.0.0.0}:8501:8501"  # Dashboard (Streamlit) - Local network only
     
     # CHANGE TRACKING (2026-02-23): Use host-gateway for Linux Docker host resolution
     # Host resolution for container (to reach host Ollama)
