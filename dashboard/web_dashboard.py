@@ -202,12 +202,47 @@ class IPBlockManager:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self._needs_sudo = self._check_needs_sudo()
+    
+    def _check_needs_sudo(self) -> bool:
+        """Check if sudo is needed (not in Docker, not running as root)"""
+        # Check if running in Docker
+        if os.path.exists("/.dockerenv"):
+            self.logger.info("Running in Docker - sudo not needed")
+            return False
+        
+        # Check if running as root (Unix only)
+        try:
+            if hasattr(os, 'getuid') and os.getuid() == 0:
+                self.logger.info("Running as root - sudo not needed")
+                return False
+        except Exception:
+            pass
+        
+        # Check if sudo exists and is executable
+        try:
+            result = subprocess.run(['which', 'sudo'], capture_output=True, timeout=1)
+            if result.returncode == 0:
+                self.logger.info("Not in Docker, not root - using sudo")
+                return True  # sudo exists and we're not root
+            else:
+                self.logger.info("sudo command not found - running without sudo")
+                return False
+        except Exception as e:
+            self.logger.info(f"Cannot check for sudo ({e}) - running without sudo")
+            return False  # sudo doesn't exist or can't be checked
+    
+    def _build_cmd(self, base_cmd: List[str]) -> List[str]:
+        """Build command with or without sudo prefix"""
+        if self._needs_sudo:
+            return ['sudo'] + base_cmd
+        return base_cmd
     
     def get_blocked_ips_ufw(self) -> List[Dict]:
         """Get list of blocked IPs from UFW"""
         try:
-            result = subprocess.run(['sudo', 'ufw', 'status', 'numbered'],
-                                  capture_output=True, text=True, timeout=5)
+            cmd = self._build_cmd(['ufw', 'status', 'numbered'])
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             
             if result.returncode != 0:
                 return []
@@ -232,8 +267,8 @@ class IPBlockManager:
     def get_blocked_ips_iptables(self) -> List[Dict]:
         """Get list of blocked IPs from iptables"""
         try:
-            result = subprocess.run(['sudo', 'iptables', '-L', 'INPUT', '-n', '-v'],
-                                  capture_output=True, text=True, timeout=5)
+            cmd = self._build_cmd(['iptables', '-L', 'INPUT', '-n', '-v'])
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             
             if result.returncode != 0:
                 return []
@@ -257,8 +292,8 @@ class IPBlockManager:
     def block_ip_ufw(self, ip: str) -> Tuple[bool, str]:
         """Block an IP using UFW"""
         try:
-            result = subprocess.run(['sudo', 'ufw', 'deny', 'from', ip],
-                                  capture_output=True, text=True, timeout=10)
+            cmd = self._build_cmd(['ufw', 'deny', 'from', ip])
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
                 return True, f"Successfully blocked {ip} with UFW"
@@ -270,8 +305,8 @@ class IPBlockManager:
     def unblock_ip_ufw(self, ip: str) -> Tuple[bool, str]:
         """Unblock an IP using UFW"""
         try:
-            result = subprocess.run(['sudo', 'ufw', 'delete', 'deny', 'from', ip],
-                                  capture_output=True, text=True, timeout=10)
+            cmd = self._build_cmd(['ufw', 'delete', 'deny', 'from', ip])
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
                 return True, f"Successfully unblocked {ip} with UFW"
@@ -283,11 +318,11 @@ class IPBlockManager:
     def block_ip_iptables(self, ip: str) -> Tuple[bool, str]:
         """Block an IP using iptables"""
         try:
-            result = subprocess.run(
-                ['sudo', 'iptables', '-A', 'INPUT', '-s', ip, '-j', 'DROP',
-                 '-m', 'comment', '--comment', 'Sentinel-Agent-Block'],
-                capture_output=True, text=True, timeout=10
+            cmd = self._build_cmd(
+                ['iptables', '-A', 'INPUT', '-s', ip, '-j', 'DROP',
+                 '-m', 'comment', '--comment', 'Sentinel-Agent-Block']
             )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
                 return True, f"Successfully blocked {ip} with iptables"
@@ -299,10 +334,8 @@ class IPBlockManager:
     def unblock_ip_iptables(self, ip: str) -> Tuple[bool, str]:
         """Unblock an IP using iptables"""
         try:
-            result = subprocess.run(
-                ['sudo', 'iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'],
-                capture_output=True, text=True, timeout=10
-            )
+            cmd = self._build_cmd(['iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'])
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
                 return True, f"Successfully unblocked {ip} with iptables"
