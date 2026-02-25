@@ -9,6 +9,8 @@ Real-time threat detection and automated response using AI crew analysis. Deploy
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
 [![GitHub](https://img.shields.io/badge/GitHub-chandan5615%2FProject-blue?logo=github)](https://github.com/chandan5615/Project)
 
+> **📚 DOCUMENTATION:** Every single feature is documented! See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for complete index of all documentation files.
+
 ---
 
 ## ⚡ Quick Start (One Command Installation)
@@ -58,6 +60,108 @@ Sentinel Agent monitors your Linux server for security threats in real-time:
 - 🤖 **AI Crew Analysis** for HIGH severity threats
 - 📊 **Automated Logging** for MEDIUM/LOW threats
 - 🧠 Multi-agent investigation (4 specialized AI agents)
+
+---
+
+## 📑 Complete Table of Contents
+
+### **Quick Start & Installation**
+- [Quick Start (One Command Installation)](#-quick-start-one-command-installation)
+- [What Does It Do?](#-what-does-it-do)
+- [System Requirements](#-system-requirements)
+- [Manual Installation Options](#-manual-installation-options)
+- [Post-Installation Steps](#-post-installation-steps)
+
+### **Features & Capabilities**
+- [Core Features](#-core-features)
+- [AI-Powered Analysis](#-ai-powered-analysis)
+- [Dashboard Features (9 Tabs)](#-dashboard-features-v20---9-comprehensive-tabs)
+- [Features by Category](#-features-by-category)
+- [Complete Feature Reference](#-complete-feature-reference)
+
+### **File Structure & Components**
+- [Project Structure & Files](#-project-structure--files)
+  - Core Application Modules
+  - Dashboard Applications
+  - Utility Scripts
+  - Testing & Attack Simulation
+  - Installation & Setup Scripts
+  - Troubleshooting & Fix Scripts
+  - Docker Configuration
+  - Documentation Files
+
+### **Configuration & Environment**
+- [Complete Environment Variables Reference](#-complete-environment-variables-reference)
+  - Ollama LLM Configuration
+  - Log File Paths
+  - Database Configuration
+  - Web Dashboard Settings
+  - API Server Configuration
+  - Authentication & Security
+  - AI Analysis Configuration
+  - Threat Response
+  - Logging Configuration
+  - Email Notifications (Future)
+  - Third-Party Integrations (Future)
+
+### **Command-Line Interface**
+- [Complete Command-Line Reference](#-complete-command-line-reference)
+  - Main Application
+  - Web Dashboard
+  - CLI Dashboard
+  - Database Cleanup
+  - View Attacks
+  - Test Web Attacks
+  - Continuous Attacks
+  - System Validation
+  - Docker Commands
+  - Ollama Commands
+
+### **API Documentation**
+- [API Endpoints Complete List](#-api-endpoints-complete-list)
+  - Health & Status Endpoints
+  - Incident Endpoints
+  - IP Management Endpoints
+  - Action Endpoints
+  - Statistics Endpoints
+  - Export Endpoints
+  - Threat Intelligence Endpoints
+  - Log Endpoints
+
+### **Database & Data Management**
+- [Database Tables](#-database-tables)
+- [Schema Details](#schema-details)
+- [Data Export & Import](#data-export--import)
+
+### **Attack Detection**
+- [Attack Detection Patterns](#-attack-detection-patterns)
+  - SQL Injection
+  - Cross-Site Scripting (XSS)
+  - Path Traversal
+  - Command Injection
+  - Brute Force
+  - Directory Scanning
+  - Attack Tool Signatures
+
+### **Usage & Examples**
+- [Use Cases](#-use-cases)
+- [Testing the System](#-testing-the-system)
+- [Attack Testing Guide](#attack-testing-guide)
+- [Real-World Deployment](#real-world-deployment)
+
+### **Troubleshooting & Support**
+- [Support & Troubleshooting](#-support--troubleshooting)
+- [Critical Issue: Ollama Connection](#-critical-issue-ollama-connection-refused)
+- [Common Problems](#common-problems)
+- [Get Help](#-get-help)
+
+### **Advanced Topics**
+- [Architecture Deep Dive](#-architecture-deep-dive)
+- [Performance Stats](#-performance-stats)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+
+---
 - 🔍 Threat intelligence correlation
 - 📈 Behavioral anomaly detection
 
@@ -123,6 +227,9 @@ Auto-installed by `AUTO_INSTALL.sh`:
 ---
 
 ## 📚 Documentation
+
+**📖 COMPLETE FEATURE DOCUMENTATION:**
+- 🔍 **[COMPLETE_FEATURE_REFERENCE.md](COMPLETE_FEATURE_REFERENCE.md)** - **COMPREHENSIVE!** Every single feature, module, script, API, configuration option, environment variable, database table, and capability documented in exhaustive detail
 
 ### **🚀 Getting Started:**
 - 📖 **[README.md](README.md)** - Main documentation (you are here)
@@ -728,6 +835,769 @@ See full API documentation in dashboard.
 
 ---
 
+## 📂 Project Structure & Files
+
+### **Core Application Modules**
+
+| File | Purpose | Key Features |
+|------|---------|--------------|
+| **main.py** | Main application entry point | Log monitoring, attack detection, AI orchestration, incident handling |
+| **agents.py** | AI agent definitions | 4 specialized agents: Triage, Intel, Responder, Enforcer |
+| **tasks.py** | AI task workflows | Log analysis, threat research, response planning, enforcement |
+| **data_engine.py** | Database operations | SQLite management, incident logging, queries, exports |
+| **sentinel_api.py** | REST API server | FastAPI endpoints, authentication, JSON responses |
+| **auth.py** | Authentication system | HTTP Basic Auth, credential verification, session management |
+| **security_manager.py** | Security & encryption | Password hashing (PBKDF2), encryption, secret management |
+| **threat_intelligence.py** | Threat intel management | IP reputation, geolocation, blacklist checking |
+| **anomaly_scorer.py** | Anomaly detection | Statistical analysis, baseline modeling, deviation alerts |
+| **metrics.py** | Performance metrics | Prometheus metrics, response times, throughput tracking |
+
+### **Dashboard Applications**
+
+| File | Purpose | Features |
+|------|---------|----------|
+| **dashboard/web_dashboard.py** | Streamlit web UI | 9 tabs: Incidents, logs, Apache traffic, IP blocking, exports, system info |
+| **dashboard/cli_dashboard.py** | Terminal UI | Rich TUI, real-time updates, color-coded severity, minimal bandwidth |
+| **dashboard_controller.py** | Dashboard management | Start/stop dashboards, service monitoring, configuration |
+
+### **Utility Scripts**
+
+| File | Purpose | Usage |
+|------|---------|-------|
+| **clear_database.py** | Database cleanup | `python3 clear_database.py --all\|--incidents\|--ip IP` |
+| **view_attacks.py** | Attack viewer | `python3 view_attacks.py --limit 50 --severity HIGH` |
+| **validate_system.py** | System validation | `python3 validate_system.py --check-all` |
+| **verify_sentinel_setup.py** | Setup verification | `python3 verify_sentinel_setup.py` |
+| **init_database.py** | Database initialization | `python3 init_database.py --fresh` |
+| **environment_detector.py** | Environment detection | Detects Docker, cloud providers, resources |
+| **password_manager.py** | Password utilities | Secure generation, strength validation |
+| **list_manager.py** | Blacklist/whitelist | Manage IP lists, import/export |
+| **logging_adapter.py** | Structured logging | JSON logs, context injection, rotation |
+| **output_formatter.py** | Output formatting | JSON, tables, colors, Rich text |
+
+### **Testing & Attack Simulation**
+
+| File | Purpose | Attack Types |
+|------|---------|--------------|
+| **test_web_attacks.py** | Web attack simulator | SQL injection, XSS, path traversal, command injection, directory scanning |
+| **test_client_attacks.py** | Client-side attacks | Stored XSS, reflected XSS, DOM XSS, CSRF, session hijacking, cookie tampering |
+| **test_auth.py** | Authentication tests | Brute force, credential stuffing, session fixation, password reset abuse |
+| **test_security.py** | Security feature tests | Firewall, rate limiting, input validation, CSRF protection |
+| **test_attacks.py** | Comprehensive suite | All attack types, scenarios, reporting |
+| **continuous_attacks.py** | Sustained attacks | Configurable rate, mixed types, long-duration testing |
+
+### **Installation & Setup Scripts**
+
+| File | Platform | Purpose |
+|------|----------|---------|
+| **AUTO_INSTALL.sh** | Linux (Ubuntu/Debian) | Fully automated one-command installation |
+| **AUTO_INSTALL_WINDOWS.bat** | Windows + WSL2 | Windows installer using WSL |
+| **install.sh** | Linux | Manual step-by-step installation |
+| **install.bat** | Windows | Windows manual installer |
+| **install.ps1** | Windows (PowerShell) | PowerShell installation script |
+| **install.py** | Cross-platform | Python-based installer |
+| **setup.sh** | Linux | Interactive setup wizard |
+| **setup.bat** | Windows | Windows setup wizard |
+| **setup.ps1** | Windows (PowerShell) | PowerShell setup script |
+| **sentinel_setup.sh** | Linux | Production setup with hardening |
+| **verify_setup.sh** | Linux | Verify installation completeness |
+
+### **Troubleshooting & Fix Scripts**
+
+| File | Purpose |
+|------|---------|
+| **configure_ollama_network.sh** | Fix Ollama connection issues (most common problem) |
+| **fix_ollama_connection.sh** | Alternative Ollama fix script |
+| **fix_ollama_connection.bat** | Windows Ollama fix |
+| **quick_fix_ollama.sh** | Fast Ollama fix |
+| **quick_fix_ollama.bat** | Windows quick Ollama fix |
+| **fix_logs.sh** | Fix log file permissions |
+| **deploy_fixes.ps1** | PowerShell deployment fixes |
+| **rebuild_no_cache.bat** | Docker rebuild without cache |
+
+### **Activation Scripts**
+
+| File | Purpose |
+|------|---------|
+| **activate_env.sh** | Activate Python virtual environment (Linux) |
+| **activate_env.bat** | Activate Python virtual environment (Windows) |
+| **start.sh** | Start all services (Linux) |
+| **LAUNCH_ATTACKS.bat** | Launch attack tests (Windows) |
+
+### **Docker Configuration**
+
+| File | Purpose |
+|------|---------|
+| **docker-compose.yml** | Main Docker Compose configuration |
+| **docker-compose.prod.yml** | Production Docker configuration |
+| **Dockerfile** | Container image build instructions |
+| **docker-entrypoint.sh** | Container startup script |
+| **docker-startup.sh** | Service startup orchestration |
+| **.dockerignore** | Files to exclude from Docker build |
+
+### **Configuration Files**
+
+| File | Purpose |
+|------|---------|
+| **requirements.txt** | Python package dependencies |
+| **nginx.conf** | Nginx reverse proxy configuration (optional) |
+| **.env** | Environment variables (create from examples) |
+| **.gitignore** | Files to exclude from Git |
+
+### **Documentation Files**
+
+| File | Description |
+|------|-------------|
+| **README.md** | Main project documentation (this file) |
+| **START_HERE.md** | Quick start guide for new users |
+| **COMPLETE_FEATURE_REFERENCE.md** | **COMPREHENSIVE feature documentation** |
+| **DASHBOARD_FEATURES.md** | Enhanced dashboard features (v2.0) |
+| **DASHBOARD_GUIDE.md** | Complete dashboard tutorial |
+| **DASHBOARD_UPDATE_SUMMARY.md** | Dashboard features overview |
+| **AUTOMATION_SUMMARY.md** | What's automated in installation |
+| **TROUBLESHOOTING_COMPLETE.md** | Complete troubleshooting guide |
+| **QUICK_TROUBLESHOOTING.md** | Quick reference troubleshooting card |
+| **ATTACK_TESTING_GUIDE.txt** | How to test the system |
+| **DEPLOYMENT_FIXES.md** | Deployment issue fixes |
+| **DOCUMENTATION_SUMMARY.txt** | Documentation summary |
+| **CHANGES_2026-02-23.md** | Changelog |
+
+### **Verification Scripts**
+
+| File | Purpose |
+|------|---------|
+| **check_crewai_api.py** | Test CrewAI functionality |
+| **check_crew_instance.py** | Validate crew configuration |
+| **sentinel_auto.py** | Automated deployment tool |
+
+---
+
+## 🔧 Complete Environment Variables Reference
+
+### **Ollama LLM Configuration**
+```bash
+OLLAMA_BASE_URL=http://host.docker.internal:11434  # Ollama server URL
+OLLAMA_MODEL=llama3:8b                             # LLM model to use
+OLLAMA_TIMEOUT=30000                               # Request timeout (ms)
+OLLAMA_NUM_CTX=4096                                # Context window size
+OLLAMA_TEMPERATURE=0.7                             # Response creativity (0.0-1.0)
+```
+
+### **Log File Paths**
+```bash
+AUTH_LOG_PATH=/var/log/auth.log                    # Authentication log
+WEB_LOG_PATH=/var/log/apache2/access.log           # Web server access log
+CUSTOM_LOG_PATH=/path/to/custom.log                # Additional custom logs
+```
+
+### **Database Configuration**
+```bash
+SENTINEL_DB_PATH=/app/data/sentinel_intel.db       # SQLite database path
+SENTINEL_DATA_DIR=/app/data                        # Data directory
+DB_BACKUP_ENABLED=true                             # Enable automatic backups
+DB_BACKUP_DIR=/app/data/backups                    # Backup location
+DB_RETENTION_DAYS=90                               # Data retention period
+```
+
+### **Web Dashboard Settings**
+```bash
+DASHBOARD_PORT=8501                                # Dashboard port
+DASHBOARD_BIND_IP=0.0.0.0                          # Bind to all interfaces (or specific IP)
+DASHBOARD_USER=sentinel                            # Dashboard username
+DASHBOARD_PASS=sentinel                            # Dashboard password (CHANGE THIS!)
+DASHBOARD_THEME=dark                               # Theme: dark or light
+DASHBOARD_REFRESH=30                               # Auto-refresh interval (seconds)
+```
+
+### **CLI Dashboard Settings**
+```bash
+CLI_REFRESH_INTERVAL=5                             # Refresh rate (seconds)
+CLI_MAX_INCIDENTS=20                               # Rows to display
+CLI_SHOW_STATS=true                                # Show summary statistics
+```
+
+### **API Server Configuration**
+```bash
+API_PORT=8000                                      # API server port
+API_HOST=0.0.0.0                                   # API bind address
+API_WORKERS=4                                      # Uvicorn workers
+API_TIMEOUT=60                                     # Request timeout (seconds)
+API_MAX_REQUESTS=1000                              # Max requests before restart
+```
+
+### **Authentication & Security**
+```bash
+SENTINEL_ADMIN_USER=sentinel                       # Admin username
+SENTINEL_ADMIN_PASS=sentinel                       # Admin password (CHANGE THIS!)
+SECRET_KEY=your-secret-key-here                    # Encryption secret key
+HASH_ITERATIONS=100000                             # Password hash iterations
+ENABLE_HTTPS=false                                 # Enable HTTPS (requires certificates)
+```
+
+### **AI Analysis Configuration**
+```bash
+ENABLE_AI_ANALYSIS=true                            # Enable AI crew analysis
+AI_THRESHOLD=HIGH                                  # Minimum severity for AI (HIGH, MEDIUM, LOW)
+AI_MAX_ITER=25                                     # Max AI agent iterations
+AI_VERBOSE=false                                   # Verbose AI output
+AI_TIMEOUT=60                                      # AI analysis timeout (seconds)
+```
+
+### **Threat Response**
+```bash
+BLOCK_AUTO=true                                    # Automatically block detected threats
+BLOCK_DURATION=3600                                # Block duration (seconds, 0=permanent)
+BLACKLIST_ENABLED=true                             # Enable IP blacklist
+WHITELIST_ENABLED=true                             # Enable IP whitelist
+```
+
+### **Logging Configuration**
+```bash
+LOG_LEVEL=INFO                                     # DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_FORMAT=json                                    # json or text
+LOG_FILE=/app/logs/sentinel.log                   # Log file path
+LOG_MAX_SIZE=104857600                             # Max log size (100MB)
+LOG_BACKUP_COUNT=10                                # Number of backup log files
+METRICS_ENABLED=true                               # Enable Prometheus metrics
+METRICS_PORT=9090                                  # Metrics endpoint port
+```
+
+### **Email Notifications (Future Feature)**
+```bash
+SMTP_HOST=smtp.gmail.com                           # SMTP server
+SMTP_PORT=587                                      # SMTP port
+SMTP_USER=your-email@example.com                   # SMTP username
+SMTP_PASS=your-password                            # SMTP password
+EMAIL_FROM=sentinel@example.com                    # From address
+EMAIL_TO=admin@example.com                         # To address
+ENABLE_EMAIL_ALERTS=false                          # Enable email alerts
+```
+
+### **Third-Party Integrations (Future)**
+```bash
+ENABLE_SIEM=false                                  # Enable SIEM integration
+SIEM_ENDPOINT=http://siem-server:514               # SIEM server endpoint
+SYSLOG_ENABLED=false                               # Enable syslog forwarding
+WEBHOOK_URL=http://slack-webhook-url               # Webhook for notifications
+```
+
+---
+
+## 🎯 Complete Command-Line Reference
+
+### **Main Application**
+```bash
+python3 main.py [OPTIONS]
+
+Options:
+  --auth-log PATH        Authentication log path (default: /var/log/auth.log)
+  --web-log PATH         Web log path (default: /var/log/apache2/access.log)
+  --db-path PATH         Database path (default: ./data/sentinel_intel.db)
+  --ollama-url URL       Ollama server URL (default: http://127.0.0.1:11434)
+  --model NAME           LLM model name (default: llama3:8b)
+  --no-ai                Disable AI analysis completely
+  --verbose              Enable debug logging
+  --daemon               Run as background daemon
+
+Examples:
+  # Standard run
+  python3 main.py
+  
+  # Custom log paths
+  python3 main.py --auth-log /custom/auth.log --web-log /custom/web.log
+  
+  # Disable AI (fast logging only)
+  python3 main.py --no-ai
+  
+  # Debug mode
+  python3 main.py --verbose
+```
+
+### **Web Dashboard**
+```bash
+streamlit run dashboard/web_dashboard.py [OPTIONS]
+
+Streamlit Options:
+  --server.port PORT             Port to run on (default: 8501)
+  --server.address ADDRESS       Address to bind (default: localhost)
+  --server.headless true         Run in headless mode
+  --server.enableCORS false      Disable CORS
+  --server.enableXsrfProtection  Enable XSRF protection
+
+Environment Variables:
+  SENTINEL_DB_PATH=/path/to/db.sqlite
+  DASHBOARD_PORT=8501
+  DASHBOARD_USER=username
+  DASHBOARD_PASS=password
+
+Examples:
+  # Run locally
+  streamlit run dashboard/web_dashboard.py
+  
+  # Run accessible from network
+  streamlit run dashboard/web_dashboard.py --server.address 0.0.0.0 --server.port 8501
+  
+  # Custom database
+  SENTINEL_DB_PATH=./custom.db streamlit run dashboard/web_dashboard.py
+  
+  # Inside Docker container
+  docker exec -it sentinel-agent streamlit run dashboard/web_dashboard.py --server.address 0.0.0.0 --server.port 8501
+```
+
+### **CLI Dashboard**
+```bash
+python3 dashboard/cli_dashboard.py [OPTIONS]
+
+Options:
+  --refresh SECONDS      Auto-refresh interval (default: 5)
+  --max-rows INT         Maximum rows to display (default: 20)
+  --db-path PATH         Database path
+
+Examples:
+  # Standard run
+  python3 dashboard/cli_dashboard.py
+  
+  # Faster refresh
+  python3 dashboard/cli_dashboard.py --refresh 2
+  
+  # Show more rows
+  python3 dashboard/cli_dashboard.py --max-rows 50
+```
+
+### **Database Cleanup**
+```bash
+python3 clear_database.py [OPTIONS]
+
+Options:
+  --all                  Clear all data (incidents, actions, threat intel)
+  --incidents            Clear incidents table only
+  --threat-intel         Clear threat intelligence only
+  --ip IP_ADDRESS        Clear all records for specific IP
+  --older-than DAYS      Clear data older than N days
+  --list                 List top attacking IPs
+  --dry-run              Show what would be deleted without deleting
+
+Examples:
+  # List top attackers
+  python3 clear_database.py --list
+  
+  # Clear specific IP
+  python3 clear_database.py --ip 1.2.3.4
+  
+  # Clear old data (dry run)
+  python3 clear_database.py --older-than 90 --dry-run
+  
+  # Clear old data (execute)
+  python3 clear_database.py --older-than 90
+  
+  # Clear all data
+  python3 clear_database.py --all
+```
+
+### **View Attacks**
+```bash
+python3 view_attacks.py [OPTIONS]
+
+Options:
+  --limit INT            Number of attacks to show (default: 50)
+  --severity LEVEL       Filter by severity (HIGH, MEDIUM, LOW)
+  --ip IP_ADDRESS        Filter by IP address
+  --since DATETIME       Filter by date (YYYY-MM-DD or ISO-8601)
+  --attack-type TYPE     Filter by attack type
+  --export FILE.csv      Export to CSV file
+  --stats                Show statistics summary
+
+Examples:
+  # View latest 50 attacks
+  python3 view_attacks.py
+  
+  # View HIGH severity only
+  python3 view_attacks.py --severity HIGH --limit 100
+  
+  # View attacks from specific IP
+  python3 view_attacks.py --ip 1.2.3.4
+  
+  # Export to CSV
+  python3 view_attacks.py --export attacks.csv --since 2024-01-01
+  
+  # Show statistics
+  python3 view_attacks.py --stats
+```
+
+### **Test Web Attacks**
+```bash
+python3 test_web_attacks.py [OPTIONS]
+
+Options:
+  --target URL           Target URL (default: http://10.76.250.89:8000)
+  --intensity LEVEL      Attack intensity: low, medium, high, extreme
+  --attack-type TYPE     Specific attack: sql, xss, path, cmd, all
+  --delay SECONDS        Delay between requests (default: 1.0)
+  --count INT            Number of attacks to generate (default: 50)
+  --verbose              Detailed output
+
+Examples:
+  # Basic test
+  python3 test_web_attacks.py
+  
+  # High intensity attack
+  python3 test_web_attacks.py --intensity high --count 100
+  
+  # SQL injection only
+  python3 test_web_attacks.py --attack-type sql --delay 0.5
+  
+  # Custom target
+  python3 test_web_attacks.py --target http://myserver.com:8000
+```
+
+### **Continuous Attacks**
+```bash
+python3 continuous_attacks.py [OPTIONS]
+
+Options:
+  --interval SECONDS     Attack every N seconds (default: 5)
+  --duration MINUTES     Run for N minutes (default: 60)
+  --burst INT            Attacks per burst (default: 3)
+  --randomize            Randomize attack types
+  --target URL           Target URL
+
+Examples:
+  # Light continuous attacks (1 hour)
+  python3 continuous_attacks.py --interval 10 --duration 60
+  
+  # Heavy attacks (5 minutes)
+  python3 continuous_attacks.py --interval 1 --burst 10 --duration 5
+  
+  # Randomized attacks
+  python3 continuous_attacks.py --randomize --duration 120
+```
+
+### **System Validation**
+```bash
+python3 validate_system.py [OPTIONS]
+
+Options:
+  --check-all            Run all checks
+  --check-deps           Check dependencies only
+  --check-config         Check configuration only
+  --check-perms          Check permissions only
+  --fix                  Attempt to fix issues automatically
+
+Examples:
+  # Full validation
+  python3 validate_system.py --check-all
+  
+  # Check and fix
+  python3 validate_system.py --check-all --fix
+  
+  # Check dependencies
+  python3 validate_system.py --check-deps
+```
+
+### **Docker Commands**
+```bash
+# Start services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f sentinel-agent
+
+# Restart specific service
+docker-compose restart sentinel-agent
+
+# Rebuild containers
+docker-compose down && docker-compose build --no-cache && docker-compose up -d
+
+# Execute command inside container
+docker exec -it sentinel-agent <command>
+
+# Access container shell
+docker exec -it sentinel-agent bash
+
+# View container status
+docker-compose ps
+
+# Check resource usage
+docker stats sentinel-agent
+```
+
+### **Ollama Commands**
+```bash
+# Check Ollama status
+systemctl status ollama
+
+# Start/Stop Ollama
+sudo systemctl start ollama
+sudo systemctl stop ollama
+sudo systemctl restart ollama
+
+# Pull model
+ollama pull llama3:8b
+
+# List models
+ollama list
+
+# Test model
+ollama run llama3:8b "Hello"
+
+# Check Ollama network binding
+ss -tlnp | grep 11434
+
+# Configure Ollama network (fix connection issues)
+sudo ./configure_ollama_network.sh
+```
+
+---
+
+## 📊 API Endpoints Complete List
+
+### **Health & Status Endpoints**
+- `GET /api/health` - Health check
+- `GET /api/status` - System status
+- `GET /api/version` - Version information
+
+### **Incident Endpoints**
+- `GET /api/incidents` - List incidents (with filters)
+- `GET /api/incidents/{id}` - Get specific incident
+- `POST /api/incidents` - Create incident
+- `DELETE /api/incidents/{id}` - Delete incident
+
+### **IP Management Endpoints**
+- `GET /api/ips/blocked` - List blocked IPs
+- `POST /api/ips/block` - Block IP address
+- `DELETE /api/ips/block/{ip}` - Unblock IP address
+- `GET /api/ips/reputation/{ip}` - Get IP reputation
+- `PUT /api/ips/reputation/{ip}` - Update IP reputation
+
+### **Action Endpoints**
+- `GET /api/actions` - List actions
+- `GET /api/actions/{id}` - Get specific action
+
+### **Statistics Endpoints**
+- `GET /api/stats/summary` - Overall statistics
+- `GET /api/stats/timeline` - Time-series data
+- `GET /api/stats/attackers` - Top attackers
+- `GET /api/stats/attack-types` - Attack type distribution
+
+### **Export Endpoints**
+- `GET /api/export/incidents` - Export incidents (CSV/JSON)
+- `GET /api/export/threat-intel` - Export threat intel (JSON)
+- `GET /api/export/database` - Backup database (Admin only)
+
+### **Threat Intelligence Endpoints**
+- `GET /api/threat-intel` - List threat intelligence
+- `POST /api/threat-intel` - Add threat intel
+- `DELETE /api/threat-intel/{ip}` - Remove threat intel
+
+### **Log Endpoints**
+- `GET /api/logs` - Get logs
+- `GET /api/logs/search` - Search logs
+
+**📘 For detailed API documentation with request/response examples, see [COMPLETE_FEATURE_REFERENCE.md](COMPLETE_FEATURE_REFERENCE.md#api-endpoints-reference)**
+
+---
+
+## 🗄️ Database Tables
+
+### **Main Tables**
+1. **incidents** - Security incident records
+2. **actions** - Automated response actions
+3. **threat_intel** - IP reputation and intelligence
+4. **blacklist** - Blocked IP addresses
+5. **whitelist** - Trusted IP addresses
+
+### **Schema Details**
+See [COMPLETE_FEATURE_REFERENCE.md](COMPLETE_FEATURE_REFERENCE.md#database-schema) for complete table structures, indexes, and example data.
+
+---
+
+## 🔍 Attack Detection Patterns
+
+### **Detected Attack Types**
+
+1. **SQL Injection**
+   - Union-based SQLi
+   - Boolean-based blind SQLi
+   - Error-based SQLi
+   - Time-based blind SQLi
+   - Stacked queries
+
+2. **Cross-Site Scripting (XSS)**
+   - Stored XSS
+   - Reflected XSS  
+   - DOM-based XSS
+   - JavaScript injection
+   - Event handler injection
+
+3. **Path Traversal**
+   - Directory traversal (../)
+   - URL encoding variants
+   - Double encoding
+   - Null byte injection
+
+4. **Command Injection**
+   - Shell command injection
+   - Code injection
+   - LDAP injection
+   - XPath injection
+
+5. **Brute Force**
+   - SSH brute force
+   - Login brute force
+   - Password spraying
+   - Credential stuffing
+
+6. **Directory Scanning**
+   - Common file/directory enumeration
+   - Admin panel discovery
+   - Configuration file access
+   - Backup file detection
+
+7. **Attack Tool Signatures**
+   - SQLmap
+   - Nikto
+   - Nmap
+   - Burp Suite
+   - Metasploit
+   - DirBuster
+
+**📘 For complete pattern regex and examples, see [COMPLETE_FEATURE_REFERENCE.md](COMPLETE_FEATURE_REFERENCE.md#detection-patterns)**
+
+---
+
+## 🎯 Features by Category
+
+### **🔍 Detection Features**
+- ✅ Real-time log monitoring (auth.log, apache access.log)
+- ✅ Pattern-based attack detection (regex)
+- ✅ Anomaly detection (statistical)
+- ✅ Threat intelligence correlation
+- ✅ IP reputation scoring
+- ✅ Attack signature matching
+- ✅ Behavioral analysis
+
+### **🤖 AI Features**
+- ✅ Multi-agent AI crew (CrewAI)
+- ✅ Local LLM (Ollama + Llama 3)
+- ✅ Conditional AI analysis (HIGH severity only)
+- ✅ Log analysis automation
+- ✅ Threat intelligence automation
+- ✅ Response planning automation
+- ✅ Natural language incident reports
+
+### **🛡️ Response Features**
+- ✅ Automatic IP blocking (iptables/UFW)
+- ✅ Manual IP blocking via dashboard
+- ✅ Temporary/permanent blocks
+- ✅ IP whitelisting
+- ✅ Configurable block duration
+- ✅ Dry-run mode for testing
+
+### **📊 Dashboard Features**
+- ✅ **Web Dashboard** (Streamlit)
+  - 9 comprehensive tabs
+  - Real-time metrics
+  - Log viewer
+  - Apache traffic analysis
+  - IP blocking controls
+  - Attack pattern visualization
+  - Data export (CSV/JSON)
+  - System information
+
+- ✅ **CLI Dashboard** (Rich TUI)
+  - Terminal-based UI
+  - Auto-refresh every 5 seconds
+  - Color-coded severity
+  - Top attackers table
+  - Attack type statistics
+  - Low bandwidth usage
+
+### **🔌 API Features**
+- ✅ RESTful API (FastAPI)
+- ✅ 25+ endpoints
+- ✅ JSON responses
+- ✅ HTTP Basic Auth
+- ✅ Rate limiting
+- ✅ CORS support
+- ✅ Swagger/OpenAPI docs
+
+### **💾 Data Management**
+- ✅ SQLite database
+- ✅ Incident logging
+- ✅ Action tracking
+- ✅ Threat intelligence storage
+- ✅ Data export (CSV/JSON/SQLite)
+- ✅ Automatic backups (configurable)
+- ✅ Data retention policies
+
+### **🔐 Security Features**
+- ✅ Password hashing (PBKDF2)
+- ✅ Secret encryption
+- ✅ HTTP Basic Auth
+- ✅ Audit logging
+- ✅ Secure credential storage
+- ✅ Input validation
+- ✅ Output sanitization
+
+### **🧪 Testing Features**
+- ✅ Web attack simulator
+- ✅ Client-side attack tests
+- ✅ Authentication attack tests
+- ✅ Continuous attack generator
+- ✅ Security feature validation
+- ✅ 100+ attack patterns
+
+### **🛠️ Utility Features**
+- ✅ Database cleanup tools
+- ✅ Attack viewer/analyzer
+- ✅ System validation
+- ✅ Configuration verification
+- ✅ Log file management
+- ✅ Blacklist/whitelist management
+
+### **🐳 Deployment Features**
+- ✅ One-command installation
+- ✅ Docker containerization
+- ✅ Docker Compose orchestration
+- ✅ Automated setup scripts
+- ✅ Cross-platform support
+- ✅ Production configuration
+
+### **📈 Monitoring Features**
+- ✅ Prometheus metrics
+- ✅ Performance tracking
+- ✅ Resource monitoring
+- ✅ System health checks
+- ✅ Uptime tracking
+- ✅ Load average monitoring
+
+---
+
+## 🎓 Use Cases
+
+### **1. Web Server Protection**
+Monitor Apache/Nginx logs for attacks, automatically block malicious IPs, get AI analysis of serious threats.
+
+### **2. SSH Brute Force Prevention**
+Detect and block SSH brute force attempts in real-time, track repeat offenders.
+
+### **3. Security Research**
+Generate controlled attacks for testing, analyze attack patterns, export data for research.
+
+### **4. Compliance & Reporting**
+Log all security incidents, generate compliance reports, export audit trails.
+
+### **5. Training & Education**
+Learn about attacks, understand AI-powered security, study threat patterns.
+
+### **6. SOC Automation**
+Automate initial threat triage, reduce false positives, focus on real threats.
+
+---
+
 ## 🤝 Contributing
 
 Contributions welcome! Areas for improvement:
@@ -743,7 +1613,7 @@ Contributions welcome! Areas for improvement:
 
 ## 📝 License
 
-License - See LICENSE file for details
+MIT License - See LICENSE file for details
 
 ---
 
