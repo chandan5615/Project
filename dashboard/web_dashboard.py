@@ -28,6 +28,11 @@ Password: sentinel
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import auth module
+sys.path.insert(0, str(Path(__file__).parent.parent))
 import sqlite3
 from pathlib import Path
 import logging
@@ -1165,8 +1170,101 @@ def render_system_info():
         st.info(f"Disk usage not available: {e}")
 
 
+def _show_login_page():
+    """Display login page for dashboard authentication."""
+    st.set_page_config(
+        page_title="Sentinel Login",
+        page_icon="🔐",
+        layout="centered"
+    )
+    
+    # Center the login form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.title("🔐 Sentinel Agent Login")
+        st.markdown("---")
+        
+        # Login form
+        with st.form("login_form"):
+            st.subheader("Enter Credentials")
+            username = st.text_input("Username", placeholder="admin")
+            password = st.text_input("Password", type="password", placeholder="Enter password")
+            
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                submit = st.form_submit_button("🔓 Login", use_container_width=True)
+            with col_btn2:
+                help_btn = st.form_submit_button("❓ Help", use_container_width=True)
+            
+            if submit:
+                if not username or not password:
+                    st.error("❌ Please enter both username and password")
+                else:
+                    # Attempt authentication
+                    try:
+                        success, token = st.session_state.authenticator.authenticate(username, password)
+                        
+                        if success:
+                            st.session_state.authenticated = True
+                            st.session_state.username = username
+                            st.session_state.auth_token = token
+                            st.success(f"✅ Welcome, {username}!")
+                            st.balloons()
+                            st.rerun()
+                        else:
+                            st.error("❌ Invalid username or password")
+                            st.warning("⚠️ Failed login attempt logged")
+                    except Exception as e:
+                        st.error(f"❌ Authentication error: {e}")
+                        st.info("💡 Tip: Check if auth.db exists and default user is created")
+            
+            if help_btn:
+                st.info("""
+                **Default Credentials:**
+                - Username: `admin`
+                - Password: `sentinel2026`
+                
+                **For password reset:**
+                - Contact your system administrator
+                - Or access the server console to reset via CLI
+                """)
+        
+        st.markdown("---")
+        st.caption("🛡️ Sentinel Agent v2.3 | Secure Dashboard Access")
+        st.caption("⚠️ Unauthorized access is monitored and logged")
+
+
 def main():
     """Main dashboard application"""
+    
+    # ============================================================
+    # 🔐 AUTHENTICATION CHECK
+    # ============================================================
+    # Initialize authentication if not exists
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+    if "username" not in st.session_state:
+        st.session_state.username = None
+    if "auth_initialized" not in st.session_state:
+        try:
+            from auth import DashboardAuthenticator
+            st.session_state.authenticator = DashboardAuthenticator()
+            st.session_state.auth_initialized = True
+        except Exception as e:
+            st.error(f"⚠️ Authentication module not available: {e}")
+            st.warning("🔓 Running in UNAUTHENTICATED mode (development only)")
+            st.session_state.auth_initialized = False
+            st.session_state.authenticated = True  # Fallback to allow access
+    
+    # Show login page if not authenticated
+    if not st.session_state.authenticated and st.session_state.auth_initialized:
+        _show_login_page()
+        return  # Stop here until authenticated
+    
+    # ============================================================
+    # 📊 MAIN DASHBOARD (Only shown if authenticated)
+    # ============================================================
     
     # Initialize session state with default database path
     if "db_path" not in st.session_state:
@@ -1175,6 +1273,16 @@ def main():
     # Sidebar configuration
     with st.sidebar:
         st.title("⚙️ Configuration")
+        
+        # Show logged in user
+        if st.session_state.get("username"):
+            st.success(f"👤 Logged in as: **{st.session_state.username}**")
+            if st.button("🚪 Logout", use_container_width=True):
+                st.session_state.authenticated = False
+                st.session_state.username = None
+                st.rerun()
+        
+        st.divider()
         
         # Database path
         db_path = st.text_input(
