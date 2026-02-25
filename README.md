@@ -262,6 +262,10 @@ Sentinel Agent provides both a web-based dashboard and a powerful CLI dashboard 
 # Access at: http://YOUR_SERVER_IP:8501
 # Login: sentinel / sentinel
 
+# If you need to start the web dashboard manually inside the container
+docker exec -it sentinel-agent streamlit run dashboard/web_dashboard.py \
+  --server.address 0.0.0.0 --server.port 8501
+
 # View logs (if needed)
 docker-compose logs -f sentinel-agent | head -50
 ```
@@ -276,10 +280,10 @@ cd Project
 pip install streamlit pandas plotly rich requests
 
 # Copy database from server (or use local)
-# scp ubuntu@192.168.31.91:~/Project/data/sentinel_intel.db ./data/
+# scp ubuntu@YOUR_SERVER_IP:~/Project/data/sentinel_intel.db ./data/
 
 # Run dashboard locally
-streamlit run dashboard/web_dashboard.py
+SENTINEL_DB_PATH=./data/sentinel_intel.db streamlit run dashboard/web_dashboard.py
 
 # Opens automatically at: http://localhost:8501
 ```
@@ -311,7 +315,7 @@ streamlit run dashboard/web_dashboard.py
 #### **Option 1: From Server**
 ```bash
 # SSH into your server
-ssh ubuntu@192.168.31.91
+ssh ubuntu@YOUR_SERVER_IP
 
 # Navigate to project
 cd ~/Project
@@ -339,10 +343,10 @@ docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
 #### **Option 3: From Your PC (Remote)**
 ```bash
 # SSH tunnel to server
-ssh -L 9000:localhost:9000 ubuntu@192.168.31.91
+ssh -L 9000:localhost:9000 ubuntu@YOUR_SERVER_IP
 
 # Then run (in another terminal)
-ssh ubuntu@192.168.31.91 "cd ~/Project && python3 dashboard/cli_dashboard.py"
+ssh ubuntu@YOUR_SERVER_IP "cd ~/Project && python3 dashboard/cli_dashboard.py"
 
 # Output streams to your terminal in real-time
 ```
@@ -397,18 +401,19 @@ ssh ubuntu@192.168.31.91 "cd ~/Project && python3 dashboard/cli_dashboard.py"
 
 ```bash
 # Terminal 1: Web Dashboard (for visual monitoring)
-ssh ubuntu@192.168.31.91 "cd ~/Project && \
-  docker exec -d sentinel-agent python3 dashboard/web_dashboard.py"
+ssh ubuntu@YOUR_SERVER_IP "cd ~/Project && \
+  docker exec -d sentinel-agent streamlit run dashboard/web_dashboard.py \
+  --server.address 0.0.0.0 --server.port 8501"
 
 # Terminal 2: CLI Dashboard (for live terminal updates)
-ssh ubuntu@192.168.31.91 "cd ~/Project && \
+ssh ubuntu@YOUR_SERVER_IP "cd ~/Project && \
   docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py"
 
 # Terminal 3: Monitor Raw Logs
 docker-compose logs -f sentinel-agent | grep -E "(HIGH|ALERT|Incident)"
 
 # Now you can:
-# - Watch web dashboard at http://192.168.31.91:8501
+# - Watch web dashboard at http://YOUR_SERVER_IP:8501
 # - Monitor CLI dashboard in Terminal 2 (live updates every 5s)
 # - Track raw logs in Terminal 3
 ```
@@ -426,6 +431,7 @@ DASHBOARD_PORT=8501
 DASHBOARD_USER=sentinel
 DASHBOARD_PASS=sentinel
 DASHBOARD_THEME=dark  # or 'light'
+DASHBOARD_PUBLIC_HOST=YOUR_SERVER_IP  # optional, shows public URL in dashboard
 
 # CLI Dashboard Settings
 CLI_REFRESH_INTERVAL=5  # seconds
@@ -440,15 +446,15 @@ SENTINEL_DATA_DIR=/app/data
 ### **Accessing External Network Dashboards:**
 
 ```bash
-# From another PC on local network (192.168.31.x)
+# From another PC on local network
 # Web Dashboard:
-http://192.168.31.91:8501
+http://YOUR_SERVER_IP:8501
 
 # API Health Check:
-http://192.168.31.91:8000/api/health
+http://YOUR_SERVER_IP:8000/api/health
 
 # Via SSH Tunnel (from anywhere):
-ssh -L 8501:localhost:8501 ubuntu@192.168.31.91
+ssh -L 8501:localhost:8501 ubuntu@YOUR_SERVER_IP
 # Then: http://localhost:8501
 ```
 
@@ -497,7 +503,7 @@ docker-compose logs -f | grep -E "(HIGH|AI|crew)"
 docker-compose logs -f | grep -E "(SQL|XSS|attack)"
 
 # Check dashboards
-# Web: http://192.168.31.91:8501
+# Web: http://YOUR_SERVER_IP:8501
 # CLI: docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
 ```
 
@@ -509,7 +515,7 @@ docker-compose logs -f | grep -E "(SQL|XSS|attack)"
 
 ```bash
 # Web Dashboard
-http://192.168.31.91:8501                    # Browser access
+http://YOUR_SERVER_IP:8501                    # Browser access
 docker-compose logs -f                       # View logs
 
 # CLI Dashboard  

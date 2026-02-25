@@ -7,15 +7,18 @@ USAGE:
 # Run with Docker (automatic)
 docker-compose up -d
 
+# Run inside container
+docker exec -it sentinel-agent streamlit run dashboard/web_dashboard.py --server.address 0.0.0.0 --server.port 8501
+
 # Run standalone (local development)
-streamlit run web_dashboard.py
+streamlit run dashboard/web_dashboard.py
 
 # Run with custom database
-SENTINEL_DB_PATH=/path/to/db.sqlite streamlit run web_dashboard.py
+SENTINEL_DB_PATH=/path/to/db.sqlite streamlit run dashboard/web_dashboard.py
 
 # Access at:
 http://localhost:8501               (local)
-http://192.168.31.91:8501           (local network)
+http://YOUR_SERVER_IP:8501          (server)
 
 # Login with:
 Username: sentinel
@@ -31,6 +34,7 @@ import logging
 from typing import Dict, List, Tuple
 import json
 import os
+import socket
 
 # Configure page
 st.set_page_config(
@@ -41,8 +45,32 @@ st.set_page_config(
 )
 
 # Default database path (matches data_engine.py)
-DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or "/app/data"
+def _detect_default_data_dir() -> str:
+    """Detect appropriate data directory based on environment."""
+    if os.path.exists("/.dockerenv"):
+        return "/app/data"
+    try:
+        with open("/proc/self/cgroup", "r", encoding="utf-8") as f:
+            if "docker" in f.read():
+                return "/app/data"
+    except OSError:
+        pass
+    return "./data"
+
+DEFAULT_DATA_DIR = os.getenv("SENTINEL_DATA_DIR") or _detect_default_data_dir()
 DEFAULT_DB_PATH = os.getenv("SENTINEL_DB_PATH") or os.path.join(DEFAULT_DATA_DIR, "sentinel_intel.db")
+DASHBOARD_PORT = int(os.getenv("DASHBOARD_PORT", "8501"))
+DASHBOARD_PUBLIC_HOST = os.getenv("DASHBOARD_PUBLIC_HOST") or os.getenv("SENTINEL_SERVER_IP")
+
+
+def _detect_primary_ip() -> str:
+    """Detect the primary IP used for outbound traffic."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect(("8.8.8.8", 80))
+            return sock.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
 
 # Dark theme CSS
 st.markdown("""
@@ -339,7 +367,7 @@ def render_wall_of_shame(data_manager: DashboardDataManager):
             'action': 'Action'
         })
         
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        st.dataframe(display_df, width="stretch", hide_index=True)
 
 
 def render_incident_feed(data_manager: DashboardDataManager):
@@ -362,7 +390,7 @@ def render_incident_feed(data_manager: DashboardDataManager):
             'details': 'Details'
         })
         
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        st.dataframe(display_df, width="stretch", hide_index=True)
 
 
 def render_network_health(data_manager: DashboardDataManager):
@@ -428,6 +456,16 @@ def main():
         st.text(f"Updated: {datetime.now().strftime('%H:%M:%S')}")
         st.text(f"Database Path: {Path(db_path).name}")
         st.text(f"Full Path: {db_path}")
+
+        st.divider()
+        st.subheader("🌐 Access URLs")
+        local_ip = _detect_primary_ip()
+        st.text(f"Local: http://localhost:{DASHBOARD_PORT}")
+        st.text(f"LAN: http://{local_ip}:{DASHBOARD_PORT}")
+        if DASHBOARD_PUBLIC_HOST:
+            st.text(f"Public: http://{DASHBOARD_PUBLIC_HOST}:{DASHBOARD_PORT}")
+        else:
+            st.caption("Set DASHBOARD_PUBLIC_HOST or SENTINEL_SERVER_IP to show public URL.")
     
     # Main header
     st.title("SENTINEL AGENT - SECURITY DASHBOARD")
