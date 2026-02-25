@@ -255,14 +255,8 @@ class SentinelAgent:
             description=attack_info.get("description", "Suspicious activity")
         )
         
-        # Display professional alert (logged to rotating file) and persist incident
-        logger.info(OutputFormatter.alert_event(
-            ip_address=ip_address,
-            attack_type=attack_info.get("attack_type", "unknown"),
-            severity=attack_info.get("severity", "medium"),
-            source=source,
-            log_line=log_line
-        ))
+        # Display concise alert
+        logger.info(f"🚨 Attack detected: {attack_info.get('attack_type', 'unknown').upper()} from {ip_address} ({source.upper()})")
 
         # Persist incident to SQLite
         try:
@@ -304,9 +298,9 @@ class SentinelAgent:
         use_ai_analysis = (severity == "HIGH")
         
         if use_ai_analysis:
-            logger.info(f"⚡ HIGH SEVERITY ATTACK - Activating AI Crew Analysis")
+            logger.info(f"⚡ HIGH severity - AI analysis activated for {ip_address} ({attack_type})")
         else:
-            logger.info(f"📝 {severity} severity attack - Logging without AI analysis (resource optimization)")
+            logger.info(f"📝 {severity} severity - Auto-blocked: {ip_address} ({attack_type})")
         
         final_report = None
         ai_response_time = 0
@@ -336,8 +330,7 @@ class SentinelAgent:
                     verbose=crew_verbose
                 )
                 
-                logger.info(OutputFormatter.crew_kickoff())
-                logger.info(OutputFormatter.analysis_started(ip_address, attack_info.get("attack_type", "unknown")))
+                logger.info(f"🤖 Starting AI analysis for {ip_address} ({attack_info.get('attack_type', 'unknown')})")
 
                 # Record analysis kickoff action
                 if incident_id:
@@ -352,42 +345,39 @@ class SentinelAgent:
                 try:
                     result = run_with_timeout(crew.kickoff, timeout)
                 except TimeoutError as e:
-                    logger.error(f"⚠️  AI analysis timed out after {timeout}s - falling back to automated response")
+                    logger.warning(f"⚠️  AI timeout after {timeout}s - Auto-blocked: {ip_address} ({attack_type})")
                     if incident_id:
                         data_engine.insert_action(incident_id, "analysis_timeout", f"Timeout after {timeout}s", False)
                     
-                    # Fallback to simple automated response
-                    final_report = f"""
-╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                           AI ANALYSIS TIMEOUT - AUTOMATED RESPONSE                                   ║
-╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                                      ║
-║  🎯 THREAT SOURCE    : {ip_address:<79}║
-║  🔥 ATTACK TYPE      : {attack_info.get("attack_type", "unknown"):<79}║
-║  ⚠️  SEVERITY LEVEL   : {attack_info.get("severity", "medium"):<79}║
-║                                                                                                      ║
-║  ⚠️  AI TIMEOUT       : Analysis exceeded {timeout} seconds - Ollama may be slow/unresponsive        ║
-║  ✅ FALLBACK ACTION  : Attack logged and IP blocked automatically                                    ║
-║  📊 STATUS           : Incident recorded in database                                                ║
-║  🛡️  PROTECTION       : IP added to monitoring watchlist                                             ║
-║                                                                                                      ║
-║  💡 RECOMMENDATION   : Check Ollama service status and model performance                             ║
-║                       Increase CREW_TIMEOUT env var if needed                                        ║
-║                                                                                                      ║
-╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
-"""
-                    logger.info(final_report)
+                    # Fallback to simple automated response (dict format)
+                    final_report = {
+                        "ip_address": ip_address,
+                        "attack_type": attack_info.get("attack_type", "unknown"),
+                        "severity": attack_info.get("severity", "medium"),
+                        "action_required": True,
+                        "firewall_rule": f"block {ip_address}",
+                        "status": "timeout_auto_blocked",
+                        "recommendation": "Check Ollama service status"
+                    }
                     # Continue with the rest of the processing
                     result = None
                     ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
                     final_report_to_use = final_report
                 except Exception as e:
-                    logger.error(f"❌ Error during AI analysis: {e}")
+                    logger.error(f"❌ AI error: {str(e)[:100]} - Auto-blocked: {ip_address}")
                     if incident_id:
                         data_engine.insert_action(incident_id, "analysis_error", str(e), False)
                     result = None
                     ai_response_time = 0
-                    final_report_to_use = f"Error: {e}"
+                    final_report_to_use = {
+                        "ip_address": ip_address,
+                        "attack_type": attack_info.get("attack_type", "unknown"),
+                        "severity": attack_info.get("severity", "medium"),
+                        "action_required": True,
+                        "firewall_rule": f"block {ip_address}",
+                        "status": "error_auto_blocked",
+                        "error": str(e)
+                    }
                 
                 # Record AI response completion time
                 if result:
@@ -397,26 +387,15 @@ class SentinelAgent:
                 
                 final_report = final_report_to_use
             else:
-                # Simple automated response without AI - just log and block
-                final_report = f"""
-╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                   AUTOMATED THREAT RESPONSE                                          ║
-╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                                      ║
-║  🎯 THREAT SOURCE    : {ip_address:<79}║
-║  🔥 ATTACK TYPE      : {attack_type:<79}║
-║  ⚠️  SEVERITY LEVEL   : {severity:<79}║
-║                                                                                                      ║
-║  ✅ AUTOMATED ACTION  : Attack logged and blocked                                                    ║
-║  📊 STATUS           : Incident recorded in database                                                ║
-║  🛡️  PROTECTION       : IP added to monitoring watchlist                                             ║
-║                                                                                                      ║
-║  ℹ️  NOTE: AI analysis reserved for HIGH severity threats only                                      ║
-║           This optimizes system resources while maintaining security                                ║
-║                                                                                                      ║
-╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
-"""
-                logger.info(final_report)
+                # Simple automated response without AI - just log and block (dict format)
+                final_report = {
+                    "ip_address": ip_address,
+                    "attack_type": attack_type,
+                    "severity": severity,
+                    "action_required": True,
+                    "firewall_rule": f"block {ip_address}",
+                    "status": "auto_blocked"
+                }
             
             # FEATURE 7: Record detection metrics
             if incident_id:
@@ -444,7 +423,7 @@ class SentinelAgent:
             self.incident_history.append(incident_record)
             
             # Update attack record with actions taken
-            if attack_record.get("id") and final_report.get("action_required"):
+            if isinstance(attack_record, dict) and attack_record.get("id") and isinstance(final_report, dict) and final_report.get("action_required"):
                 action_details = f"Firewall rule: {final_report.get('firewall_rule', 'N/A')}"
                 self.attack_logger.add_action(
                     attack_id=attack_record["id"],
@@ -454,13 +433,10 @@ class SentinelAgent:
                 )
             
             # Check if action is required
-            if final_report.get("action_required", False):
+            if isinstance(final_report, dict) and final_report.get("action_required", False):
                 self._handle_remediation(final_report, ip_address, incident_id)
-            else:
-                logger.info(OutputFormatter.info_message(
-                    "MONITORING MODE ACTIVE",
-                    ["No immediate action required.", "System is monitoring for additional indicators."]
-                ))
+            elif isinstance(final_report, dict):
+                logger.info(f"ℹ️  Monitoring: {ip_address} - No immediate action")
                 if incident_id:
                     try:
                         data_engine.insert_action(incident_id, "monitoring", "No action required - monitoring", True)
@@ -776,14 +752,12 @@ class SentinelAgent:
     
     def start(self):
         """Start the Sentinel Defense Module with multi-vector monitoring."""
-        logger.info(OutputFormatter.header("SENTINEL AGENT v2.0 INITIALIZATION"))
-        logger.info(OutputFormatter.section("SYSTEM CONFIGURATION"))
-        logger.info(f"  Authentication Log   : {self.auth_log_path}")
-        logger.info(f"  Web Access Log       : {self.web_log_path}")
-        logger.info("  AI Engine            : Ollama Local LLM (llama3:8b)")
-        logger.info("  Analysis Mode        : Multi-Agent AI Investigation")
-        logger.info("  Multi-Vector Support : Enabled")
-        logger.info("  Human-in-Loop        : Enabled")
+        logger.info("=" * 80)
+        logger.info("SENTINEL AGENT v2.2 - Security Monitoring Active")
+        logger.info("=" * 80)
+        logger.info(f"Auth Log: {self.auth_log_path}")
+        logger.info(f"Web Log:  {self.web_log_path}")
+        logger.info(f"AI Mode:  Ollama (llama3:8b) - HIGH severity only")
         logger.info("")
         
         # Initialize and start both sensors
@@ -802,11 +776,7 @@ class SentinelAgent:
             self.auth_sensor.start()
             self.web_sensor.start()
             
-            logger.info("✅ Sentinel Defense Module is now monitoring for security events...")
-            logger.info("   - Auth log monitoring: ACTIVE")
-            logger.info("   - Web log monitoring: ACTIVE")
-            logger.info("   - Cross-correlation: ENABLED")
-            logger.info("   - Resilience loop: ENABLED")
+            logger.info("✅ Monitoring active: Auth + Web logs | Cross-correlation enabled")
             logger.info("Press Ctrl+C to stop\n")
             
             # Keep the main thread alive with periodic polling fallback

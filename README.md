@@ -245,6 +245,7 @@ Auto-installed by `AUTO_INSTALL.sh`:
 - 🎨 **[DASHBOARD_GUIDE.md](DASHBOARD_GUIDE.md)** - Complete dashboard tutorial
 - 📝 **[DASHBOARD_UPDATE_SUMMARY.md](DASHBOARD_UPDATE_SUMMARY.md)** - Dashboard features overview
 - ✨ **[DASHBOARD_FEATURES.md](DASHBOARD_FEATURES.md)** - NEW: Enhanced features guide (v2.0)
+- 🛡️ **[IP_MANAGER_CLI_GUIDE.md](IP_MANAGER_CLI_GUIDE.md)** - **NEW!** IP blocking CLI tool guide
 - ⚙️ **[FEATURE_INTEGRATION.md](docs_markdown/FEATURE_INTEGRATION.md)** - Feature details
 
 ### **🧪 Testing & Deployment:**
@@ -864,6 +865,7 @@ See full API documentation in dashboard.
 
 | File | Purpose | Usage |
 |------|---------|-------|
+| **ip_manager_cli.py** | **⭐ IP blocking CLI** | `python3 ip_manager_cli.py block\|unblock\|list\|check IP` |
 | **clear_database.py** | Database cleanup | `python3 clear_database.py --all\|--incidents\|--ip IP` |
 | **view_attacks.py** | Attack viewer | `python3 view_attacks.py --limit 50 --severity HIGH` |
 | **validate_system.py** | System validation | `python3 validate_system.py --check-all` |
@@ -1192,6 +1194,63 @@ Examples:
   
   # Clear all data
   python3 clear_database.py --all
+```
+
+### **⭐ IP Manager CLI (NEW!)**
+```bash
+python3 ip_manager_cli.py [COMMAND] [OPTIONS]
+
+Commands:
+  block IP [IP2...]      Block one or more IP addresses
+  unblock IP [IP2...]    Unblock one or more IP addresses
+  list                   List all currently blocked IPs
+  check IP               Check if an IP is blocked
+  flush                  Remove ALL blocks (dangerous!)
+  (no command)           Interactive mode
+
+Options:
+  --reason TEXT, -r      Reason/comment for blocking
+  --details, -d          Show detailed information
+
+Features:
+  ✓ Works with both UFW and iptables
+  ✓ Validates IP addresses before blocking
+  ✓ Batch operations (block/unblock multiple IPs)
+  ✓ Interactive mode available
+  ✓ Color-coded output
+  ✓ Fast and lightweight
+
+Examples:
+  # Interactive mode (recommended)
+  python3 ip_manager_cli.py
+  
+  # Block a single IP
+  sudo python3 ip_manager_cli.py block 1.2.3.4
+  
+  # Block with reason
+  sudo python3 ip_manager_cli.py block 1.2.3.4 --reason "SQL injection attack"
+  
+  # Block multiple IPs at once
+  sudo python3 ip_manager_cli.py block 1.2.3.4 5.6.7.8 9.10.11.12
+  
+  # Unblock an IP
+  sudo python3 ip_manager_cli.py unblock 1.2.3.4
+  
+  # List all blocked IPs
+  sudo python3 ip_manager_cli.py list
+  
+  # Check if IP is blocked
+  sudo python3 ip_manager_cli.py check 1.2.3.4
+  
+  # Interactive session
+  sudo python3 ip_manager_cli.py
+  > block 1.2.3.4
+  > list
+  > check 1.2.3.4
+  > unblock 1.2.3.4
+  > exit
+
+See IP_MANAGER_CLI_GUIDE.md for complete documentation.
 ```
 
 ### **View Attacks**
