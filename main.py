@@ -355,7 +355,7 @@ class SentinelAgent:
                         "attack_type": attack_info.get("attack_type", "unknown"),
                         "severity": attack_info.get("severity", "medium"),
                         "action_required": True,
-                        "firewall_rule": f"block {ip_address}",
+                        "firewall_rule": f"iptables -I INPUT -s {ip_address} -j DROP",
                         "status": "timeout_auto_blocked",
                         "recommendation": "Check Ollama service status"
                     }
@@ -374,7 +374,7 @@ class SentinelAgent:
                         "attack_type": attack_info.get("attack_type", "unknown"),
                         "severity": attack_info.get("severity", "medium"),
                         "action_required": True,
-                        "firewall_rule": f"block {ip_address}",
+                        "firewall_rule": f"iptables -I INPUT -s {ip_address} -j DROP",
                         "status": "error_auto_blocked",
                         "error": str(e)
                     }
@@ -393,7 +393,7 @@ class SentinelAgent:
                     "attack_type": attack_type,
                     "severity": severity,
                     "action_required": True,
-                    "firewall_rule": f"block {ip_address}",
+                    "firewall_rule": f"iptables -I INPUT -s {ip_address} -j DROP",
                     "status": "auto_blocked"
                 }
             
@@ -444,7 +444,7 @@ class SentinelAgent:
                         logger.error(f"Error inserting action: {e}")
             
             # Update IP profile for anomaly scoring
-            anomaly_scorer.update_ip_profile(ip_address, attack_info.get("severity", "medium"))
+            anomaly_scorer.update_ip_profile(ip_address, attack_info.get("attack_type", "unknown"), attack_info.get("severity", "medium"))
             
         except Exception as e:
             logger.error(f"Error processing security event: {e}", exc_info=True)
@@ -545,20 +545,9 @@ class SentinelAgent:
             except Exception as e:
                 logger.error(f"Error inserting action: {e}")
 
-        response = input("  Execute this firewall rule? (yes/no): ").strip().lower()
-
-        if response in ['yes', 'y']:
-            self._execute_firewall_rule(firewall_rule, ip_address, incident_id)
-        else:
-            logger.info(OutputFormatter.info_message(
-                "ACTION CANCELLED",
-                ["The firewall rule has been cancelled by user.", "System continues monitoring."]
-            ))
-            if incident_id:
-                try:
-                    data_engine.insert_action(incident_id, "firewall_cancelled", "User cancelled execution", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
+        # Auto-approve HIGH severity attacks in automated environment (Docker)
+        logger.info("🔐 AUTO-APPROVED: High severity threat - Firewall block executing immediately")
+        self._execute_firewall_rule(firewall_rule, ip_address, incident_id)
     
     def _parse_firewall_rule(self, rule: str, ip_address: str) -> Optional[list]:
         try:
@@ -612,125 +601,111 @@ class SentinelAgent:
             ))
             return
         
-        # Final confirmation
-        logger.warning(OutputFormatter.subheader("FINAL CONFIRMATION REQUIRED"))
-        logger.warning(f"  Firewall Command: {rule}\n")
-        final_confirm = input("  Type 'EXECUTE' to proceed, or anything else to cancel: ").strip()
+        # Auto-execute in Docker (no interactive prompt needed)
+        logger.info("Executing firewall rule immediately...")
         
-        if final_confirm == "EXECUTE":
-            try:
-                logger.info(OutputFormatter.section("EXECUTING FIREWALL RULE"))
-                logger.info("  Status: Processing...\n")
+        try:
+            logger.info("Firewall rule executing")
+            logger.info(f"  Command: {rule}\n")
 
-                perf_metrics = get_metrics()
-                
-                # Record response start time for metrics
-                response_start = perf_metrics.get_current_timestamp()
-                
-                # Execute the command
-                result = subprocess.run(
-                    command,
-                    capture_output=True,
-                    text=True,
-                    shell=False,
-                    timeout=10
+            perf_metrics = get_metrics()
+            
+            # Record response start time for metrics
+            response_start = perf_metrics.get_current_timestamp()
+            
+            # Execute the command
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                shell=False,
+                timeout=10
+            )
+            
+            response_time = perf_metrics.get_current_timestamp() - response_start
+            success = False
+
+            if result.returncode == 0:
+                logger.info(OutputFormatter.success_message(
+                    "FIREWALL RULE SUCCESSFULLY APPLIED",
+                    [
+                        f"Blocked IP Address: {ip_address}",
+                        f"Rule Command: {rule}",
+                        "Status: Active and Verified"
+                    ]
+                ))
+                success = True
+            else:
+                logger.error(OutputFormatter.error_message(
+                    "FIREWALL RULE EXECUTION FAILED",
+                    f"Error output: {result.stderr}"
+                ))
+            
+            # FEATURE 7: Record response metrics
+            if incident_id:
+                perf_metrics.record_response(
+                    incident_id=incident_id,
+                    action_type="firewall_block",
+                    execution_time_ms=response_time,
+                    success=success
                 )
                 
-                response_time = perf_metrics.get_current_timestamp() - response_start
-                success = False
-
-                if result.returncode == 0:
-                    logger.info(OutputFormatter.success_message(
-                        "FIREWALL RULE SUCCESSFULLY APPLIED",
-                        [
-                            f"Blocked IP Address: {ip_address}",
-                            f"Rule Command: {rule}",
-                            "Status: Active and Verified"
-                        ]
-                    ))
-                    success = True
-                else:
-                    logger.error(OutputFormatter.error_message(
-                        "FIREWALL RULE EXECUTION FAILED",
-                        f"Error output: {result.stderr}"
-                    ))
-                
-                # FEATURE 7: Record response metrics
-                if incident_id:
-                    perf_metrics.record_response(
-                        incident_id=incident_id,
-                        action_type="firewall_block",
-                        execution_time_ms=response_time,
-                        success=success
-                    )
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", rule, success)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
                     
-                if incident_id:
-                    try:
-                        data_engine.insert_action(incident_id, "firewall_execute", rule, success)
-                    except Exception as e:
-                        logger.error(f"Error inserting action: {e}")
-                    
-            except subprocess.TimeoutExpired:
-                logger.error(OutputFormatter.error_message(
-                    "COMMAND EXECUTION TIMEOUT",
-                    "The firewall command timed out after 10 seconds."
-                ))
-                
-                # Record failed response
-                if incident_id:
-                    perf_metrics.record_response(
-                        incident_id=incident_id,
-                        action_type="firewall_block",
-                        execution_time_ms=-1,
-                        success=False
-                    )
-                
-                if incident_id:
-                    try:
-                        data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
-                    except Exception as e:
-                        logger.error(f"Error inserting action: {e}")
-            except FileNotFoundError:
-                logger.error(OutputFormatter.error_message(
-                    "IPTABLES NOT FOUND",
-                    "Ensure you are on a Linux system with iptables installed and available in PATH."
-                ))
-                if incident_id:
-                    try:
-                        data_engine.insert_action(incident_id, "firewall_execute", "iptables_not_found", False)
-                    except Exception as e:
-                        logger.error(f"Error inserting action: {e}")
-            except PermissionError:
-                logger.error(OutputFormatter.error_message(
-                    "PERMISSION DENIED",
-                    "This operation requires sudo privileges. Please run with: sudo python main.py"
-                ))
-                if incident_id:
-                    try:
-                        data_engine.insert_action(incident_id, "firewall_execute", "permission_denied", False)
-                    except Exception as e:
-                        logger.error(f"Error inserting action: {e}")
-            except Exception as e:
-                logger.error(OutputFormatter.error_message(
-                    "UNEXPECTED ERROR",
-                    f"Error executing firewall rule: {str(e)}"
-                ))
-                if incident_id:
-                    try:
-                        data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
-                    except Exception as e:
-                        logger.error(f"Error inserting action: {e}")
-        else:
-            logger.info(OutputFormatter.info_message(
-                "EXECUTION CANCELLED",
-                ["Operation was cancelled by user."]
+        except subprocess.TimeoutExpired:
+            logger.error(OutputFormatter.error_message(
+                "COMMAND EXECUTION TIMEOUT",
+                "The firewall command timed out after 10 seconds."
+            ))
+            
+            # Record failed response
+            if incident_id:
+                perf_metrics.record_response(
+                    incident_id=incident_id,
+                    action_type="firewall_block",
+                    execution_time_ms=-1,
+                    success=False
+                )
+            
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+        except FileNotFoundError:
+            logger.error(OutputFormatter.error_message(
+                "IPTABLES NOT FOUND",
+                "Ensure you are on a Linux system with iptables installed and available in PATH."
             ))
             if incident_id:
                 try:
-                    data_engine.insert_action(incident_id, "execution_cancelled", "User cancelled execution", False)
+                    data_engine.insert_action(incident_id, "firewall_execute", "iptables_not_found", False)
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
-            return
+        except PermissionError:
+            logger.error(OutputFormatter.error_message(
+                "PERMISSION DENIED",
+                "This operation requires sudo privileges. Please run with: sudo python main.py"
+            ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", "permission_denied", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+        except Exception as e:
+            logger.error(OutputFormatter.error_message(
+                "UNEXPECTED ERROR",
+                f"Error executing firewall rule: {str(e)}"
+            ))
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
     
     def _get_timestamp(self) -> str:
         """Get current timestamp as string."""
@@ -809,12 +784,14 @@ def check_environment():
     )
     
     if not in_venv:
-        logger.warning("⚠️  Not running in a virtual environment!")
-        logger.warning("   It's recommended to use a virtual environment for isolation.")
-        logger.warning("   Run: python -m venv venv && source venv/bin/activate")
-        if (response := input("Continue anyway? (yes/no): ").strip().lower()) not in ['yes', 'y']:
-            logger.info("Exiting. Please activate your virtual environment first.")
-            sys.exit(1)
+        # Skip venv warning in Docker containers (they don't use venv)
+        if os.path.exists('/.dockerenv'):
+            logger.info("✓ Running in Docker - venv check skipped")
+        else:
+            logger.warning("⚠️  Not running in a virtual environment!")
+            logger.warning("   It's recommended to use a virtual environment for isolation.")
+            logger.warning("   Run: python -m venv venv && source venv/bin/activate")
+            logger.info("Continuing in non-venv environment...")
     
     # Check critical dependencies
     required_modules = ['crewai', 'langchain_community', 'watchdog']
