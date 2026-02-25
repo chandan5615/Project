@@ -91,6 +91,37 @@ class DataEngine:
                     """
                 )
                 logger.info(f"✓ threat_intel table created/verified in {self.db_path}")
+                
+                # FEATURE: Temporary Ban Logic (Auto-Expiry)
+                self._conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS blocked_ips (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ip TEXT UNIQUE,
+                        blocked_at TEXT,
+                        banned_until TEXT,
+                        offense_count INTEGER DEFAULT 1,
+                        ban_duration_minutes INTEGER,
+                        reason TEXT,
+                        status TEXT DEFAULT 'active'
+                    )
+                    """
+                )
+                logger.info(f"✓ blocked_ips table created/verified in {self.db_path}")
+                
+                # FEATURE: Whitelist Protection (Admin God-Mode)
+                self._conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safe_ips (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ip TEXT UNIQUE,
+                        reason TEXT,
+                        added_at TEXT,
+                        auto_detected INTEGER DEFAULT 0
+                    )
+                    """
+                )
+                logger.info(f"✓ safe_ips (whitelist) table created/verified in {self.db_path}")
         except Exception as e:
             logger.error(f"Error creating tables in {self.db_path}: {e}")
             raise
@@ -147,6 +178,168 @@ class DataEngine:
         else:
             cur = self._conn.execute("SELECT * FROM threat_intel")
         return [dict(r) for r in cur.fetchall()]
+    
+    # =========================================================================
+    # FEATURE: Temporary Ban Logic with Progressive Punishment
+    # =========================================================================
+    
+    def block_ip(self, ip: str, ban_duration_minutes: int, reason: str = "Security incident") -> int:
+        """
+        Block an IP with automatic expiry.
+        Implements progressive punishment based on offense count.
+        
+        Args:
+            ip: IP address to block
+            ban_duration_minutes: How long to ban (15, 120, or 1440 minutes)
+            reason: Reason for blocking
+            
+        Returns:
+            ID of blocked_ips record
+        """
+        from datetime import timedelta
+        
+        blocked_at = datetime.utcnow()
+        banned_until = blocked_at + timedelta(minutes=ban_duration_minutes)
+        
+        with self._conn:
+            # Check if IP was previously blocked
+            cur = self._conn.execute("SELECT offense_count FROM blocked_ips WHERE ip = ?", (ip,))
+            existing = cur.fetchone()
+            
+            if existing:
+                # Increment offense count
+                new_count = existing['offense_count'] + 1
+                self._conn.execute(
+                    """UPDATE blocked_ips 
+                       SET offense_count = ?, blocked_at = ?, banned_until = ?, 
+                           ban_duration_minutes = ?, status = 'active', reason = ?
+                       WHERE ip = ?""",
+                    (new_count, blocked_at.isoformat(), banned_until.isoformat(), 
+                     ban_duration_minutes, reason, ip)
+                )
+                logger.info(f"✓ IP {ip} re-blocked (offense #{new_count}) until {banned_until.isoformat()}")
+            else:
+                # First offense
+                cur = self._conn.execute(
+                    """INSERT INTO blocked_ips 
+                       (ip, blocked_at, banned_until, offense_count, ban_duration_minutes, reason, status)
+                       VALUES (?, ?, ?, 1, ?, ?, 'active')""",
+                    (ip, blocked_at.isoformat(), banned_until.isoformat(), ban_duration_minutes, reason)
+                )
+                logger.info(f"✓ IP {ip} blocked (1st offense) until {banned_until.isoformat()}")
+            
+            return cur.lastrowid
+    
+    def get_expired_ips(self) -> List[Dict[str, Any]]:
+        """
+        Get all IPs whose ban time has expired.
+        
+        Returns:
+            List of expired blocked IP records
+        """
+        now = datetime.utcnow().isoformat()
+        cur = self._conn.execute(
+            "SELECT * FROM blocked_ips WHERE status = 'active' AND banned_until < ?",
+            (now,)
+        )
+        return [dict(r) for r in cur.fetchall()]
+    
+    def mark_ip_unblocked(self, ip: str) -> bool:
+        """
+        Mark an IP as unblocked (status='expired').
+        
+        Args:
+            ip: IP address to mark as unblocked
+            
+        Returns:
+            True if successful
+        """
+        with self._conn:
+            self._conn.execute(
+                "UPDATE blocked_ips SET status = 'expired' WHERE ip = ? AND status = 'active'",
+                (ip,)
+            )
+            logger.info(f"✓ IP {ip} marked as expired/unblocked")
+            return True
+    
+    def get_offense_count(self, ip: str) -> int:
+        """
+        Get the current offense count for an IP.
+        
+        Args:
+            ip: IP address to check
+            
+        Returns:
+            Offense count (0 if never seen)
+        """
+        cur = self._conn.execute("SELECT offense_count FROM blocked_ips WHERE ip = ?", (ip,))
+        row = cur.fetchone()
+        return row['offense_count'] if row else 0
+    
+    # =========================================================================
+    # FEATURE: Whitelist Protection (Admin God-Mode)
+    # =========================================================================
+    
+    def add_safe_ip(self, ip: str, reason: str, auto_detected: bool = False) -> int:
+        """
+        Add an IP to the whitelist (safe_ips).
+        
+        Args:
+            ip: IP address to whitelist
+            reason: Reason for whitelisting
+            auto_detected: Whether this was auto-detected (local network, etc.)
+            
+        Returns:
+            ID of safe_ips record
+        """
+        added_at = datetime.utcnow().isoformat()
+        try:
+            with self._conn:
+                cur = self._conn.execute(
+                    """INSERT INTO safe_ips (ip, reason, added_at, auto_detected)
+                       VALUES (?, ?, ?, ?)""",
+                    (ip, reason, added_at, 1 if auto_detected else 0)
+                )
+                logger.info(f"✓ IP {ip} added to whitelist: {reason}")
+                return cur.lastrowid
+        except sqlite3.IntegrityError:
+            # Already whitelisted
+            logger.info(f"IP {ip} already in whitelist")
+            return -1
+    
+    def is_whitelisted(self, ip: str) -> bool:
+        """
+        Check if an IP is in the whitelist.
+        
+        Args:
+            ip: IP address to check
+            
+        Returns:
+            True if IP is whitelisted
+        """
+        cur = self._conn.execute("SELECT COUNT(*) FROM safe_ips WHERE ip = ?", (ip,))
+        count = cur.fetchone()[0]
+        return count > 0
+    
+    def get_all_whitelisted_ips(self) -> List[Dict[str, Any]]:
+        """Get all whitelisted IPs."""
+        cur = self._conn.execute("SELECT * FROM safe_ips ORDER BY added_at DESC")
+        return [dict(r) for r in cur.fetchall()]
+    
+    def remove_from_whitelist(self, ip: str) -> bool:
+        """
+        Remove an IP from the whitelist.
+        
+        Args:
+            ip: IP address to remove
+            
+        Returns:
+            True if removed
+        """
+        with self._conn:
+            self._conn.execute("DELETE FROM safe_ips WHERE ip = ?", (ip,))
+            logger.info(f"✓ IP {ip} removed from whitelist")
+            return True
 
     def close(self):
         """Close the underlying DB connection."""

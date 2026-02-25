@@ -548,3 +548,96 @@ def change_permissions(file_path: str, permissions: str, recursive: bool = False
         result["error"] = str(e)
     
     return json.dumps(result, indent=2)
+
+
+# =========================================================================
+# FEATURE: Whitelist Protection - Local IP Detection
+# =========================================================================
+
+def get_local_ip() -> Optional[str]:
+    """
+    Automatically detect the server's primary IP address.
+    Used to add the admin/server IP to the whitelist on startup.
+    
+    Returns:
+        Primary IP address or None if detection fails
+    """
+    import socket
+    try:
+        # Connect to external DNS server (doesn't actually send data)
+        # This gets the IP used for outbound connections
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            return local_ip
+    except Exception:
+        # Fallback: try to get hostname IP
+        try:
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+            return local_ip
+        except Exception:
+            return None
+
+
+def get_local_network() -> Optional[str]:
+    """
+    Detect the local network CIDR (e.g., 192.168.1.0/24).
+    Used to whitelist the entire local network.
+    
+    Returns:
+        Network CIDR string or None
+    """
+    local_ip = get_local_ip()
+    if not local_ip:
+        return None
+    
+    try:
+        # For most home/office networks, assume /24 subnet
+        ip_obj = ipaddress.ip_address(local_ip)
+        
+        # Determine network based on IP class
+        if local_ip.startswith("192.168."):
+            # Class C private network - /24
+            network = ipaddress.ip_network(f"{local_ip}/24", strict=False)
+        elif local_ip.startswith("10."):
+            # Class A private network - /16 for safety
+            network = ipaddress.ip_network(f"{local_ip}/16", strict=False)
+        elif local_ip.startswith("172."):
+            # Class B private network - /16
+            network = ipaddress.ip_network(f"{local_ip}/16", strict=False)
+        else:
+            # Public IP or unknown - just whitelist the single IP
+            return f"{local_ip}/32"
+        
+        return str(network)
+    except Exception:
+        return None
+
+
+def get_admin_ips() -> list:
+    """
+    Get list of IPs that should be automatically whitelisted.
+    Includes: localhost, local IP, local network, common private ranges.
+    
+    Returns:
+        List of IP addresses/networks to whitelist
+    """
+    safe_ips = [
+        "127.0.0.1",      # Localhost IPv4
+        "::1",            # Localhost IPv6
+        "localhost"       # Hostname
+    ]
+    
+    # Add detected local IP
+    local_ip = get_local_ip()
+    if local_ip:
+        safe_ips.append(local_ip)
+    
+    # Add local network
+    local_network = get_local_network()
+    if local_network:
+        safe_ips.append(local_network)
+    
+    return safe_ips
+

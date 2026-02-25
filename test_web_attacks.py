@@ -18,8 +18,33 @@ from urllib.parse import urljoin
 
 # Configuration
 # CHANGE TRACKING (2026-02-23): Default to Sentinel API port for Docker-based setup
-# Updated (2026-02-23): Fixed target IP to match Ubuntu server at 10.76.250.89
-TARGET = os.getenv("SENTINEL_TEST_TARGET", "http://10.76.250.89:8000")
+# CHANGE TRACKING (2026-02-25): Auto-detect target - use localhost if in Docker, otherwise use Ubuntu server
+import socket
+
+def _get_target_url():
+    """Auto-detect target URL based on environment."""
+    # Check if running in Docker
+    if os.path.exists("/.dockerenv"):
+        return "http://localhost:8000"
+    
+    # Try to connect to the server from environment variable
+    env_target = os.getenv("SENTINEL_TEST_TARGET")
+    if env_target:
+        return env_target
+    
+    # Try default server IP
+    default_server = "192.168.31.91"
+    try:
+        # Try to connect to the server to verify it's reachable
+        socket.create_connection((default_server, 8000), timeout=2)
+        return f"http://{default_server}:8000"
+    except Exception:
+        pass
+    
+    # Fallback to localhost
+    return "http://localhost:8000"
+
+TARGET = _get_target_url()
 DELAY_BETWEEN_ATTACKS = 2  # seconds
 DELAY_BETWEEN_TESTS = 5   # seconds
 

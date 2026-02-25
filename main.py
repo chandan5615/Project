@@ -186,6 +186,10 @@ class SentinelAgent:
         self.ip_tracking = {}  # Track IPs across multiple vectors
         self.attack_logger = AttackLogger()
         self.attack_detector = AttackDetector()
+        
+        # FEATURE: Auto-unblocking cleanup thread
+        self.cleanup_thread = None
+        self.cleanup_running = False
     
     def handle_security_event(self, ip_address: str, log_line: str, attack_info: dict = None, source: str = "auth"):
         """
@@ -519,6 +523,19 @@ class SentinelAgent:
             ip_address: IP address to block
             incident_id: Optional DB incident id for logging actions
         """
+        # =====================================================================
+        # FEATURE: Whitelist Protection (Admin God-Mode)
+        # =====================================================================
+        data_eng = get_engine()
+        if data_eng.is_whitelisted(ip_address):
+            logger.warning(f"⚪ WHITELIST PROTECTION: IP {ip_address} is whitelisted - SKIPPING BLOCK")
+            if incident_id:
+                try:
+                    data_engine.insert_action(incident_id, "whitelist_skip", f"IP is whitelisted", False)
+                except Exception as e:
+                    logger.error(f"Error inserting action: {e}")
+            return
+        
         firewall_rule = report.get("firewall_rule")
         
         if not firewall_rule:
@@ -547,6 +564,17 @@ class SentinelAgent:
 
         # Auto-approve HIGH severity attacks in automated environment (Docker)
         logger.info("🔐 AUTO-APPROVED: High severity threat - Firewall block executing immediately")
+        
+        # =====================================================================
+        # FEATURE: Block IP with Progressive Punishment
+        # =====================================================================
+        severity = report.get("severity", "medium")
+        ban_duration = self._calculate_ban_duration(ip_address, severity)
+        
+        # Record block in database
+        data_eng.block_ip(ip_address, ban_duration, reason=report.get("reason", "Security incident"))
+        
+        # Execute the firewall rule
         self._execute_firewall_rule(firewall_rule, ip_address, incident_id)
     
     def _parse_firewall_rule(self, rule: str, ip_address: str) -> Optional[list]:
@@ -711,6 +739,114 @@ class SentinelAgent:
         """Get current timestamp as string."""
         from datetime import datetime
         return datetime.now().isoformat()
+    
+    # =========================================================================
+    # FEATURE: Auto-Unblocking - Cleanup Thread for Expired Bans
+    # =========================================================================
+    
+    def _start_cleanup_thread(self):
+        """Start background thread for auto-unblocking expired IPs."""
+        import threading
+        
+        self.cleanup_running = True
+        self.cleanup_thread = threading.Thread(target=self._cleanup_expired_blocks, daemon=True)
+        self.cleanup_thread.start()
+        logger.info("✅ Auto-unblock cleanup thread started (checks every 60 seconds)")
+    
+    def _cleanup_expired_blocks(self):
+        """Background thread that checks for and removes expired IP blocks."""
+        import time
+        
+        while self.cleanup_running:
+            try:
+                # Check every 60 seconds
+                time.sleep(60)
+                
+                # Get expired IPs
+                data_eng = get_engine()
+                expired_ips = data_eng.get_expired_ips()
+                
+                if expired_ips:
+                    logger.info(f"🔓 Found {len(expired_ips)} expired IP blocks - auto-unblocking...")
+                    
+                    for ip_record in expired_ips:
+                        ip = ip_record['ip']
+                        try:
+                            # Remove iptables rule
+                            self._unblock_ip(ip)
+                            
+                            # Mark as unblocked in database
+                            data_eng.mark_ip_unblocked(ip)
+                            
+                            logger.info(f"✅ Auto-unblocked {ip} (ban expired)")
+                        except Exception as e:
+                            logger.error(f"❌ Failed to unblock {ip}: {e}")
+                
+            except Exception as e:
+                logger.error(f"Cleanup thread error: {e}")
+    
+    def _unblock_ip(self, ip: str):
+        """
+        Remove an IP from iptables blocking.
+        
+        Args:
+            ip: IP address to unblock
+        """
+        try:
+            # Remove from iptables INPUT chain
+            command = ["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"]
+            result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                logger.info(f"🔓 Firewall rule removed for {ip}")
+            else:
+                # Rule might not exist - that's okay
+                logger.debug(f"Could not remove firewall rule for {ip}: {result.stderr}")
+        except Exception as e:
+            logger.error(f"Error removing firewall rule for {ip}: {e}")
+    
+    # =========================================================================
+    # FEATURE: Progressive Punishment - Calculate Ban Duration
+    # =========================================================================
+    
+    def _calculate_ban_duration(self, ip: str, severity: str) -> int:
+        """
+        Calculate ban duration based on offense count (Progressive Punishment).
+        
+        Args:
+            ip: IP address
+            severity: Attack severity
+            
+        Returns:
+            Ban duration in minutes
+        """
+        data_eng = get_engine()
+        offense_count = data_eng.get_offense_count(ip)
+        
+        # Progressive punishment logic
+        if offense_count == 0:
+            # 1st offense: 15 minutes
+            ban_minutes = 15
+            logger.info(f"⚖️  1st offense → 15 minute ban for {ip}")
+        elif offense_count == 1:
+            # 2nd offense: 2 hours
+            ban_minutes = 120
+            logger.info(f"⚖️  2nd offense → 2 hour ban for {ip}")
+        else:
+            # 3rd+ offense: 24 hours (hard ban)
+            ban_minutes = 1440
+            logger.info(f"⚖️  {offense_count + 1}th offense → 24 hour HARD BAN for {ip}")
+        
+        # Override for CRITICAL severity - always hard ban
+        if severity.upper() == "CRITICAL":
+            ban_minutes = 1440
+            logger.info(f"⚠️  CRITICAL severity → 24 hour HARD BAN for {ip}")
+        
+        return ban_minutes
+    
+    # =========================================================================
+    # END FEATURES
+    # =========================================================================
 
     def _poll_sensors(self, poll_interval: float) -> None:
         last_poll_time = 0.0
@@ -733,6 +869,30 @@ class SentinelAgent:
         logger.info(f"Auth Log: {self.auth_log_path}")
         logger.info(f"Web Log:  {self.web_log_path}")
         logger.info(f"AI Mode:  Ollama (llama3:8b) - HIGH severity only")
+        
+        # =====================================================================
+        # FEATURE: Initialize Whitelist and Auto-unblocking
+        # =====================================================================
+        from tools.tools import get_admin_ips
+        
+        logger.info("")
+        logger.info("🔐 Initializing Whitelist Protection...")
+        data_eng = get_engine()
+        
+        # Auto-add safe IPs on startup
+        safe_ips = get_admin_ips()
+        for safe_ip in safe_ips:
+            if data_eng.is_whitelisted(safe_ip):
+                logger.info(f"  ✓ {safe_ip} (already whitelisted)")
+            else:
+                try:
+                    data_eng.add_safe_ip(safe_ip, "Auto-detected admin/local IP", auto_detected=True)
+                    logger.info(f"  ✓ {safe_ip} (added to whitelist)")
+                except Exception as e:
+                    logger.debug(f"  Could not add {safe_ip}: {e}")
+        
+        # Start auto-unblock cleanup thread
+        self._start_cleanup_thread()
         logger.info("")
         
         # Initialize and start both sensors
@@ -759,6 +919,7 @@ class SentinelAgent:
                 
         except KeyboardInterrupt:
             logger.info("\n🛑 Shutting down Sentinel Defense Module...")
+            self.cleanup_running = False
             if self.auth_sensor:
                 self.auth_sensor.stop()
             if self.web_sensor:
@@ -766,6 +927,7 @@ class SentinelAgent:
             logger.info("✅ Shutdown complete")
         except Exception as e:
             logger.error(f"❌ Fatal error: {e}", exc_info=True)
+            self.cleanup_running = False
             if self.auth_sensor:
                 self.auth_sensor.stop()
             if self.web_sensor:

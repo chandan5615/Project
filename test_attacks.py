@@ -29,22 +29,39 @@ def _is_docker() -> bool:
         return False
 
 
-def _resolve_writable_log_path(path: str, docker_fallback: str) -> str:
-    """Resolve a writable log path, falling back inside Docker if needed."""
+def _resolve_writable_log_path(path: str, docker_fallback: str, local_fallback: str = None) -> str:
+    """Resolve a writable log path, with fallbacks for different environments."""
+    if local_fallback is None:
+        local_fallback = "./logs/" + os.path.basename(docker_fallback)
+    
     if not path or path.isspace():
         path = docker_fallback
-
+    
+    # If running in Docker, use Docker fallback if not writable
     if _is_docker():
         target_dir = os.path.dirname(path) or "."
+        try:
+            if os.access(target_dir, os.W_OK):
+                # Can write to system logs in Docker - use original path
+                return path
+        except Exception:
+            pass
+        return docker_fallback
+    
+    # Not in Docker - check if we can write to the requested path
+    try:
+        target_dir = os.path.dirname(path) or "."
         if os.path.exists(path):
-            if not os.access(path, os.W_OK):
-                logger.warning("Log file not writable in container, using %s", docker_fallback)
-                return docker_fallback
-        elif not os.access(target_dir, os.W_OK):
-            logger.warning("Log directory not writable in container, using %s", docker_fallback)
-            return docker_fallback
-
-    return path
+            if os.access(path, os.W_OK):
+                return path
+        elif os.access(target_dir, os.W_OK):
+            return path
+    except Exception:
+        pass
+    
+    # Can't write to requested path - use local fallback
+    os.makedirs(os.path.dirname(local_fallback), exist_ok=True)
+    return local_fallback
 
 
 class TestAttackGenerator:
