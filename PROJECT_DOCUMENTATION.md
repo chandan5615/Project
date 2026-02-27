@@ -21,7 +21,7 @@
 ## 1. Definition of the Project and Scope
 
 ### Project Overview
-**Sentinel Agent** is an enterprise-grade, AI-powered security monitoring and automated threat response system designed to detect, analyze, and automatically respond to cyberattacks in real-time. The system combines machine learning, artificial intelligence, and intelligent automation to protect Linux-based servers from various security threats.
+**Sentinel Agent** is an AI-powered security monitoring and automated threat response system designed to detect, analyze, and automatically respond to cyberattacks in real-time. The system combines machine learning, artificial intelligence, and intelligent automation to protect Linux-based servers from various security threats.
 
 ### Project Definition
 Sentinel Agent is an autonomous multi-agent AI Security Operations Center (SOC) analyst that monitors system logs, detects attack patterns, applies intelligent blocking mechanisms, and provides comprehensive threat intelligence without human intervention. It integrates advanced AI crew-based analysis with practical security automation.
@@ -38,7 +38,7 @@ Sentinel Agent is an autonomous multi-agent AI Security Operations Center (SOC) 
 - **Dashboard & Visualization**: Real-time web-based dashboard with authentication and metrics
 - **REST API**: 20+ API endpoints for external integration and monitoring
 - **Multi-factor Anomaly Scoring**: 4-factor ML-based algorithm for threat classification
-- **Production-ready Deployment**: Docker containerized solution with automated installation
+- **Containerized**: Docker containerized solution with automated installation
 
 #### Out of Scope:
 - Network intrusion detection at packet level (focuses on application-level logs)

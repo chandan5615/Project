@@ -1,0 +1,158 @@
+================================================================================
+SENTINEL AGENT - PROJECT DOCUMENTATION (SHORT VERSION)
+================================================================================
+
+AI-Powered Security Monitoring and Automated Response System
+
+================================================================================
+1. DEFINITION OF THE PROJECT AND SCOPE
+================================================================================
+
+Sentinel Agent is an AI-powered SOC assistant designed for real-time attack 
+detection and automated response. The project scope includes SSH and web log 
+monitoring, threat detection, auto-blocking with progressive punishment, and 
+a comprehensive dashboard. The primary objective is to reduce response time 
+and manual effort for common security attacks. Out of scope items include 
+packet-level intrusion detection, custom malware analysis, and cloud-specific 
+features.
+
+================================================================================
+2. SYSTEM REQUIREMENT SPECIFICATION
+================================================================================
+
+FUNCTIONAL REQUIREMENTS (SHORT)
+- Monitor SSH and web logs in real time.
+- Detect common attacks and classify severity.
+- Auto-block attackers with whitelist protection and auto-unblock.
+- Provide dashboard and REST API for visibility and control.
+
+NON-FUNCTIONAL REQUIREMENTS (SHORT)
+- Low latency detection (sub-second). Reliable and secure storage.
+- Role-based access and secure auth (JWT/bcrypt).
+- Works on Ubuntu 20.04+ with Docker and Python 3.10+.
+- High availability with auto-restart and log rotation.
+
+================================================================================
+3. FEASIBILITY STUDY
+================================================================================
+
+- Technical: Feasible with Python, Docker, FastAPI, Streamlit, SQLite, Ollama.
+- Operational: Simple one-command install, low admin overhead.
+- Economic: Open-source, low hardware cost, strong ROI vs manual SOC.
+- Scheduling: Incremental rollout possible with minimal downtime.
+
+================================================================================
+4. EXISTING SYSTEM WITH DISADVANTAGES
+================================================================================
+
+- Manual SOC: costly, slow response, high fatigue.
+- Traditional firewalls: no intelligence, manual maintenance.
+- SIEM tools: expensive and complex for small teams.
+- Manual log review: error-prone and hard to scale.
+
+================================================================================
+5. PROPOSED SYSTEM WITH ADVANTAGES
+================================================================================
+
+- Automated real-time blocking with progressive punishment.
+- AI analysis for high severity incidents.
+- Whitelist protection prevents admin lockout.
+- Dashboard and API provide clear visibility and control.
+- Lower operational cost with consistent policy enforcement.
+
+================================================================================
+6. BRIEFING OF MODULES AND FUNCTIONALITIES
+================================================================================
+
+- Log Monitoring: auth.log and access.log watch.
+- Threat Detection: pattern and anomaly checks, severity scoring.
+- Response Engine: block/unblock, whitelist, history.
+- Dashboard and API: metrics, control, reporting.
+- Data Layer: SQLite storage for attacks and blocks.
+
+DIAGRAM (HIGH-LEVEL MODULE FLOW)
+
+Log Files -> Sensors -> Detection -> AI Crew -> Response Engine -> Firewall
+								|                         |                 |
+								v                         v                 v
+						 Database <----------------- Dashboard/API <---- Metrics
+
+FLOW CHART (ATTACK HANDLING)
+
+Start
+	|
+	v
+Read log entry
+	|
+	v
+Match attack pattern?
+	|-- No --> Ignore/Store
+	|
+	v
+Score severity
+	|
+	v
+High/Critical?
+	|-- No --> Log and notify
+	|
+	v
+AI analysis
+	|
+	v
+Whitelist check
+	|-- Whitelisted --> Log only
+	|
+	v
+Block IP (iptables)
+	|
+	v
+Store in database -> Update dashboard
+
+================================================================================
+7. METHODOLOGY USED
+================================================================================
+
+The project follows Agile development methodology with iterative testing cycles.
+Threat detection employs a multi-layer approach combining signature-based patterns,
+anomaly detection, and AI-powered analysis. Testing includes unit tests for 
+individual modules, integration tests for component interactions, and attack 
+simulation tests to validate real-world scenarios. The system incorporates 
+continuous monitoring with feedback-driven tuning to improve detection accuracy.
+
+================================================================================
+8. SYSTEM REQUIREMENTS
+================================================================================
+
+HARDWARE (MINIMUM)
+- CPU: 6 core
+- RAM: 8 GB 
+- Storage: 20 GB.
+- Recommended: 12+ cores, 16 GB RAM for production.
+
+SOFTWARE
+- Ubuntu 20.04+
+- Python 3.10+ 
+- Docker and Docker Compose.
+- Ollama for local LLM (recommended).
+- Network ports: 8000 (API), 8501 (Dashboard).
+
+================================================================================
+9. GANTT CHART (SUMMARY)
+================================================================================
+
+- Phase 1-2: Core monitoring and detection.
+- Phase 3-4: AI analysis and response automation.
+- Phase 5-6: Dashboard, API, testing, deployment.
+- Phase 7: Maintenance, optimization, documentation.
+
+================================================================================
+10. CONCLUSION
+================================================================================
+
+Sentinel Agent delivers fast, automated security at low cost and is ready for
+deployment on Ubuntu servers. It scales for small teams and enterprise
+environments while reducing manual workload and improving response time.
+
+================================================================================
+Document Version: 2.3 - February 27, 2026
+================================================================================
