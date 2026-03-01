@@ -1,10 +1,10 @@
-# 🛡️ IP Manager CLI - Quick Reference Guide
+# [PROTECT] IP Manager CLI - Quick Reference Guide
 
 **Standalone command-line tool for managing IP blocks on Linux servers**
 
 ---
 
-## 📥 Installation
+## [DOCS] Installation
 
 The tool is already installed at: `~/Project/ip_manager_cli.py`
 
@@ -15,7 +15,7 @@ chmod +x ~/Project/ip_manager_cli.py
 
 ---
 
-## 🚀 Quick Start
+## [DEPLOY] Quick Start
 
 ### **Interactive Mode** (Recommended for beginners)
 ```bash
@@ -34,7 +34,7 @@ sentinel-ip> exit
 
 ---
 
-## 📋 Command-Line Usage
+## [DOCS] Command-Line Usage
 
 ### **Block a Single IP**
 ```bash
@@ -77,14 +77,14 @@ python3 ~/Project/ip_manager_cli.py list
 python3 ~/Project/ip_manager_cli.py check 1.2.3.4
 ```
 
-### **Remove ALL Blocks** ⚠️ DANGEROUS!
+### **Remove ALL Blocks** [WARNING] DANGEROUS!
 ```bash
 python3 ~/Project/ip_manager_cli.py flush
 ```
 
 ---
 
-## 🎯 Common Use Cases
+## [TARGET] Common Use Cases
 
 ### **Scenario 1: Block an Attacker IP**
 ```bash
@@ -141,41 +141,41 @@ sentinel-ip> exit
 
 ---
 
-## 🔧 Features
+## [CONFIG] Features
 
-✅ **Dual Firewall Support**
+[OK] **Dual Firewall Support**
 - Works with both UFW and iptables
 - Automatically detects which firewall is available
 - Can use both simultaneously
 
-✅ **IP Validation**
+[OK] **IP Validation**
 - Validates IP address format before blocking
 - Prevents invalid entries
 - Checks for existing blocks
 
-✅ **Batch Operations**
+[OK] **Batch Operations**
 - Block/unblock multiple IPs in one command
 - Faster than Web dashboard for bulk operations
 
-✅ **Color-Coded Output**
-- ✓ Green for success
-- ✗ Red for errors
-- ⚠ Yellow for warnings
+[OK] **Color-Coded Output**
+- [OK] Green for success
+- [ERROR] Red for errors
+- [WARNING] Yellow for warnings
 - ℹ Blue for information
 
-✅ **Interactive Mode**
+[OK] **Interactive Mode**
 - User-friendly command prompt
 - Built-in help system
 - Command history support
 
-✅ **Reason/Comment Support**
+[OK] **Reason/Comment Support**
 - Add comments when blocking IPs
 - Track why IPs were blocked
 - Useful for auditing
 
 ---
 
-## 💡 Tips & Tricks
+## [TIP] Tips & Tricks
 
 ### **Create an Alias for Easy Access**
 Add to your `~/.bashrc`:
@@ -226,17 +226,17 @@ grep "Failed password" /var/log/auth.log | \
 
 | Feature | CLI Tool | Web Dashboard |
 |---------|----------|---------------|
-| **Speed** | ⚡ Very fast | Moderate |
-| **Batch operations** | ✅ Easy | Limited |
+| **Speed** | [FAST] Very fast | Moderate |
+| **Batch operations** | [OK] Easy | Limited |
 | **Remote access** | SSH only | Web browser |
-| **Scriptable** | ✅ Yes | No |
-| **Interactive** | ✅ Yes | ✅ Yes |
+| **Scriptable** | [OK] Yes | No |
+| **Interactive** | [OK] Yes | [OK] Yes |
 | **Visual feedback** | Text/Colors | Charts/Tables |
 | **Best for** | Admins, scripts | Monitoring, analysis |
 
 ---
 
-## 🔐 Permissions
+## [SECURE] Permissions
 
 **This tool requires sudo access** to modify firewall rules.
 
@@ -257,7 +257,7 @@ This allows the tool to run without password prompts.
 
 ---
 
-## 🐛 Troubleshooting
+## [BUG] Troubleshooting
 
 ### **"No firewall available" Error**
 ```bash
@@ -296,7 +296,7 @@ python3 ~/Project/ip_manager_cli.py check <IP>
 
 ---
 
-## 📊 Integration with Sentinel
+## [STATS] Integration with Sentinel
 
 ### **Block IPs from Dashboard Incidents**
 ```bash
@@ -324,7 +324,7 @@ sqlite3 ~/Project/data/sentinel_intel.db \
 
 ---
 
-## 📝 Example Session
+## [DOCS] Example Session
 
 ```bash
 ubuntu@sentinel:~/Project$ python3 ip_manager_cli.py
@@ -361,7 +361,7 @@ sentinel-ip> block 192.0.2.100
 ╚════════════════════════════════════════════════════════╝
 ℹ Attempting to block 1 IP(s)...
 
-✓ Blocked 192.0.2.100 using UFW
+[OK] Blocked 192.0.2.100 using UFW
 
 ℹ Results: 1 blocked, 0 failed
 
@@ -371,7 +371,7 @@ sentinel-ip> exit
 
 ---
 
-## ⚡ Advanced Usage
+## [FAST] Advanced Usage
 
 ### **Combine with grep/awk/sed**
 ```bash
@@ -401,7 +401,7 @@ python3 ~/Project/ip_manager_cli.py list | \
 
 ---
 
-## 📞 Support
+## [SUPPORT] Support
 
 - **Tool location**: `~/Project/ip_manager_cli.py`
 - **Documentation**: This file (`IP_MANAGER_CLI_GUIDE.md`)
@@ -409,17 +409,17 @@ python3 ~/Project/ip_manager_cli.py list | \
 
 ---
 
-## ✅ Summary
+## [OK] Summary
 
 The IP Manager CLI provides a **fast, scriptable, and user-friendly** way to manage IP blocks directly from the Linux command line without needing to use the web dashboard.
 
 **Key Benefits:**
-- ⚡ **Faster** than web interface
-- 🔄 **Scriptable** for automation
-- 📦 **Batch operations** support
-- 🎨 **Color-coded** output
-- 💻 **Interactive mode** available
-- 🔧 **Works with UFW and iptables**
+- [FAST] **Faster** than web interface
+- [SCRIPT] **Scriptable** for automation
+- [PACKAGE] **Batch operations** support
+- [COLOR] **Color-coded** output
+- [NETWORK] **Interactive mode** available
+- [CONFIG] **Works with UFW and iptables**
 
 **Best for:**
 - System administrators
@@ -430,4 +430,4 @@ The IP Manager CLI provides a **fast, scriptable, and user-friendly** way to man
 
 ---
 
-**Happy blocking! 🛡️**
+**Happy blocking! [PROTECT]**

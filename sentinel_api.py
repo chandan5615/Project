@@ -352,6 +352,68 @@ def get_incidents_by_ip(
         "incidents": matching
     }
 
+@app.post("/api/incidents/unblock-ip")
+def unblock_ip_globally(
+    ip: str,
+    username: str = Depends(verify_api_key)
+):
+    """
+    GLOBAL IP CLEARANCE: Completely unblock and remove an IP from the system.
+    
+    This performs:
+    - Firewall removal (iptables)
+    - Database deletion of ALL incidents for this IP
+    - Removal from blocked_ips table
+    
+    Returns counts of deleted records.
+    """
+    import subprocess
+    
+    engine = get_engine()
+    
+    # Step 1: Remove from iptables/firewall
+    firewall_removed = False
+    firewall_message = ""
+    
+    try:
+        # Try to remove from iptables INPUT chain
+        result = subprocess.run(
+            ["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            firewall_removed = True
+            firewall_message = f"Firewall rule removed for {ip}"
+            logger.info(f"🔓 Firewall rule removed for {ip}")
+        else:
+            # IP might not be in firewall (that's okay)
+            firewall_message = f"No active firewall rule for {ip} (might already be unblocked)"
+            logger.debug(f"No firewall rule found for {ip}: {result.stderr}")
+    except Exception as e:
+        firewall_message = f"Could not access firewall: {str(e)}"
+        logger.warning(f"Firewall removal failed for {ip}: {e}")
+    
+    # Step 2: Global database wipe for this IP
+    db_result = engine.unblock_ip_globally(ip)
+    
+    # Step 3: Return comprehensive result
+    return {
+        "ip": ip,
+        "firewall_removed": firewall_removed,
+        "firewall_message": firewall_message,
+        "database_result": db_result,
+        "success": db_result.get("success", False),
+        "total_records_deleted": db_result.get("total_deleted", 0),
+        "breakdown": {
+            "incidents_deleted": db_result.get("incidents_deleted", 0),
+            "blocks_deleted": db_result.get("blocks_deleted", 0)
+        },
+        "message": f"Globally unblocked {ip}: Removed {db_result.get('total_deleted', 0)} records from database",
+        "performed_by": username
+    }
+
 
 # ============ AUTHENTICATION ENDPOINTS ============
 

@@ -1,4 +1,4 @@
-# 🛡️ Sentinel Agent v2.3
+# Sentinel Agent v2.3
 
 **AI-Powered Security Monitoring & Automated Response System**
 
@@ -11,7 +11,7 @@ Real-time threat detection with intelligent auto-blocking, whitelist protection,
 
 ---
 
-## 🚀 Quick Start (One Command)
+## Quick Start (One Command)
 
 ```bash
 # Download and run automated installer
@@ -23,22 +23,22 @@ sudo ./AUTO_INSTALL.sh
 ```
 
 **That's it!** The installer automatically:
-- ✅ Installs Docker & Docker Compose
-- ✅ Sets up Ollama LLM with llama3:8b
-- ✅ Configures system dependencies
-- ✅ **Auto-detects your server IP** (no hardcoded addresses!)
-- ✅ Creates secure `.env` configuration
-- ✅ Builds and starts containers
-- ✅ Initializes database with security features
-- ✅ Configures firewall and monitoring
+- Installs Docker & Docker Compose
+- Sets up Ollama LLM with llama3:8b
+- Configures system dependencies
+- **Auto-detects your server IP** (no hardcoded addresses!)
+- Creates secure `.env` configuration
+- Builds and starts containers
+- Initializes database with security features
+- Configures firewall and monitoring
 
 **Time:** 10-15 minutes (fully automated)
 
 **Access After Installation:**
 ```
-📊 Dashboard: http://YOUR_SERVER_IP:8501 (local network only, requires login)
-🔌 API:       http://YOUR_SERVER_IP:8000
-💚 Health:    http://YOUR_SERVER_IP:8000/api/health
+Dashboard: http://YOUR_SERVER_IP:8501 (local network only, requires login)
+API:       http://YOUR_SERVER_IP:8000
+Health:    http://YOUR_SERVER_IP:8000/api/health
 ```
 
 **Default Credentials:**
@@ -47,76 +47,76 @@ Username: admin
 Password: (auto-generated - check: docker logs sentinel-agent | grep "DEFAULT ADMIN")
 ```
 
-> ⚠️ **SECURITY:** Dashboard is automatically restricted to local network only. Change admin password after first login!
+> **SECURITY:** Dashboard is automatically restricted to local network only. Change admin password after first login!
 
 ---
 
-## ⚡ What's New in v2.3
+## What's New in v2.3
 
-### **🆕 Major Features**
+### **Major Features**
 
 #### **1. Auto-Unblocking (Temporary Bans)**
-- 🕐 IPs are blocked temporarily, not permanently
-- ⏰ Automatic expiry based on offense severity
-- 🧹 Background cleanup thread checks every 60 seconds
-- 📊 Track ban duration and expiry in database
+- IPs are blocked temporarily, not permanently
+- Automatic expiry based on offense severity
+- Background cleanup thread checks every 60 seconds
+- Track ban duration and expiry in database
 
 #### **2. Whitelist Protection (Admin God-Mode)**
-- 🛡️ Auto-detects and protects admin IPs (localhost, server IP, local network)
-- 🚫 Whitelisted IPs can NEVER be blocked
-- 📝 Manual whitelist management via CLI
-- ✅ Prevents accidental self-lockout
+- Auto-detects and protects admin IPs (localhost, server IP, local network)
+- Whitelisted IPs can NEVER be blocked
+- Manual whitelist management via CLI
+- Prevents accidental self-lockout
 
 #### **3. Progressive Punishment**
-- 1️⃣ **1st offense:** 15-minute ban
-- 2️⃣ **2nd offense:** 2-hour ban
-- 3️⃣ **3rd+ offense:** 24-hour ban
-- 🚨 **CRITICAL severity:** Always 24-hour ban (overrides count)
+- **1st offense:** 15-minute ban
+- **2nd offense:** 2-hour ban
+- **3rd+ offense:** 24-hour ban
+- **CRITICAL severity:** Always 24-hour ban (overrides count)
 
 #### **4. Dashboard Authentication**
-- 🔐 Secure login with bcrypt-hashed passwords
-- 🎫 Session-based authentication (24-hour expiry)
-- 📝 Failed login attempts logged
-- 👥 Multi-user support (admin, analyst, viewer roles)
+- Secure login with bcrypt-hashed passwords
+- Session-based authentication (24-hour expiry)
+- Failed login attempts logged
+- Multi-user support (admin, analyst, viewer roles)
 
 #### **5. Auto IP Detection**
-- 🔍 Automatically detects server's primary IP on installation
-- 💾 Creates `.env` file with correct configuration
-- 🔄 No hardcoded IPs - works even if IP changes!
-- 🔒 Binds dashboard to local network automatically
+- Automatically detects server's primary IP on installation
+- Creates `.env` file with correct configuration
+- No hardcoded IPs - works even if IP changes!
+- Binds dashboard to local network automatically
 
 ---
 
-## 🎯 What Does It Do?
+## What Does It Do?
 
 Sentinel Agent is a comprehensive security monitoring system that:
 
 ### **Detects Attacks**
-- 🔓 SSH brute force attacks
-- 💉 SQL injection attempts
-- 📂 Path traversal / directory scanning
-- ⚡ Cross-site scripting (XSS)
-- 🤖 Automated attack tool signatures (sqlmap, nikto, etc.)
-- 🌐 Suspicious web requests and patterns
+- SSH brute force attacks
+- SQL injection attempts
+- Path traversal / directory scanning
+- Cross-site scripting (XSS)
+- Automated attack tool signatures (sqlmap, nikto, etc.)
+- Suspicious web requests and patterns
 
 ### **Responds Intelligently**
-- 🚫 **Automatic blocking** with iptables firewall rules
-- ⏰ **Temporary bans** with auto-expiry
-- 📈 **Progressive punishment** for repeat offenders
-- 🛡️ **Whitelist protection** to prevent admin lockout
-- 🤖 **AI crew analysis** for critical threats (4 specialized agents)
-- 📊 **Real-time logging** and dashboard visualization
+- **Automatic blocking** with iptables firewall rules
+- **Temporary bans** with auto-expiry
+- **Progressive punishment** for repeat offenders
+- **Whitelist protection** to prevent admin lockout
+- **AI crew analysis** for critical threats (4 specialized agents)
+- **Real-time logging** and dashboard visualization
 
 ### **Monitors Continuously**
-- 📁 `/var/log/auth.log` (SSH attacks)
-- 📁 `/var/log/apache2/access.log` (web attacks)
-- ⚡ Real-time file watching with instant response
-- 🔄 Background cleanup of expired bans
-- 📈 Statistics tracking and trending
+- `/var/log/auth.log` (SSH attacks)
+- `/var/log/apache2/access.log` (web attacks)
+- Real-time file watching with instant response
+- Background cleanup of expired bans
+- Statistics tracking and trending
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
@@ -131,40 +131,40 @@ Sentinel Agent is a comprehensive security monitoring system that:
 
 ---
 
-## �� System Architecture
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                          SENTINEL AGENT                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  📁 Log Monitoring          →  🤖 AI Analysis                   │
+│  [LOGS] Log Monitoring      →  [AI] AI Analysis                │
 │  ├─ auth.log (SSH)             └─ 4 AI Agents                   │
 │  └─ access.log (Web)              ├─ Security Analyst           │
 │                                   ├─ Network Specialist         │
-│  🔍 Pattern Detection             ├─ Threat Intelligence        │
+│  [DETECT] Pattern Detection       ├─ Threat Intelligence        │
 │  ├─ SQL Injection                 └─ Incident Coordinator       │
 │  ├─ XSS                                                         │
-│  ├─ Path Traversal         →  🛡️ Auto Response                 │
-│  ├─ Brute Force                └─ Whitelist Check ✅             │
+│  ├─ Path Traversal         →  [AUTO] Auto Response             │
+│  ├─ Brute Force                └─ Whitelist Check OK            │
 │  └─ Command Injection          └─ Calculate Ban Duration        │
 │                                └─ Execute iptables Block        │
-│  💾 Database                   └─ Schedule Auto-Unblock         │
+│  [DB] Database                 └─ Schedule Auto-Unblock         │
 │  ├─ incidents                                                   │
-│  ├─ blocked_ips (with expiry)  →  📊 Dashboard                  │
+│  ├─ blocked_ips (with expiry)  →  [DASH] Dashboard             │
 │  ├─ safe_ips (whitelist)          ├─ Real-time Monitoring       │
 │  ├─ threat_intel                  ├─ Attack Visualization       │
 │  └─ actions                       ├─ IP Management              │
 │                                   └─ Statistics & Reports       │
-│  🧹 Background Cleanup                                          │
-│  └─ Expired Ban Removal (60s)  →  🔔 Notifications (Future)     │
+│  [CLEANUP] Background Cleanup                                   │
+│  └─ Expired Ban Removal (60s)  →  [FUTURE] Notifications       │
 │                                   └─ Email/Slack/Webhook        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💻 System Requirements
+## System Requirements
 
 ### **Minimum:**
 - **OS:** Ubuntu 20.04+ / Debian 11+
@@ -182,7 +182,7 @@ Sentinel Agent is a comprehensive security monitoring system that:
 
 ---
 
-## 🛠️ Manual Installation
+## Manual Installation
 
 If you prefer manual setup or need customization:
 
@@ -235,9 +235,9 @@ curl http://localhost:8000/api/health
 
 ---
 
-## 🎮 Usage Examples
+## Usage Examples
 
-### **🎯 Starting Both Dashboards**
+### **Starting Both Dashboards**
 
 Sentinel Agent v2.3 includes **TWO dashboards** that work together:
 
@@ -323,9 +323,9 @@ curl http://YOUR_SERVER_IP:8501
 
 #### **Access Both Dashboards**
 ```
-📊 Streamlit Dashboard:  http://YOUR_SERVER_IP:8501  (Interactive UI)
-🔌 REST API Dashboard:   http://YOUR_SERVER_IP:8000  (Programmatic)
-📋 API Documentation:    http://YOUR_SERVER_IP:8000/docs (Swagger UI)
+[DASH] Streamlit Dashboard:  http://YOUR_SERVER_IP:8501  (Interactive UI)
+[API] REST API Dashboard:    http://YOUR_SERVER_IP:8000  (Programmatic)
+[DOCS] API Documentation:    http://YOUR_SERVER_IP:8000/docs (Swagger UI)
 ```
 
 ---
@@ -376,7 +376,7 @@ print('IP whitelisted')
 
 ---
 
-## 🧪 Testing the System
+## Testing the System
 
 ### **Simulate SSH Brute Force**
 ```bash
@@ -421,7 +421,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db   "SELECT ip, sta
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 Project/
@@ -473,7 +473,7 @@ Project/
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### **Environment Variables** (`.env` file - auto-generated by AUTO_INSTALL.sh)
 
@@ -508,7 +508,7 @@ ports:
 
 ---
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### **Dashboard Not Accessible**
 
@@ -567,7 +567,7 @@ docker-compose restart
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Areas for improvement:
 - [ ] Email/Slack notifications
@@ -579,20 +579,20 @@ Contributions welcome! Areas for improvement:
 
 ---
 
-## 📄 License
+## License
 
 MIT License - See [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support
+## Support
 
 - **Documentation:** See markdown files in project root
 - **Issues:** [GitHub Issues](https://github.com/chandan5615/Project/issues)
 
 ---
 
-## 📈 Project Stats
+## Project Stats
 
 - **Version:** 2.3
 - **Last Updated:** February 25, 2026
@@ -603,6 +603,6 @@ MIT License - See [LICENSE](LICENSE) file
 
 ---
 
-**🛡️ Protect Your Server. Monitor Threats. Respond Intelligently.**
+**Protect Your Server. Monitor Threats. Respond Intelligently.**
 
-**Star ⭐ this repo if you find it useful!**
+**Star this repo if you find it useful!**

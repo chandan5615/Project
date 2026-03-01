@@ -348,6 +348,55 @@ class IPBlockManager:
                 return False, f"Failed to unblock {ip}: {result.stderr}"
         except Exception as e:
             return False, f"Error unblocking IP: {str(e)}"
+    
+    def unblock_ip_globally(self, ip: str, firewall_type: str = "iptables") -> Tuple[bool, str]:
+        """
+        GLOBAL IP CLEARANCE: Completely unblock and remove an IP from the system.
+        
+        This performs:
+        - Firewall removal (UFW or iptables)
+        - Database deletion of ALL incidents for this IP
+        - Removal from blocked_ips table
+        
+        Args:
+            ip: IP address to globally unblock
+            firewall_type: "UFW" or "iptables"
+            
+        Returns:
+            (success: bool, message: str)
+        """
+        try:
+            # Step 1: Remove from firewall
+            if firewall_type == "UFW":
+                fw_success, fw_message = self.unblock_ip_ufw(ip)
+            else:
+                fw_success, fw_message = self.unblock_ip_iptables(ip)
+            
+            # Step 2: Global database wipe
+            from data_engine import get_engine
+            data_eng = get_engine()
+            db_result = data_eng.unblock_ip_globally(ip)
+            
+            # Step 3: Build response message
+            if db_result.get("success"):
+                total_deleted = db_result.get("total_deleted", 0)
+                incidents_deleted = db_result.get("incidents_deleted", 0)
+                blocks_deleted = db_result.get("blocks_deleted", 0)
+                
+                message = (
+                    f"✅ GLOBALLY UNBLOCKED {ip}:\n"
+                    f"• Firewall: {fw_message}\n"
+                    f"• Deleted {incidents_deleted} incident(s)\n"
+                    f"• Deleted {blocks_deleted} block record(s)\n"
+                    f"• Total records removed: {total_deleted}"
+                )
+                return True, message
+            else:
+                error = db_result.get("error", "Unknown error")
+                return False, f"❌ Firewall cleared but database cleanup failed: {error}"
+                
+        except Exception as e:
+            return False, f"❌ Error during global unblock: {str(e)}"
 
 
 class DashboardDataManager:
@@ -675,7 +724,7 @@ def render_network_health(data_manager: DashboardDataManager):
 
 def render_log_viewer():
     """Render log file viewer with tail and search functionality"""
-    st.subheader("📄 LOG FILE VIEWER")
+    st.subheader("LOG FILE VIEWER")
     
     col1, col2 = st.columns(2)
     
@@ -735,7 +784,7 @@ def render_log_viewer():
 
 def render_apache_traffic():
     """Render Apache traffic statistics and analysis"""
-    st.subheader("🌐 APACHE SERVER TRAFFIC ANALYSIS")
+    st.subheader("APACHE SERVER TRAFFIC ANALYSIS")
     
     # Log file selection
     apache_log_path = st.text_input(
@@ -838,7 +887,7 @@ def render_apache_traffic():
 
 def render_ip_blocking():
     """Render IP blocking/unblocking interface"""
-    st.subheader("🚫 IP BLOCKING CONTROLS")
+    st.subheader("IP BLOCKING CONTROLS")
     
     # Firewall selection
     firewall_type = st.radio(
@@ -861,7 +910,7 @@ def render_ip_blocking():
             key="block_ip_input"
         )
         
-        if st.button("🔒 Block IP", type="primary", key="block_btn"):
+        if st.button("[BLOCK] Block IP", type="primary", key="block_btn"):
             if ip_to_block:
                 # Validate IP format
                 ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
@@ -883,7 +932,9 @@ def render_ip_blocking():
                 st.warning("Please enter an IP address")
     
     with col2:
-        st.subheader("Unblock IP")
+        st.subheader("Unblock IP (Global Wipe)")
+        
+        st.info("⚠️ This will completely remove the IP from firewall AND delete all its incidents from the database.")
         
         ip_to_unblock = st.text_input(
             "IP Address to Unblock",
@@ -891,7 +942,7 @@ def render_ip_blocking():
             key="unblock_ip_input"
         )
         
-        if st.button("🔓 Unblock IP", type="secondary", key="unblock_btn"):
+        if st.button("[UNBLOCK] Globally Unblock IP", type="secondary", key="unblock_btn"):
             if ip_to_unblock:
                 # Validate IP format
                 ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
@@ -900,13 +951,13 @@ def render_ip_blocking():
                 else:
                     blocker = IPBlockManager()
                     
-                    if firewall_type == "UFW":
-                        success, message = blocker.unblock_ip_ufw(ip_to_unblock)
-                    else:
-                        success, message = blocker.unblock_ip_iptables(ip_to_unblock)
+                    # GLOBAL UNBLOCK: Remove from firewall + delete all database records
+                    success, message = blocker.unblock_ip_globally(ip_to_unblock, firewall_type)
                     
                     if success:
                         st.success(message)
+                        # Auto-refresh the blocked IPs list
+                        st.rerun()
                     else:
                         st.error(message)
             else:
@@ -937,7 +988,7 @@ def render_ip_blocking():
 
 def render_attack_patterns(data_manager: DashboardDataManager):
     """Render attack patterns visualization"""
-    st.subheader("🎯 ATTACK PATTERNS ANALYSIS")
+    st.subheader("ATTACK PATTERNS ANALYSIS")
     
     try:
         conn = data_manager.get_connection()
@@ -988,7 +1039,7 @@ def render_attack_patterns(data_manager: DashboardDataManager):
 
 def render_export_reports(data_manager: DashboardDataManager):
     """Render export and reporting functionality"""
-    st.subheader("📊 EXPORT REPORTS")
+    st.subheader("EXPORT REPORTS")
     
     col1, col2 = st.columns(2)
     
@@ -1113,7 +1164,7 @@ def render_export_reports(data_manager: DashboardDataManager):
 
 def render_system_info():
     """Render system information and health"""
-    st.subheader("💻 SYSTEM INFORMATION")
+    st.subheader("SYSTEM INFORMATION")
     
     try:
         # Get system uptime
@@ -1193,7 +1244,7 @@ def _show_login_page():
             
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                submit = st.form_submit_button("🔓 Login", use_container_width=True)
+                submit = st.form_submit_button("[LOGIN] Login", use_container_width=True)
             with col_btn2:
                 help_btn = st.form_submit_button("❓ Help", use_container_width=True)
             
@@ -1253,7 +1304,7 @@ def main():
             st.session_state.auth_initialized = True
         except Exception as e:
             st.error(f"⚠️ Authentication module not available: {e}")
-            st.warning("🔓 Running in UNAUTHENTICATED mode (development only)")
+            st.warning("[NOTICE] Running in UNAUTHENTICATED mode (development only)")
             st.session_state.auth_initialized = False
             st.session_state.authenticated = True  # Fallback to allow access
     
@@ -1302,30 +1353,29 @@ def main():
         )
         
         st.divider()
-        st.subheader("📈 Dashboard Info")
+        st.subheader("Dashboard Info")
         st.text(f"Updated: {datetime.now().strftime('%H:%M:%S')}")
         st.text(f"Database Path: {Path(db_path).name}")
         st.text(f"Full Path: {db_path}")
 
         st.divider()
-        st.subheader("🌐 Access URLs")
+        st.subheader("Access URLs")
         local_ip = _detect_primary_ip()
         st.text(f"Local: http://localhost:{DASHBOARD_PORT}")
         st.text(f"LAN: http://{local_ip}:{DASHBOARD_PORT}")
         
         st.divider()
-        st.subheader("✨ Features")
+        st.subheader("Features")
         st.markdown("""
-        - 🛡️ Blocked IPs monitoring
-- 📋 Real-time incident feed
-        - 📈 Network health metrics
-        - 📄 Live log file viewer
-        - 🌐 Apache traffic analysis
-        - 🚫 IP blocking/unblocking
-        - 🎯 Attack pattern analysis
-        - 📊 Export reports (CSV/JSON)
-        - 💻 System information
-        """)
+        - Blocked IPs monitoring
+        - Real-time incident feed
+        - Network health metrics
+        - Live log file viewer
+        - Apache traffic analysis
+        - IP blocking/unblocking
+        - Attack pattern analysis
+        - Export reports (CSV/JSON)
+        - System information
         
         st.divider()
         st.info("💡 **Tip:** Use IP Blocking tab to manually block/unblock malicious IPs")
@@ -1355,15 +1405,15 @@ def main():
     
     # 2. Create tabs for different views
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "🛡️ Wall of Shame", 
-        "📋 Incident Feed", 
-        "📈 Network Health",
-        "📄 Log Viewer",
-        "🌐 Apache Traffic",
-        "🚫 IP Blocking",
-        "🎯 Attack Patterns",
-        "📊 Export Reports",
-        "💻 System Info"
+        "[BLOCKED] Wall of Shame", 
+        "[INCIDENTS] Incident Feed", 
+        "[NETWORK] Network Health",
+        "[LOGS] Log Viewer",
+        "[APACHE] Apache Traffic",
+        "[BLOCKING] IP Blocking",
+        "[ATTACKS] Attack Patterns",
+        "[EXPORT] Export Reports",
+        "[SYSTEM] System Info"
     ])
     
     with tab1:

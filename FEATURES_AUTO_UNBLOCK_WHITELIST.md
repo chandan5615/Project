@@ -2,11 +2,11 @@
 
 **Release Date**: February 25, 2026  
 **Version**: 2.3  
-**Status**: ✅ Implemented & Deployed
+**Status**: [OK] Implemented & Deployed
 
 ---
 
-## 📋 Overview
+## [DOCS] Overview
 
 This document describes three new security features added to Sentinel Agent v2.2:
 
@@ -18,7 +18,7 @@ These features prevent permanent lockouts of genuine users/admins while maintain
 
 ---
 
-## 🔓 Feature 1: Temporary Ban Logic (Auto-Expiry)
+## [UNBLOCK] Feature 1: Temporary Ban Logic (Auto-Expiry)
 
 ### Problem Solved
 Previously, blocked IPs would remain blocked indefinitely, risking permanent lockout of:
@@ -65,8 +65,8 @@ CREATE TABLE blocked_ips (
 
 3. **Logging**
    ```
-   ✅ Auto-unblocked 203.0.113.45 (ban expired)
-   🔓 Found 3 expired IP blocks - auto-unblocking...
+   [OK] Auto-unblocked 203.0.113.45 (ban expired)
+   [UNBLOCK] Found 3 expired IP blocks - auto-unblocking...
    ```
 
 ### Configuration
@@ -80,7 +80,7 @@ CREATE TABLE blocked_ips (
 
 ---
 
-## 🛡️ Feature 2: Whitelist Protection (Admin God-Mode)
+## [PROTECT] Feature 2: Whitelist Protection (Admin God-Mode)
 
 ### Problem Solved
 Prevents the system from "suicide-blocking" the administrator or local network due to:
@@ -118,7 +118,7 @@ get_admin_ips()  # Returns list of safe IPs including:
 In `_handle_remediation()`:
 ```python
 if data_engine.is_whitelisted(ip_address):
-    logger.warning(f"⚪ WHITELIST PROTECTION: IP {ip} is whitelisted - SKIPPING BLOCK")
+    logger.warning(f"[WHITE] WHITELIST PROTECTION: IP {ip} is whitelisted - SKIPPING BLOCK")
     data_engine.insert_action(incident_id, "whitelist_skip", ...)
     return  # Do NOT block
 ```
@@ -126,11 +126,11 @@ if data_engine.is_whitelisted(ip_address):
 #### Startup Initialization
 
 ```
-🔐 Initializing Whitelist Protection...
-  ✓ 127.0.0.1 (already whitelisted)
-  ✓ 192.168.31.91 (added to whitelist)
-  ✓ 192.168.31.0/24 (added to whitelist)
-✅ Auto-unblock cleanup thread started (checks every 60 seconds)
+[SECURE] Initializing Whitelist Protection...
+  [OK] 127.0.0.1 (already whitelisted)
+  [OK] 192.168.31.91 (added to whitelist)
+  [OK] 192.168.31.0/24 (added to whitelist)
+[OK] Auto-unblock cleanup thread started (checks every 60 seconds)
 ```
 
 ### Functions
@@ -151,7 +151,7 @@ if data_engine.is_whitelisted(ip_address):
 
 ---
 
-## ⚖️ Feature 3: Progressive Punishment
+## [BALANCE] Feature 3: Progressive Punishment
 
 ### Problem Solved
 First-time offenders (users who made a mistake) shouldn't receive the same penalty as repeat attackers:
@@ -191,10 +191,10 @@ IP 203.0.113.45 blocked 3 times = offense_count = 3
 
 #### Logging
 ```
-⚖️  1st offense → 15 minute ban for 203.0.113.45
-⚖️  2nd offense → 2 hour ban for 203.0.113.45
-⚖️  3rd offense → 24 hour HARD BAN for 203.0.113.45
-⚠️  CRITICAL severity → 24 hour HARD BAN for 203.0.113.45
+[BALANCE]  1st offense → 15 minute ban for 203.0.113.45
+[BALANCE]  2nd offense → 2 hour ban for 203.0.113.45
+[BALANCE]  3rd offense → 24 hour HARD BAN for 203.0.113.45
+[WARNING]  CRITICAL severity → 24 hour HARD BAN for 203.0.113.45
 ```
 
 ### Code Location
@@ -203,7 +203,7 @@ IP 203.0.113.45 blocked 3 times = offense_count = 3
 
 ---
 
-## 🔧 Implementation Details
+## [CONFIG] Implementation Details
 
 ### Files Modified
 1. **data_engine.py** (↑55 lines)
@@ -221,7 +221,7 @@ IP 203.0.113.45 blocked 3 times = offense_count = 3
    - Added 3 new functions: `get_local_ip()`, `get_local_network()`, `get_admin_ips()`
 
 ### Backward Compatibility
-✅ **Fully compatible** - All existing code continues to work:
+[OK] **Fully compatible** - All existing code continues to work:
 - Old `incidents` table unchanged
 - Old `actions` table unchanged
 - Whitelist check is transparent (if IP not in list, proceeds normally)
@@ -233,45 +233,45 @@ IP 203.0.113.45 blocked 3 times = offense_count = 3
 
 ---
 
-## 📊 Usage Examples
+## [STATS] Usage Examples
 
 ### Example 1: First-Time Offender Gets 15-Minute Ban
 ```
-20:30:15 | ❌ Attack detected: 203.0.113.45 (suspicious auth)
-20:30:16 | ⚖️  1st offense → 15 minute ban for 203.0.113.45
-20:30:17 | 🔐 Firewall rule: iptables -I INPUT -s 203.0.113.45 -j DROP
-20:30:18 | ✅ IP 203.0.113.45 blocked until 20:45:15
+20:30:15 | [ERROR] Attack detected: 203.0.113.45 (suspicious auth)
+20:30:16 | [BALANCE]  1st offense → 15 minute ban for 203.0.113.45
+20:30:17 | [SECURE] Firewall rule: iptables -I INPUT -s 203.0.113.45 -j DROP
+20:30:18 | [OK] IP 203.0.113.45 blocked until 20:45:15
 ---
-20:45:15 | 🔓 Found 1 expired IP blocks - auto-unblocking...
-20:45:16 | ✅ Auto-unblocked 203.0.113.45 (ban expired)
-20:45:17 | 🔓 Firewall rule removed for 203.0.113.45
+20:45:15 | [UNBLOCK] Found 1 expired IP blocks - auto-unblocking...
+20:45:16 | [OK] Auto-unblocked 203.0.113.45 (ban expired)
+20:45:17 | [UNBLOCK] Firewall rule removed for 203.0.113.45
 ```
 
 ### Example 2: Repeat Attacker Gets 24-Hour Ban
 ```
-19:00:00 | ❌ Attack detected: 192.0.2.1 (1st time)
-19:00:01 | ⚖️  1st offense → 15 minute ban
+19:00:00 | [ERROR] Attack detected: 192.0.2.1 (1st time)
+19:00:01 | [BALANCE]  1st offense → 15 minute ban
 ---
 (15 minutes later)
-19:15:01 | 🔓 Auto-unblocked 192.0.2.1
+19:15:01 | [UNBLOCK] Auto-unblocked 192.0.2.1
 ---
-19:20:00 | ❌ Attack detected: 192.0.2.1 (2nd time!)
-19:20:01 | ⚖️  2nd offense → 2 hour ban
+19:20:00 | [ERROR] Attack detected: 192.0.2.1 (2nd time!)
+19:20:01 | [BALANCE]  2nd offense → 2 hour ban
 ---
 (2 hours later)
-21:20:01 | 🔓 Auto-unblocked 192.0.2.1
+21:20:01 | [UNBLOCK] Auto-unblocked 192.0.2.1
 ---
-21:25:00 | ❌ Attack detected: 192.0.2.1 (3rd time!!!)
-21:25:01 | ⚖️  3rd offense → 24 hour HARD BAN
+21:25:00 | [ERROR] Attack detected: 192.0.2.1 (3rd time!!!)
+21:25:01 | [BALANCE]  3rd offense → 24 hour HARD BAN
 ---
 (24 hours later)
-21:25:01 Next day | 🔓 Auto-unblocked 192.0.2.1
+21:25:01 Next day | [UNBLOCK] Auto-unblocked 192.0.2.1
 ```
 
 ### Example 3: Admin IP Protected
 ```
-14:30:00 | ❌ Attack detected: 192.168.31.91 (config mistake)
-14:30:01 | ⚪ WHITELIST PROTECTION: IP 192.168.31.91 is whitelisted - SKIPPING BLOCK
+14:30:00 | [ERROR] Attack detected: 192.168.31.91 (config mistake)
+14:30:01 | [WHITE] WHITELIST PROTECTION: IP 192.168.31.91 is whitelisted - SKIPPING BLOCK
 14:30:02 | ℹ️  No action taken - risk of admin lockout prevented
 ```
 
@@ -279,19 +279,19 @@ IP 203.0.113.45 blocked 3 times = offense_count = 3
 ```
 SENTINEL AGENT v2.2 - Security Monitoring Active
 =========================================================
-🔐 Initializing Whitelist Protection...
-  ✓ 127.0.0.1 (already whitelisted)
-  ✓ 192.168.31.91 (added to whitelist)
-  ✓ 192.168.31.0/24 (added to whitelist)
-✅ Auto-unblock cleanup thread started (checks every 60 seconds)
+[SECURE] Initializing Whitelist Protection...
+  [OK] 127.0.0.1 (already whitelisted)
+  [OK] 192.168.31.91 (added to whitelist)
+  [OK] 192.168.31.0/24 (added to whitelist)
+[OK] Auto-unblock cleanup thread started (checks every 60 seconds)
 
-✅ Monitoring active: Auth + Web logs | Cross-correlation enabled
+[OK] Monitoring active: Auth + Web logs | Cross-correlation enabled
 Press Ctrl+C to stop
 ```
 
 ---
 
-## 🧪 Testing
+## [TEST] Testing
 
 ### Manual Test 1: Auto-Unblocking
 ```bash
@@ -333,12 +333,12 @@ print(f'Offense count: {db.get_offense_count(\"203.0.113.10\")}')
 
 ---
 
-## 🚀 Deployment
+## [DEPLOY] Deployment
 
 ### Files Deployed
-- ✅ `main.py` (modified)
-- ✅ `data_engine.py` (modified)
-- ✅ `tools/tools.py` (modified)
+- [OK] `main.py` (modified)
+- [OK] `data_engine.py` (modified)
+- [OK] `tools/tools.py` (modified)
 
 ### Docker Rebuild
 ```bash
@@ -358,7 +358,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
 
 ---
 
-## ⚙️ Configuration
+## [CONFIG] Configuration
 
 ### Adjustable Parameters
 
@@ -390,7 +390,7 @@ ban_minutes = 2880 # 3rd offense (48 hours)
 
 ---
 
-## 📈 Monitoring
+## [DATA] Monitoring
 
 ### Key Metrics to Track
 1. **Auto-unblock rate**: How many IPs auto-unblocked vs still blocked
@@ -417,7 +417,7 @@ WHERE status='active' AND banned_until < datetime('now');
 
 ---
 
-## 🐛 Troubleshooting
+## [BUG] Troubleshooting
 
 ### Issue: Cleanup thread not running
 **Check**: `docker logs sentinel-agent | grep "Auto-unblock cleanup thread"`  
@@ -449,7 +449,7 @@ print('Safe IPs:', db.get_all_whitelisted_ips())
 
 ---
 
-## 📝 Future Enhancements
+## [DOCS] Future Enhancements
 
 Potential v2.4 improvements:
 1. **Manual whitelist management**: Add CLI commands to manage whitelist
@@ -460,7 +460,7 @@ Potential v2.4 improvements:
 
 ---
 
-## 📞 Support
+## [SUPPORT] Support
 
 For issues or questions:
 1. Check logs: `docker-compose logs sentinel-agent`
@@ -472,4 +472,4 @@ For issues or questions:
 
 **Version**: 2.3  
 **Last Updated**: February 25, 2026  
-**Status**: ✅ Production Ready
+**Status**: [OK] Production Ready

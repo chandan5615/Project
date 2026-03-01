@@ -1,4 +1,4 @@
-# 🔒 Securing Dashboard Port 8501 - Local Network Only
+# [SECURE] Securing Dashboard Port 8501 - Local Network Only
 
 **Date**: February 25, 2026  
 **Issue**: Port 8501 currently exposed to public (0.0.0.0)  
@@ -6,21 +6,21 @@
 
 ---
 
-## ⚠️ Current Vulnerability
+## [WARNING] Current Vulnerability
 
 **Your docker-compose.yml (Line 95):**
 ```yaml
 ports:
-  - "${DASHBOARD_BIND_IP:-0.0.0.0}:8501:8501"  # ❌ EXPOSED TO PUBLIC!
+  - "${DASHBOARD_BIND_IP:-0.0.0.0}:8501:8501"  # [ERROR] EXPOSED TO PUBLIC!
 ```
 
 **What this means:**
 ```
 0.0.0.0:8501 → Binds to ALL network interfaces
-├─ ✅ Localhost (127.0.0.1)
-├─ ✅ Local network (192.168.31.91)
-├─ ❌ Public internet (if server has public IP)
-└─ ❌ ANY IP that can reach your server!
+├─ [OK] Localhost (127.0.0.1)
+├─ [OK] Local network (192.168.31.91)
+├─ [ERROR] Public internet (if server has public IP)
+└─ [ERROR] ANY IP that can reach your server!
 
 If your server has a public IP, ANYONE can access:
 http://YOUR_PUBLIC_IP:8501
@@ -28,16 +28,16 @@ http://YOUR_PUBLIC_IP:8501
 
 ---
 
-## 🛡️ Solution: Choose Your Security Level
+## [PROTECT] Solution: Choose Your Security Level
 
-### **Option 1: Localhost Only (Most Secure)** ⭐ Recommended if using SSH
+### **Option 1: Localhost Only (Most Secure)** [STAR] Recommended if using SSH
 
 **Best for**: Only access dashboard when SSH'd into server or via SSH tunnel
 
 **Modify docker-compose.yml:**
 ```yaml
 ports:
-  - "127.0.0.1:8501:8501"  # ✅ LOCALHOST ONLY
+  - "127.0.0.1:8501:8501"  # [OK] LOCALHOST ONLY
 ```
 
 **Access methods:**
@@ -54,42 +54,42 @@ ssh -L 8501:localhost:8501 ubuntu@192.168.31.91
 ```
 
 **Pros:**
-- ✅ Maximum security - NO network exposure
-- ✅ Even local network can't access
-- ✅ SSH tunnel provides encryption
-- ✅ Perfect for single-admin setup
+- [OK] Maximum security - NO network exposure
+- [OK] Even local network can't access
+- [OK] SSH tunnel provides encryption
+- [OK] Perfect for single-admin setup
 
 **Cons:**
-- ❌ Requires SSH tunnel setup
-- ❌ Can't access from other LAN devices directly
+- [ERROR] Requires SSH tunnel setup
+- [ERROR] Can't access from other LAN devices directly
 
 ---
 
-### **Option 2: Local Network Only (Balanced)** ⭐ Recommended for LAN
+### **Option 2: Local Network Only (Balanced)** [STAR] Recommended for LAN
 
 **Best for**: Access from any device on your local network (192.168.31.0/24)
 
 **Modify docker-compose.yml:**
 ```yaml
 ports:
-  - "192.168.31.91:8501:8501"  # ✅ LOCAL IP ONLY
+  - "192.168.31.91:8501:8501"  # [OK] LOCAL IP ONLY
 ```
 
 **Access:**
 ```
-✅ From any LAN device: http://192.168.31.91:8501
-❌ From internet: Connection refused
+[OK] From any LAN device: http://192.168.31.91:8501
+[ERROR] From internet: Connection refused
 ```
 
 **Pros:**
-- ✅ Easy access from any LAN device
-- ✅ No SSH tunnel needed
-- ✅ Still blocks public internet
-- ✅ Perfect for team on same network
+- [OK] Easy access from any LAN device
+- [OK] No SSH tunnel needed
+- [OK] Still blocks public internet
+- [OK] Perfect for team on same network
 
 **Cons:**
-- ❌ Anyone on LAN can access (use authentication!)
-- ❌ Vulnerable if someone joins your WiFi
+- [ERROR] Anyone on LAN can access (use authentication!)
+- [ERROR] Vulnerable if someone joins your WiFi
 
 ---
 
@@ -114,18 +114,18 @@ sudo iptables -I INPUT -p tcp --dport 8501 -j DROP
 ```
 
 **Pros:**
-- ✅ Flexible - can change rules without rebuilding Docker
-- ✅ Works even if Docker config changes
-- ✅ Can whitelist specific IPs
+- [OK] Flexible - can change rules without rebuilding Docker
+- [OK] Works even if Docker config changes
+- [OK] Can whitelist specific IPs
 
 **Cons:**
-- ❌ More complex to manage
-- ❌ Rules can be accidentally deleted
-- ❌ Need to persist across reboots
+- [ERROR] More complex to manage
+- [ERROR] Rules can be accidentally deleted
+- [ERROR] Need to persist across reboots
 
 ---
 
-## 🚀 Quick Fix - Apply Now
+## [DEPLOY] Quick Fix - Apply Now
 
 ### **RECOMMENDED: Option 2 (Local Network Only)**
 
@@ -168,33 +168,33 @@ sudo netstat -tulpn | grep 8501
 ```bash
 # From a device OUTSIDE your network (mobile hotspot, etc.):
 curl http://YOUR_PUBLIC_IP:8501
-# Expected: Connection timeout or refused ✅
+# Expected: Connection timeout or refused [OK]
 ```
 
 ---
 
-## 📊 Port Binding Comparison
+## [STATS] Port Binding Comparison
 
 | Bind Address | Local Access | LAN Access | Internet Access | Security Level |
 |--------------|--------------|------------|-----------------|----------------|
-| `0.0.0.0:8501` | ✅ Yes | ✅ Yes | ⚠️ **YES** | ❌ **VULNERABLE** |
-| `127.0.0.1:8501` | ✅ Yes | ❌ No | ❌ No | ✅ **MAXIMUM** |
-| `192.168.31.91:8501` | ✅ Yes | ✅ Yes | ❌ No | ✅ **GOOD** |
-| `0.0.0.0 + iptables` | ✅ Yes | ✅ Yes (filtered) | ❌ No | ✅ **GOOD** |
+| `0.0.0.0:8501` | [OK] Yes | [OK] Yes | [WARNING] **YES** | [ERROR] **VULNERABLE** |
+| `127.0.0.1:8501` | [OK] Yes | [ERROR] No | [ERROR] No | [OK] **MAXIMUM** |
+| `192.168.31.91:8501` | [OK] Yes | [OK] Yes | [ERROR] No | [OK] **GOOD** |
+| `0.0.0.0 + iptables` | [OK] Yes | [OK] Yes (filtered) | [ERROR] No | [OK] **GOOD** |
 
 ---
 
-## 🔍 How to Check Current Exposure
+## [CHECK] How to Check Current Exposure
 
 **Check what IP Docker is bound to:**
 ```bash
 ssh ubuntu@192.168.31.91
 docker port sentinel-agent 8501
 # Current output (vulnerable):
-# 0.0.0.0:8501 -> 8501  ❌ BAD!
+# 0.0.0.0:8501 -> 8501  [ERROR] BAD!
 
 # After fix (secure):
-# 192.168.31.91:8501 -> 8501  ✅ GOOD!
+# 192.168.31.91:8501 -> 8501  [OK] GOOD!
 ```
 
 **Check with netstat:**
@@ -202,13 +202,13 @@ docker port sentinel-agent 8501
 sudo netstat -tulpn | grep 8501
 
 # Vulnerable output:
-# tcp  0  0  0.0.0.0:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  ❌
+# tcp  0  0  0.0.0.0:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  [ERROR]
 
 # Secure output (localhost):
-# tcp  0  0  127.0.0.1:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  ✅
+# tcp  0  0  127.0.0.1:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  [OK]
 
 # Secure output (LAN only):
-# tcp  0  0  192.168.31.91:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  ✅
+# tcp  0  0  192.168.31.91:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  [OK]
 ```
 
 **Check from external network:**
@@ -230,32 +230,32 @@ nmap -p 8501 YOUR_PUBLIC_IP
 
 ---
 
-## 🧪 Testing After Fix
+## [TEST] Testing After Fix
 
 **Test 1: Local access still works**
 ```bash
 ssh ubuntu@192.168.31.91
 curl http://192.168.31.91:8501
-# Expected: HTTP 200 response ✅
+# Expected: HTTP 200 response [OK]
 ```
 
 **Test 2: LAN access works (from your Windows PC)**
 ```powershell
 # On Windows:
 curl http://192.168.31.91:8501
-# Expected: HTTP response or browser loads page ✅
+# Expected: HTTP response or browser loads page [OK]
 ```
 
 **Test 3: Internet access blocked**
 ```bash
 # From mobile hotspot or external network:
 curl --connect-timeout 5 http://YOUR_PUBLIC_IP:8501
-# Expected: Connection timeout ✅
+# Expected: Connection timeout [OK]
 ```
 
 ---
 
-## 🔒 Additional Security Hardening
+## [SECURE] Additional Security Hardening
 
 ### **1. Combine Network Binding + Authentication**
 
@@ -264,14 +264,14 @@ Best practice: Use BOTH network restriction AND login
 ```yaml
 # docker-compose.yml
 ports:
-  - "192.168.31.91:8501:8501"  # Network restriction ✅
+  - "192.168.31.91:8501:8501"  # Network restriction [OK]
 ```
 
-**PLUS** authentication in web_dashboard.py (already implemented) ✅
+**PLUS** authentication in web_dashboard.py (already implemented) [OK]
 
 **Result**: Defense in depth
-- Layer 1: Network can't even reach the port ✅
-- Layer 2: If they somehow do, login required ✅
+- Layer 1: Network can't even reach the port [OK]
+- Layer 2: If they somehow do, login required [OK]
 
 ---
 
@@ -330,7 +330,7 @@ knock 192.168.31.91 9000 8000 7000
 
 ---
 
-## 📖 FAQ
+## FAQ
 
 ### **Q: Will this break the main website (port 8000)?**
 
@@ -338,8 +338,8 @@ knock 192.168.31.91 9000 8000 7000
 
 ```yaml
 ports:
-  - "0.0.0.0:8000:8000"        # ✅ Public website (if desired)
-  - "192.168.31.91:8501:8501"  # ✅ Private dashboard (LAN only)
+  - "0.0.0.0:8000:8000"        # [OK] Public website (if desired)
+  - "192.168.31.91:8501:8501"  # [OK] Private dashboard (LAN only)
 ```
 
 ### **Q: Can I use environment variable to switch binding?**
@@ -381,7 +381,7 @@ lynx http://localhost:8501
 
 ---
 
-## ✅ Security Checklist
+## [OK] Security Checklist
 
 Before going to production:
 
@@ -398,24 +398,24 @@ Before going to production:
 
 ---
 
-## 🎯 Summary
+## [TARGET] Summary
 
 **Your Goal**: Dashboard on local network only, NOT public
 
 **Best Solution**: 
 ```yaml
 # docker-compose.yml line 95:
-- "192.168.31.91:8501:8501"  # ✅ LOCAL ONLY
+- "192.168.31.91:8501:8501"  # [OK] LOCAL ONLY
 ```
 
 **Combined with**:
-- ✅ Authentication (already implemented)
-- ✅ Firewall rules (optional but recommended)
-- ✅ Regular security audits
+- [OK] Authentication (already implemented)
+- [OK] Firewall rules (optional but recommended)
+- [OK] Regular security audits
 
 **Access From**:
-- ✅ Server itself: `http://localhost:8501`
-- ✅ Your PC on LAN: `http://192.168.31.91:8501`
-- ❌ Internet: Connection refused ✅ SECURE!
+- [OK] Server itself: `http://localhost:8501`
+- [OK] Your PC on LAN: `http://192.168.31.91:8501`
+- [ERROR] Internet: Connection refused [OK] SECURE!
 
-**This is the RIGHT security approach!** 🔒
+**This is the RIGHT security approach!** [SECURE]

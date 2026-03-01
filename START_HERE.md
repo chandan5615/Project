@@ -1,25 +1,25 @@
-# ✅ ALL AUTOMATION COMPLETE!
+# [OK] ALL AUTOMATION COMPLETE!
 
-## 🎉 **WHAT WAS DONE**
+## [SUCCESS] **WHAT WAS DONE**
 
-### 1. **AI Optimization** ⚡
+### 1. **AI Optimization** [FAST]
 - AI crew NOW **ONLY runs for HIGH severity attacks**
 - Saves ~90% of Ollama resources
 - MEDIUM/LOW attacks logged automatically without AI
 - System runs MUCH faster!
 
-### 2. **One-Click Installers Created** 🚀
+### 2. **One-Click Installers Created** [DEPLOY]
 - **Linux:** `AUTO_INSTALL.sh` - Installs EVERYTHING automatically
 - **Windows:** `AUTO_INSTALL_WINDOWS.bat` - Helper for remote deployment
 
-### 3. **Dashboard Fixed** 📊
-- ✅ Unblock IP buttons working
-- ✅ Logs auto-refresh every 8 seconds
-- ✅ All features operational
+### 3. **Dashboard Fixed** [STATS]
+- [OK] Unblock IP buttons working
+- [OK] Logs auto-refresh every 8 seconds
+- [OK] All features operational
 
 ---
 
-## 🚀 **QUICK START - JUST DO THIS:**
+## [DEPLOY] **QUICK START - JUST DO THIS:**
 
 ### **Your Current Server (Already Running):**
 
@@ -60,7 +60,7 @@ Then watch dashboard update in real-time!
 
 ---
 
-## 📋 **FILES YOU CAN USE**
+## [DOCS] **FILES YOU CAN USE**
 
 ### **Auto-Installers:**
 - `AUTO_INSTALL.sh` - Linux one-click installer
@@ -77,7 +77,7 @@ Then watch dashboard update in real-time!
 
 ---
 
-## 🎯 **HOW TO SEE AI OPTIMIZATION WORKING**
+## [TARGET] **HOW TO SEE AI OPTIMIZATION WORKING**
 
 Run attacks and watch logs:
 
@@ -89,13 +89,13 @@ docker-compose logs -f sentinel-agent | grep -E "(HIGH|MEDIUM|severity)"
 
 You'll see:
 ```
-⚡ HIGH SEVERITY ATTACK - Activating AI Crew Analysis   ← Uses AI
-📝 MEDIUM severity attack - Logging without AI         ← No AI (optimized!)
+[FAST] HIGH SEVERITY ATTACK - Activating AI Crew Analysis   ← Uses AI
+[DOCS] MEDIUM severity attack - Logging without AI         ← No AI (optimized!)
 ```
 
 ---
 
-## ✅ **VERIFY EVERYTHING WORKS**
+## [OK] **VERIFY EVERYTHING WORKS**
 
 ```bash
 # 1. Check system status
@@ -117,7 +117,7 @@ python continuous_attacks.py --interval 5 --duration 1
 
 ---
 
-## 🆘 **IF ANY ERROR OCCURS**
+## [HELP] **IF ANY ERROR OCCURS**
 
 **Just run these commands:**
 
@@ -137,7 +137,7 @@ The installer handles everything including:
 
 ---
 
-## 📊 **IMPROVEMENTS MADE**
+## [STATS] **IMPROVEMENTS MADE**
 
 | Feature | Before | After |
 |---------|--------|-------|
@@ -151,7 +151,7 @@ The installer handles everything including:
 
 ---
 
-## 🎓 **FOR FUTURE USE**
+## [GUIDE] **FOR FUTURE USE**
 
 **To deploy on any NEW system:**
 1. Copy project folder
@@ -170,16 +170,16 @@ docker-compose logs -f
 
 ---
 
-## 🎉 **YOU'RE READY!**
+## [SUCCESS] **YOU'RE READY!**
 
 Everything is:
-- ✅ Automated
-- ✅ Optimized
-- ✅ Working
-- ✅ Documented
-- ✅ Easy to deploy anywhere
+- [OK] Automated
+- [OK] Optimized
+- [OK] Working
+- [OK] Documented
+- [OK] Easy to deploy anywhere
 
-**Just one command installs everything!** 🚀
+**Just one command installs everything!** [DEPLOY]
 
 ---
 
@@ -188,4 +188,4 @@ Everything is:
 - `AUTOMATION_SUMMARY.md` - Detailed automation explanation
 - `ATTACK_TESTING_GUIDE.txt` - How to test the system
 
-**Happy monitoring!** 🛡️
+**Happy monitoring!** [PROTECT]

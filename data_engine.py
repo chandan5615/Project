@@ -65,7 +65,7 @@ class DataEngine:
                     )
                     """
                 )
-                logger.info(f"✓ incidents table created/verified in {self.db_path}")
+                logger.info(f"[OK] incidents table created/verified in {self.db_path}")
                 self._conn.execute(
                     """
                     CREATE TABLE IF NOT EXISTS actions (
@@ -78,7 +78,7 @@ class DataEngine:
                     )
                     """
                 )
-                logger.info(f"✓ actions table created/verified in {self.db_path}")
+                logger.info(f"[OK] actions table created/verified in {self.db_path}")
                 self._conn.execute(
                     """
                     CREATE TABLE IF NOT EXISTS threat_intel (
@@ -90,7 +90,7 @@ class DataEngine:
                     )
                     """
                 )
-                logger.info(f"✓ threat_intel table created/verified in {self.db_path}")
+                logger.info(f"[OK] threat_intel table created/verified in {self.db_path}")
                 
                 # FEATURE: Temporary Ban Logic (Auto-Expiry)
                 self._conn.execute(
@@ -107,7 +107,7 @@ class DataEngine:
                     )
                     """
                 )
-                logger.info(f"✓ blocked_ips table created/verified in {self.db_path}")
+                logger.info(f"[OK] blocked_ips table created/verified in {self.db_path}")
                 
                 # FEATURE: Whitelist Protection (Admin God-Mode)
                 self._conn.execute(
@@ -121,7 +121,7 @@ class DataEngine:
                     )
                     """
                 )
-                logger.info(f"✓ safe_ips (whitelist) table created/verified in {self.db_path}")
+                logger.info(f"[OK] safe_ips (whitelist) table created/verified in {self.db_path}")
         except Exception as e:
             logger.error(f"Error creating tables in {self.db_path}: {e}")
             raise
@@ -135,7 +135,7 @@ class DataEngine:
                     (ts, source_ip, attack_type, severity, raw_log, threat_type or attack_type, action or "blocked", details or "")
                 )
                 incident_id = cur.lastrowid
-                logger.info(f"✓ Incident #{incident_id} inserted for {source_ip} ({attack_type})")
+                logger.info(f"[OK] Incident #{incident_id} inserted for {source_ip} ({attack_type})")
                 return incident_id
         except Exception as e:
             logger.error(f"Failed to insert incident for {source_ip}: {e}")
@@ -217,7 +217,7 @@ class DataEngine:
                     (new_count, blocked_at.isoformat(), banned_until.isoformat(), 
                      ban_duration_minutes, reason, ip)
                 )
-                logger.info(f"✓ IP {ip} re-blocked (offense #{new_count}) until {banned_until.isoformat()}")
+                logger.info(f"[OK] IP {ip} re-blocked (offense #{new_count}) until {banned_until.isoformat()}")
             else:
                 # First offense
                 cur = self._conn.execute(
@@ -226,7 +226,7 @@ class DataEngine:
                        VALUES (?, ?, ?, 1, ?, ?, 'active')""",
                     (ip, blocked_at.isoformat(), banned_until.isoformat(), ban_duration_minutes, reason)
                 )
-                logger.info(f"✓ IP {ip} blocked (1st offense) until {banned_until.isoformat()}")
+                logger.info(f"[OK] IP {ip} blocked (1st offense) until {banned_until.isoformat()}")
             
             return cur.lastrowid
     
@@ -259,7 +259,7 @@ class DataEngine:
                 "UPDATE blocked_ips SET status = 'expired' WHERE ip = ? AND status = 'active'",
                 (ip,)
             )
-            logger.info(f"✓ IP {ip} marked as expired/unblocked")
+            logger.info(f"[OK] IP {ip} marked as expired/unblocked")
             return True
     
     def get_offense_count(self, ip: str) -> int:
@@ -275,6 +275,57 @@ class DataEngine:
         cur = self._conn.execute("SELECT offense_count FROM blocked_ips WHERE ip = ?", (ip,))
         row = cur.fetchone()
         return row['offense_count'] if row else 0
+    
+    def unblock_ip_globally(self, ip: str) -> Dict[str, Any]:
+        """
+        GLOBAL IP CLEARANCE: Completely remove an IP from the system.
+        
+        This performs a complete wipe of the IP:
+        - Deletes ALL incidents for this IP (not just one)
+        - Removes IP from blocked_ips table
+        - Returns count of deleted records
+        
+        Args:
+            ip: IP address to completely clear
+            
+        Returns:
+            Dict with counts of deleted records
+        """
+        try:
+            # Count incidents before deletion
+            cur = self._conn.execute("SELECT COUNT(*) FROM incidents WHERE source_ip = ?", (ip,))
+            incident_count = cur.fetchone()[0]
+            
+            # Count blocked_ips entries before deletion
+            cur = self._conn.execute("SELECT COUNT(*) FROM blocked_ips WHERE ip = ?", (ip,))
+            blocked_count = cur.fetchone()[0]
+            
+            # Perform global wipe
+            with self._conn:
+                # Delete ALL incidents for this IP
+                self._conn.execute("DELETE FROM incidents WHERE source_ip = ?", (ip,))
+                
+                # Delete ALL blocked_ips entries for this IP
+                self._conn.execute("DELETE FROM blocked_ips WHERE ip = ?", (ip,))
+            
+            logger.info(f"[OK] GLOBAL WIPE for {ip}: Deleted {incident_count} incidents, {blocked_count} block records")
+            
+            return {
+                "success": True,
+                "ip": ip,
+                "incidents_deleted": incident_count,
+                "blocks_deleted": blocked_count,
+                "total_deleted": incident_count + blocked_count
+            }
+        except Exception as e:
+            logger.error(f"❌ Failed to globally unblock {ip}: {e}")
+            return {
+                "success": False,
+                "ip": ip,
+                "error": str(e),
+                "incidents_deleted": 0,
+                "blocks_deleted": 0
+            }
     
     # =========================================================================
     # FEATURE: Whitelist Protection (Admin God-Mode)
@@ -300,7 +351,7 @@ class DataEngine:
                        VALUES (?, ?, ?, ?)""",
                     (ip, reason, added_at, 1 if auto_detected else 0)
                 )
-                logger.info(f"✓ IP {ip} added to whitelist: {reason}")
+                logger.info(f"[OK] IP {ip} added to whitelist: {reason}")
                 return cur.lastrowid
         except sqlite3.IntegrityError:
             # Already whitelisted
@@ -338,7 +389,7 @@ class DataEngine:
         """
         with self._conn:
             self._conn.execute("DELETE FROM safe_ips WHERE ip = ?", (ip,))
-            logger.info(f"✓ IP {ip} removed from whitelist")
+            logger.info(f"[OK] IP {ip} removed from whitelist")
             return True
 
     def close(self):

@@ -563,7 +563,7 @@ class SentinelAgent:
                 logger.error(f"Error inserting action: {e}")
 
         # Auto-approve HIGH severity attacks in automated environment (Docker)
-        logger.info("🔐 AUTO-APPROVED: High severity threat - Firewall block executing immediately")
+        logger.info("[AUTO-APPROVED] High severity threat - Firewall block executing immediately")
         
         # =====================================================================
         # FEATURE: Block IP with Progressive Punishment
@@ -751,7 +751,7 @@ class SentinelAgent:
         self.cleanup_running = True
         self.cleanup_thread = threading.Thread(target=self._cleanup_expired_blocks, daemon=True)
         self.cleanup_thread.start()
-        logger.info("✅ Auto-unblock cleanup thread started (checks every 60 seconds)")
+        logger.info("[OK] Auto-unblock cleanup thread started (checks every 60 seconds)")
     
     def _cleanup_expired_blocks(self):
         """Background thread that checks for and removes expired IP blocks."""
@@ -767,20 +767,26 @@ class SentinelAgent:
                 expired_ips = data_eng.get_expired_ips()
                 
                 if expired_ips:
-                    logger.info(f"🔓 Found {len(expired_ips)} expired IP blocks - auto-unblocking...")
+                    logger.info(f"[INFO] Found {len(expired_ips)} expired IP blocks - auto-unblocking...")
                     
                     for ip_record in expired_ips:
                         ip = ip_record['ip']
                         try:
-                            # Remove iptables rule
+                            # GLOBAL UNBLOCK: Remove firewall rule
                             self._unblock_ip(ip)
                             
-                            # Mark as unblocked in database
-                            data_eng.mark_ip_unblocked(ip)
+                            # GLOBAL UNBLOCK: Remove ALL database records for this IP
+                            result = data_eng.unblock_ip_globally(ip)
                             
-                            logger.info(f"✅ Auto-unblocked {ip} (ban expired)")
+                            if result.get("success"):
+                                logger.info(
+                                    f"[OK] Auto-unblocked {ip} (ban expired) - "
+                                    f"Cleared {result.get('total_deleted', 0)} records"
+                                )
+                            else:
+                                logger.warning(f"[WARNING] Firewall cleared for {ip} but database cleanup had issues")
                         except Exception as e:
-                            logger.error(f"❌ Failed to unblock {ip}: {e}")
+                            logger.error(f"[ERROR] Failed to globally unblock {ip}: {e}")
                 
             except Exception as e:
                 logger.error(f"Cleanup thread error: {e}")
@@ -798,7 +804,7 @@ class SentinelAgent:
             result = subprocess.run(command, capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
-                logger.info(f"🔓 Firewall rule removed for {ip}")
+                logger.info(f"[OK] Firewall rule removed for {ip}")
             else:
                 # Rule might not exist - that's okay
                 logger.debug(f"Could not remove firewall rule for {ip}: {result.stderr}")
@@ -876,18 +882,18 @@ class SentinelAgent:
         from tools.tools import get_admin_ips
         
         logger.info("")
-        logger.info("🔐 Initializing Whitelist Protection...")
+        logger.info("[INIT] Initializing Whitelist Protection...")
         data_eng = get_engine()
         
         # Auto-add safe IPs on startup
         safe_ips = get_admin_ips()
         for safe_ip in safe_ips:
             if data_eng.is_whitelisted(safe_ip):
-                logger.info(f"  ✓ {safe_ip} (already whitelisted)")
+                logger.info(f"  [OK] {safe_ip} (already whitelisted)")
             else:
                 try:
                     data_eng.add_safe_ip(safe_ip, "Auto-detected admin/local IP", auto_detected=True)
-                    logger.info(f"  ✓ {safe_ip} (added to whitelist)")
+                    logger.info(f"  [OK] {safe_ip} (added to whitelist)")
                 except Exception as e:
                     logger.debug(f"  Could not add {safe_ip}: {e}")
         
@@ -911,22 +917,22 @@ class SentinelAgent:
             self.auth_sensor.start()
             self.web_sensor.start()
             
-            logger.info("✅ Monitoring active: Auth + Web logs | Cross-correlation enabled")
+            logger.info("[OK] Monitoring active: Auth + Web logs | Cross-correlation enabled")
             logger.info("Press Ctrl+C to stop\n")
             
             # Keep the main thread alive with periodic polling fallback
             self._poll_sensors(poll_interval=2.0)
                 
         except KeyboardInterrupt:
-            logger.info("\n🛑 Shutting down Sentinel Defense Module...")
+            logger.info("\n[SHUTDOWN] Shutting down Sentinel Defense Module...")
             self.cleanup_running = False
             if self.auth_sensor:
                 self.auth_sensor.stop()
             if self.web_sensor:
                 self.web_sensor.stop()
-            logger.info("✅ Shutdown complete")
+            logger.info("[OK] Shutdown complete")
         except Exception as e:
-            logger.error(f"❌ Fatal error: {e}", exc_info=True)
+            logger.error(f"[ERROR] Fatal error: {e}", exc_info=True)
             self.cleanup_running = False
             if self.auth_sensor:
                 self.auth_sensor.stop()
@@ -948,9 +954,9 @@ def check_environment():
     if not in_venv:
         # Skip venv warning in Docker containers (they don't use venv)
         if os.path.exists('/.dockerenv'):
-            logger.info("✓ Running in Docker - venv check skipped")
+            logger.info("[OK] Running in Docker - venv check skipped")
         else:
-            logger.warning("⚠️  Not running in a virtual environment!")
+            logger.warning("[WARNING] Not running in a virtual environment!")
             logger.warning("   It's recommended to use a virtual environment for isolation.")
             logger.warning("   Run: python -m venv venv && source venv/bin/activate")
             logger.info("Continuing in non-venv environment...")
@@ -961,11 +967,11 @@ def check_environment():
         module for module in required_modules
         if importlib.util.find_spec(module) is None
     ]:
-        logger.error(f"❌ Missing required modules: {', '.join(missing)}")
+        logger.error(f"[ERROR] Missing required modules: {', '.join(missing)}")
         logger.error("   Install with: pip install -r requirements.txt")
         sys.exit(1)
     
-    logger.info("✅ Environment check passed")
+    logger.info("[OK] Environment check passed")
 
 
 def main():

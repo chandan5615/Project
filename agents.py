@@ -56,10 +56,10 @@ def check_ollama_connection():
         req = urllib.request.Request(f"{url}/api/tags", method='GET')
         with urllib.request.urlopen(req, timeout=5) as response:
             if response.status == 200:
-                logger.info(f"✅ Ollama server is reachable at {url}")
+                logger.info(f"[OK] Ollama server is reachable at {url}")
                 return True
     except urllib.error.URLError as e:
-        logger.warning(f"⚠️  Warning: Cannot reach Ollama server at {url}")
+        logger.warning(f"[WARNING] Cannot reach Ollama server at {url}")
         logger.warning(f"   Error: {e.reason}")
         logger.warning("   Make sure Ollama is running: ollama serve")
         logger.warning("   Or set OLLAMA_BASE_URL environment variable")

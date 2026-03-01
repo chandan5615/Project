@@ -1,14 +1,14 @@
-# 🔐 Dashboard Security Guide - Sentinel Agent v2.3
+# [SECURE] Dashboard Security Guide - Sentinel Agent v2.3
 
 **Critical Security Update: Dashboard Authentication**
 
 ---
 
-## ⚠️ CRITICAL VULNERABILITY FIXED
+## [WARNING] CRITICAL VULNERABILITY FIXED
 
 ### **Before v2.3.1 (VULNERABLE):**
 ```
-❌ Dashboard: http://YOUR_SERVER:8501
+[ERROR] Dashboard: http://YOUR_SERVER:8501
 ├─ No username/password required
 ├─ Anyone on network can access
 ├─ Can view ALL attack data
@@ -18,7 +18,7 @@
 
 ### **After v2.3.1 (SECURE):**
 ```
-✅ Dashboard: http://YOUR_SERVER:8501
+[OK] Dashboard: http://YOUR_SERVER:8501
 ├─ Login page with username/password
 ├─ Session-based authentication
 ├─ Auto-logout after 24 hours inactivity
@@ -28,7 +28,7 @@
 
 ---
 
-## 📋 Quick Start: Enable Authentication
+## [DOCS] Quick Start: Enable Authentication
 
 ### **Step 1: Rebuild Docker Container**
 
@@ -71,10 +71,10 @@ docker exec sentinel-agent cat /app/data/INITIAL_CREDENTIALS.txt
 ### **Step 3: First Login**
 
 1. Navigate to: `http://YOUR_SERVER:8501`
-2. You'll see the login page (🔐 Sentinel Agent Login)
+2. You'll see the login page ([SECURE] Sentinel Agent Login)
 3. Enter credentials from Step 2
-4. Click **🔓 Login**
-5. You're in! 🎉
+4. Click **[UNBLOCK] Login**
+5. You're in! [SUCCESS]
 
 ### **Step 4: Change Password (CRITICAL)**
 
@@ -93,7 +93,7 @@ print('Password changed successfully!')
 
 ---
 
-## 🛡️ Security Features
+## [PROTECT] Security Features
 
 ### **1. Session Management**
 - Sessions expire after **24 hours** of inactivity
@@ -125,11 +125,11 @@ auth.create_user("viewer", "ViewerPass456!", "viewer")
 
 ---
 
-## 🔧 Configuration Options
+## [CONFIG] Configuration Options
 
 ### **Option 1: Disable Authentication (Development Only)**
 
-**⚠️ WARNING: Only use on isolated/local networks!**
+**[WARNING]: Only use on isolated/local networks!**
 
 Edit `web_dashboard.py`:
 ```python
@@ -186,7 +186,7 @@ sudo iptables -A INPUT -p tcp --dport 8501 ! -i wg0 -j DROP
 
 ---
 
-## 🚨 Emergency Access Recovery
+## [ALERT] Emergency Access Recovery
 
 ### **Scenario 1: Forgot Password**
 
@@ -244,7 +244,7 @@ docker restart sentinel-agent
 
 ---
 
-## 📊 Monitoring Authentication
+## [STATS] Monitoring Authentication
 
 ### **Check Login Activity**
 
@@ -273,25 +273,25 @@ docker exec sentinel-agent grep "Invalid username or password" \
 
 ---
 
-## 🔐 Best Practices
+## [SECURE] Best Practices
 
 ### **1. Strong Passwords**
-✅ **DO:**
+[OK] **DO:**
 - Use passwords ≥ 16 characters
 - Include uppercase, lowercase, numbers, symbols
 - Use password manager (LastPass, 1Password, Bitwarden)
 
-❌ **DON'T:**
+[ERROR] **DON'T:**
 - Use `admin`, `password`, `123456`
 - Reuse passwords from other systems
 - Share credentials via email/chat
 
 ### **2. Network Security**
 ```bash
-# ✅ Recommended: Dashboard only on local network
+# [OK] Recommended: Dashboard only on local network
 sudo ufw allow from 192.168.31.0/24 to any port 8501
 
-# ❌ Avoid: Exposing dashboard to internet
+# [ERROR] Avoid: Exposing dashboard to internet
 sudo ufw allow 8501  # DANGEROUS!
 ```
 
@@ -312,7 +312,7 @@ docker exec sentinel-agent sqlite3 /app/data/auth.db \
 
 ---
 
-## 🛠️ Advanced: Rate Limiting (Optional)
+## [TOOLS] Advanced: Rate Limiting (Optional)
 
 **Prevent brute-force attacks by limiting login attempts:**
 
@@ -355,13 +355,13 @@ if "rate_limiter" not in st.session_state:
 
 # Before authentication:
 if not st.session_state.rate_limiter.allow_login(st.session_state.get("client_ip", "unknown")):
-    st.error("⛔ Too many failed attempts. Try again in 15 minutes.")
+    st.error("[BLOCKED] Too many failed attempts. Try again in 15 minutes.")
     return
 ```
 
 ---
 
-## 📖 FAQ
+## [DOCS] FAQ
 
 ### **Q: Can I use HTTPS instead of HTTP?**
 
@@ -421,7 +421,7 @@ docker restart sentinel-agent
 
 ---
 
-## 🎯 Testing Authentication
+## [TEST] Testing Authentication
 
 ### **Test 1: Verify Login Page Shows**
 ```bash
@@ -454,7 +454,7 @@ assert token is not None
 
 ---
 
-## ✅ Security Checklist
+## [OK] Security Checklist
 
 Before deploying to production:
 
@@ -472,20 +472,20 @@ Before deploying to production:
 
 ---
 
-## 🚀 Summary
+## [DEPLOY] Summary
 
 **Before:**
-- ❌ No authentication
-- ❌ Public access if port exposed
-- ❌ Attackers could manipulate firewall rules
+- [ERROR] No authentication
+- [ERROR] Public access if port exposed
+- [ERROR] Attackers could manipulate firewall rules
 
 **After:**
-- ✅ Secure login with bcrypt hashing
-- ✅ Session-based authentication
-- ✅ Failed login logging
-- ✅ Multi-user support
-- ✅ Easy password reset
+- [OK] Secure login with bcrypt hashing
+- [OK] Session-based authentication
+- [OK] Failed login logging
+- [OK] Multi-user support
+- [OK] Easy password reset
 
-**Your dashboard is now SECURE! 🔒**
+**Your dashboard is now SECURE! [SECURE]**
 
 For support: Check logs in `/var/log/sentinel/auth.log`

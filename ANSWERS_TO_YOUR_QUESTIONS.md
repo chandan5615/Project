@@ -3,13 +3,13 @@
 **Date**: February 25, 2026  
 **Attack**: GoldenEye DDoS (1200+ requests)  
 **Blocked IP**: 192.168.31.183  
-**Status**: ✅ Working Correctly
+**Status**: [OK] Working Correctly
 
-**UPDATE**: Auto IP detection now integrated into [AUTO_INSTALL.sh](AUTO_INSTALL.sh) - no more hardcoded IPs! ✅
+**UPDATE**: Auto IP detection now integrated into [AUTO_INSTALL.sh](AUTO_INSTALL.sh) - no more hardcoded IPs! [OK]
 
 ---
 
-## ❓ Question 1: Why Can I Still Access the Website After Being Blocked?
+## [Q] Question 1: Why Can I Still Access the Website After Being Blocked?
 
 ### **Answer: You're Testing From The Wrong Location**
 
@@ -20,7 +20,7 @@ Your IP **IS blocked**, but you need to test from the right place:
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  YOUR ATTACK: 192.168.31.183 → 192.168.31.91:8000           │
-│  ├─ GoldenEye DDoS detected ✅                               │
+│  ├─ GoldenEye DDoS detected [OK]                            │
 │  ├─ Blocked with: iptables -I INPUT -s 192.168.31.183 -j DROP │
 │  ├─ Ban duration: 24 hours (CRITICAL severity)              │
 │  └─ Status: BLOCKED on server firewall                      │
@@ -31,23 +31,23 @@ Your IP **IS blocked**, but you need to test from the right place:
 
 **Mistake #1**: Testing from localhost
 ```bash
-# ❌ WRONG - Testing from THE SERVER itself
+# [ERROR] WRONG - Testing from THE SERVER itself
 ssh ubuntu@192.168.31.91
 curl http://localhost:8000
 
-# ✅ This works because:
+# [OK] This works because:
 # - Firewall only blocks EXTERNAL connections from 192.168.31.183
 # - Server can always access itself via localhost (127.0.0.1)
 ```
 
 **Mistake #2**: Testing from wrong IP
 ```bash
-# ❌ WRONG - Testing from a different machine
+# [ERROR] WRONG - Testing from a different machine
 # If you test from 192.168.31.100, it will work
 # Only 192.168.31.183 is blocked!
 ```
 
-### **✅ CORRECT Way to Test:**
+### **[OK] CORRECT Way to Test:**
 
 **Test 1: Check if your IP is blocked in firewall**
 ```bash
@@ -79,7 +79,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
 # 192.168.31.183|2026-02-26T10:13:01.395910|active
 ```
 
-### **🔍 Network Flow Diagram:**
+### **[CHECK] Network Flow Diagram:**
 
 ```
 BEFORE BLOCK:
@@ -88,7 +88,7 @@ BEFORE BLOCK:
 │ 192.168.31.183 │────────>│ 192.168.31.91  │
 │ (Windows)       │<────────│ Port: 8000      │
 └─────────────────┘  200 OK └─────────────────┘
-     ✅ Connected
+     [OK] Connected
 
 AFTER BLOCK:
 ┌─────────────────┐         ┌─────────────────┐
@@ -96,7 +96,7 @@ AFTER BLOCK:
 │ 192.168.31.183 │────X───>│ 192.168.31.91  │
 │ (Windows)       │ DROPPED │ iptables DROP   │
 └─────────────────┘ Firewall└─────────────────┘
-     ❌ Connection timeout
+     [ERROR] Connection timeout
 
 LOCALHOST (Always works):
 ┌─────────────────────────────────────┐
@@ -105,20 +105,20 @@ LOCALHOST (Always works):
 │ ├─ 127.0.0.1 → 127.0.0.1           │
 │ └─ Firewall doesn't block internal  │
 └─────────────────────────────────────┘
-     ✅ Always works (not blocked)
+     [OK] Always works (not blocked)
 ```
 
 ---
 
-## ❓ Question 2: Why "No Threat Intelligence Data"?
+## [Q] Question 2: Why "No Threat Intelligence Data"?
 
 ### **Answer: You're Looking at the WRONG Table**
 
 There are **4 different data stores** in Sentinel Agent:
 
-### **📊 Database Tables Explained:**
+### **[DATA] Database Tables Explained:**
 
-#### **1. `incidents` Table** ✅ **YOUR DATA IS HERE**
+#### **1. `incidents` Table** [OK] **YOUR DATA IS HERE**
 ```sql
 -- What it stores:
 Every attack event detected by sensors
@@ -140,7 +140,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
 
 ---
 
-#### **2. `blocked_ips` Table** ✅ **YOUR DATA IS HERE TOO**
+#### **2. `blocked_ips` Table** [OK] **YOUR DATA IS HERE TOO**
 ```sql
 -- What it stores:
 IPs that are currently blocked with expiry times
@@ -162,7 +162,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
 
 ---
 
-#### **3. `safe_ips` Table** ✅ **WHITELIST DATA IS HERE**
+#### **3. `safe_ips` Table** [OK] **WHITELIST DATA IS HERE**
 ```sql
 -- What it stores:
 Protected IPs that can never be blocked
@@ -179,7 +179,7 @@ id|ip|reason|added_at|auto_detected
 
 ---
 
-#### **4. `threat_intel` Table** ❌ **THIS IS EMPTY - AND THAT'S NORMAL**
+#### **4. `threat_intel` Table** [ERROR] **THIS IS EMPTY - AND THAT'S NORMAL**
 ```sql
 -- What it stores:
 External threat intelligence from APIs (AbuseIPDB, Shodan, etc.)
@@ -199,12 +199,12 @@ OR for importing known-bad-IP lists
 ```
 ┌───────────────────────────────────────────────────────────┐
 │  MISCONCEPTION: Threat Intel = Attack Logs                │
-│  ❌ WRONG                                                  │
+│  [ERROR] WRONG                                            │
 └───────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────┐
 │  REALITY: Threat Intel = External IP Reputation Database  │
-│  ✅ CORRECT                                                │
+│  [OK] CORRECT                                             │
 │                                                            │
 │  Threat Intel sources:                                    │
 │  ├─ AbuseIPDB (reports from 500k+ users)                  │
@@ -222,11 +222,11 @@ OR for importing known-bad-IP lists
 
 ```
 GoldenEye Attack: 192.168.31.183
-├─ ✅ Stored in: incidents table (attack event)
-├─ ✅ Stored in: blocked_ips table (firewall block)
-├─ ✅ Coreference checked: threat_intelligence.py (offline DB)
-├─ ✅ Logged in: actions table (firewall execute)
-└─ ❌ NOT in: threat_intel table (export-only table)
+├─ [OK] Stored in: incidents table (attack event)
+├─ [OK] Stored in: blocked_ips table (firewall block)
+├─ [OK] Coreference checked: threat_intelligence.py (offline DB)
+├─ [OK] Logged in: actions table (firewall execute)
+└─ [ERROR] NOT in: threat_intel table (export-only table)
 ```
 
 ### **How Threat Intelligence Was Used (Even Though Table is Empty):**
@@ -251,11 +251,11 @@ threat_result = threat_intel.check_ip_reputation(ip_address)
 
 ---
 
-## ❓ Question 3: Is Dashboard Publicly Accessible?
+## [Q] Question 3: Is Dashboard Publicly Accessible?
 
-### **⚠️ CRITICAL SECURITY ISSUE FOUND**
+### **[WARNING] CRITICAL SECURITY ISSUE FOUND**
 
-**Current Status:** ❌ **YES - Dashboard has NO authentication!**
+**Current Status:** [ERROR] **YES - Dashboard has NO authentication!**
 
 ### **The Problem:**
 
@@ -263,23 +263,23 @@ threat_result = threat_intel.check_ip_reputation(ip_address)
 Current Setup:
 ┌────────────────────────────────────────────┐
 │ http://192.168.31.91:8501                 │
-│ ├─ ❌ No username/password required       │
-│ ├─ ❌ Anyone on network can access        │
-│ ├─ ❌ Can view all incidents              │
-│ └─ ❌ Can block/unblock IPs               │
+│ ├─ [ERROR] No username/password required       │
+│ ├─ [ERROR] Anyone on network can access        │
+│ ├─ [ERROR] Can view all incidents              │
+│ └─ [ERROR] Can block/unblock IPs               │
 └────────────────────────────────────────────┘
 
 If Server is Public:
 ┌────────────────────────────────────────────┐
 │ http://YOUR_PUBLIC_IP:8501                │
-│ ├─ ❌ ENTIRE INTERNET can access          │
-│ ├─ ❌ Attackers can see their own IPs     │
-│ ├─ ❌ Can unblock themselves!             │
-│ └─ ❌ MASSIVE SECURITY HOLE                │
+│ ├─ [ERROR] ENTIRE INTERNET can access          │
+│ ├─ [ERROR] Attackers can see their own IPs     │
+│ ├─ [ERROR] Can unblock themselves!             │
+│ └─ [ERROR] MASSIVE SECURITY HOLE                │
 └────────────────────────────────────────────┘
 ```
 
-### **✅ SOLUTION: Add Authentication**
+### **[OK] SOLUTION: Add Authentication**
 
 I'll create a secure version of the dashboard with login.
 
@@ -289,10 +289,10 @@ I'll create a secure version of the dashboard with login.
 Secure Setup:
 ┌────────────────────────────────────────────┐
 │ http://192.168.31.91:8501                 │
-│ ├─ ✅ Login page with username/password   │
-│ ├─ ✅ Sessions expire after inactivity    │
-│ ├─ ✅ Failed login attempts logged        │
-│ └─ ✅ Only admins can access              │
+│ ├─ [OK] Login page with username/password   │
+│ ├─ [OK] Sessions expire after inactivity    │
+│ ├─ [OK] Failed login attempts logged        │
+│ └─ [OK] Only admins can access              │
 └────────────────────────────────────────────┘
 ```
 
@@ -325,27 +325,27 @@ Only allow dashboard access through VPN
 
 ---
 
-## 📊 Summary: What's Actually Working
+## [DATA] Summary: What's Actually Working
 
-### ✅ **What Worked Perfectly:**
+### [OK] **What Worked Perfectly:**
 
-1. **Attack Detection**: GoldenEye DDoS detected as CRITICAL ✅
-2. **Firewall Blocking**: Your IP (192.168.31.183) blocked with iptables ✅
-3. **Progressive Punishment**: 1st offense detected, 24-hour CRITICAL ban applied ✅
-4. **Auto-Expiry**: Ban expires 2026-02-26 at 10:13:01 ✅
-5. **Database Logging**: Incident #1 stored in `incidents` table ✅
-6. **Blocked IP Tracking**: Entry in `blocked_ips` table with expiry time ✅
+1. **Attack Detection**: GoldenEye DDoS detected as CRITICAL [OK]
+2. **Firewall Blocking**: Your IP (192.168.31.183) blocked with iptables [OK]
+3. **Progressive Punishment**: 1st offense detected, 24-hour CRITICAL ban applied [OK]
+4. **Auto-Expiry**: Ban expires 2026-02-26 at 10:13:01 [OK]
+5. **Database Logging**: Incident #1 stored in `incidents` table [OK]
+6. **Blocked IP Tracking**: Entry in `blocked_ips` table with expiry time [OK]
 
-### ❌ **What You Misunderstood:**
+### [ERROR] **What You Misunderstood:**
 
-1. **Blocking Location**: Block is on SERVER side, not client side ❌
-2. **Testing Method**: Testing from localhost doesn't show the block ❌
-3. **Threat Intel Table**: Empty table is NORMAL - it's export-only ❌
-4. **Dashboard Security**: Currently NO authentication (security risk) ⚠️
+1. **Blocking Location**: Block is on SERVER side, not client side [ERROR]
+2. **Testing Method**: Testing from localhost doesn't show the block [ERROR]
+3. **Threat Intel Table**: Empty table is NORMAL - it's export-only [ERROR]
+4. **Dashboard Security**: Currently NO authentication (security risk) [WARNING]
 
 ---
 
-## 🔧 Verification Commands
+## [CONFIG] Verification Commands
 
 Run these to verify everything is working:
 
@@ -374,7 +374,7 @@ curl http://192.168.31.91:8000
 
 ---
 
-## 🎯 Next Steps
+## [TARGET] Next Steps
 
 1. **Test the block properly**: Access from 192.168.31.183 (should fail)
 2. **Wait 24 hours**: Auto-unblock will trigger
@@ -385,7 +385,7 @@ curl http://192.168.31.91:8000
 
 **Your system is working correctly! You just needed to understand WHERE the block applies.**
 
-✅ Sentinel Agent: WORKING  
-✅ Firewall Blocking: ACTIVE  
-✅ Auto-Expiry: SCHEDULED  
-⚠️ Dashboard Security: **NEEDS FIXING**
+[OK] Sentinel Agent: WORKING  
+[OK] Firewall Blocking: ACTIVE  
+[OK] Auto-Expiry: SCHEDULED  
+[WARNING] Dashboard Security: **NEEDS FIXING**

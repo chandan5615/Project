@@ -1,4 +1,4 @@
-# 🔧 Complete Troubleshooting Guide - Sentinel Agent
+# [CONFIG] Complete Troubleshooting Guide - Sentinel Agent
 
 **Last Updated:** February 2026  
 **Version:** 2.2
@@ -7,22 +7,22 @@ This guide covers **all known issues** and their solutions, plus potential futur
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-1. [🔴 Critical Issues](#-critical-issues)
-2. [🐳 Docker & Container Issues](#-docker--container-issues)
-3. [🌐 Network & Connectivity](#-network--connectivity)
-4. [🤖 Ollama & AI Issues](#-ollama--ai-issues)
-5. [📊 Dashboard Problems](#-dashboard-problems)
-6. [🔒 Security & Permissions](#-security--permissions)
-7. [⚡ Performance Issues](#-performance-issues)
-8. [💾 Database Problems](#-database-problems)
-9. [🔮 Potential Future Issues](#-potential-future-issues)
-10. [🛠️ Diagnostic Tools](#-diagnostic-tools)
+1. [[CRITICAL] Critical Issues](#-critical-issues)
+2. [[DOCKER] Docker & Container Issues](#-docker--container-issues)
+3. [[WEB] Network & Connectivity](#-network--connectivity)
+4. [[AI] Ollama & AI Issues](#-ollama--ai-issues)
+5. [[STATS] Dashboard Problems](#-dashboard-problems)
+6. [[SECURE] Security & Permissions](#-security--permissions)
+7. [[FAST] Performance Issues](#-performance-issues)
+8. [[DB] Database Problems](#-database-problems)
+9. [[FUTURE] Potential Future Issues](#-potential-future-issues)
+10. [[TOOLS] Diagnostic Tools](#-diagnostic-tools)
 
 ---
 
-## 🔴 Critical Issues
+## [CRITICAL] Critical Issues
 
 ### Issue 1: Ollama Connection Refused (MOST COMMON)
 
@@ -105,7 +105,7 @@ docker-compose logs -f sentinel-agent | grep -E "(Ollama|SUCCESS)"
 Detecting Ollama server...
 [SUCCESS] Found Ollama via host.docker.internal at http://host.docker.internal:11434
 [SUCCESS] Model llama3:8b is available
-✅ Ollama server is reachable at http://host.docker.internal:11434
+[OK] Ollama server is reachable at http://host.docker.internal:11434
 ```
 
 **Security Note:**  
@@ -197,7 +197,7 @@ git commit -m "Fix line endings"
 
 ---
 
-## 🐳 Docker & Container Issues
+## [DOCKER] Docker & Container Issues
 
 ### Issue 3: Container Constantly Restarting
 
@@ -318,13 +318,13 @@ docker-compose restart sentinel-agent
 
 ---
 
-## 🌐 Network & Connectivity
+## [WEB] Network & Connectivity
 
 ### Issue 6: Can't Access Dashboard from Remote Machine
 
 **Symptoms:**
-- Dashboard works on server: `http://localhost:8501` ✅
-- Dashboard fails from other devices: `http://SERVER_IP:8501` ❌
+- Dashboard works on server: `http://localhost:8501` [OK]
+- Dashboard fails from other devices: `http://SERVER_IP:8501` [ERROR]
 - Browser error: "Connection refused" or "Timeout"
 
 **Diagnosis:**
@@ -442,7 +442,7 @@ services:
 
 ---
 
-## 🤖 Ollama & AI Issues
+## [AI] Ollama & AI Issues
 
 ### Issue 9: Model Not Found
 
@@ -475,8 +475,8 @@ docker-compose restart sentinel-agent
 **This is NORMAL for MEDIUM/LOW severity attacks!**
 
 The system is optimized to conserve resources:
-- ✅ **HIGH severity** → AI crew analysis (SQL injection, XSS, etc.)
-- 📝 **MEDIUM/LOW severity** → Fast logging without AI (90% of attacks)
+- [OK] **HIGH severity** → AI crew analysis (SQL injection, XSS, etc.)
+- [DOCS] **MEDIUM/LOW severity** → Fast logging without AI (90% of attacks)
 
 **Verify it's working correctly:**
 ```bash
@@ -526,7 +526,7 @@ environment:
 
 ---
 
-## 📊 Dashboard Problems
+## [STATS] Dashboard Problems
 
 ### Issue 12: Dashboard Shows No Data
 
@@ -623,7 +623,7 @@ export LANG=en_US.UTF-8
 
 ---
 
-## 🔒 Security & Permissions
+## [SECURE] Security & Permissions
 
 ### Issue 15: Permission Denied Errors
 
@@ -703,7 +703,7 @@ sudo ufw enable
 
 ---
 
-## ⚡ Performance Issues
+## [FAST] Performance Issues
 
 ### Issue 18: High CPU Usage
 
@@ -764,7 +764,7 @@ EOF
 
 ---
 
-## 💾 Database Problems
+## [DB] Database Problems
 
 ### Issue 20: Database Corruption
 
@@ -814,7 +814,7 @@ docker-compose restart sentinel-agent
 
 ---
 
-## 🔮 Potential Future Issues
+## [FUTURE] Potential Future Issues
 
 ### Future Issue 1: Python Dependency Conflicts
 
@@ -978,7 +978,7 @@ logging:
 
 ---
 
-## 🛠️ Diagnostic Tools
+## [TOOLS] Diagnostic Tools
 
 ### Complete Health Check Script
 
@@ -1080,7 +1080,7 @@ tail -f /var/log/auth.log | while read line; do echo "$(date +%T) - Auth event";
 
 ---
 
-## 📞 Support Escalation
+## [SUPPORT] Support Escalation
 
 If issues persist after trying these solutions:
 
