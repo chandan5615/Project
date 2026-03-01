@@ -237,6 +237,99 @@ curl http://localhost:8000/api/health
 
 ## 🎮 Usage Examples
 
+### **🎯 Starting Both Dashboards**
+
+Sentinel Agent v2.3 includes **TWO dashboards** that work together:
+
+#### **Dashboard 1: Streamlit Web Dashboard** (Port 8501)
+**Purpose:** Interactive UI for threat monitoring, IP management, and analytics
+
+**Auto-Start:** Starts automatically with the container
+
+**Manual Start (Docker):**
+```bash
+# Already running if docker-compose is up
+docker-compose ps
+
+# View logs:
+docker logs -f sentinel-agent | grep -i streamlit
+
+# Access:
+# http://YOUR_SERVER_IP:8501 (local network only)
+# Login with admin credentials
+```
+
+**Manual Start (Local Development):**
+```bash
+# Install dependencies:
+pip install streamlit pandas plotly
+
+# Start dashboard:
+cd ~/Project
+streamlit run dashboard/web_dashboard.py --server.port 8501 --server.address 0.0.0.0
+
+# Access: http://localhost:8501
+```
+
+#### **Dashboard 2: REST API Dashboard** (Port 8000)
+**Purpose:** Programmatic access to threat data and system controls
+
+**Auto-Start:** Starts automatically with the container
+
+**Manual Start (Docker):**
+```bash
+# Already running if docker-compose is up
+docker-compose ps
+
+# View logs:
+docker logs -f sentinel-agent | grep -i "uvicorn\|api"
+
+# Access API:
+curl http://YOUR_SERVER_IP:8000/api/health
+curl http://YOUR_SERVER_IP:8000/api/incidents
+curl http://YOUR_SERVER_IP:8000/api/blocked_ips
+```
+
+**Manual Start (Local Development):**
+```bash
+# Install dependencies:
+pip install fastapi uvicorn
+
+# Start API:
+cd ~/Project
+python sentinel_api.py
+
+# Access: http://localhost:8000 (root redirects to /api/health)
+# API Docs: http://localhost:8000/docs
+```
+
+#### **Starting Everything Together**
+```bash
+# Recommended: Use Docker Compose (starts both automatically)
+docker-compose down
+docker-compose build --no-cache sentinel-agent
+docker-compose up -d sentinel-agent
+
+# Verify both are running:
+docker-compose ps
+
+# View startup logs:
+docker logs -f sentinel-agent
+
+# Check both services are healthy:
+curl http://YOUR_SERVER_IP:8000/api/health
+curl http://YOUR_SERVER_IP:8501
+```
+
+#### **Access Both Dashboards**
+```
+📊 Streamlit Dashboard:  http://YOUR_SERVER_IP:8501  (Interactive UI)
+🔌 REST API Dashboard:   http://YOUR_SERVER_IP:8000  (Programmatic)
+📋 API Documentation:    http://YOUR_SERVER_IP:8000/docs (Swagger UI)
+```
+
+---
+
 ### **Dashboard Access**
 ```bash
 # Open in browser:
