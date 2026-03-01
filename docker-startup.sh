@@ -59,9 +59,23 @@ else
 fi
 echo ""
 
+# Start Streamlit dashboard in background
+echo "[5/6] Starting Web Dashboard (Streamlit on port 8501)..."
+streamlit run dashboard/web_dashboard.py --server.port 8501 --server.address 0.0.0.0 --logger.level=error 2>&1 &
+DASHBOARD_PID=$!
+echo "      ✓ Dashboard started (PID: $DASHBOARD_PID)"
+sleep 3
+
+# Check if dashboard is running
+if kill -0 $DASHBOARD_PID 2>/dev/null; then
+    echo "      ✓ Dashboard is running on port 8501"
+else
+    echo "      ⚠ Dashboard may have failed to start"
+fi
+echo ""
+
 # Start sentinel_api.py (REST API) in foreground
-echo "[5/6] Starting REST API server (sentinel_api.py on port 8000)..."
-echo "[6/6] Services ready!"
+echo "[6/6] Starting REST API server (sentinel_api.py on port 8000)..."
 echo ""
 echo "      API:       http://localhost:8000"
 echo "      Dashboard: http://localhost:8501"

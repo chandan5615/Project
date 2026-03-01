@@ -1,4 +1,4 @@
-# Sentinel Agent v2.2 - Dockerfile
+# Sentinel Agent v2.3 - Dockerfile
 # Multi-stage build for optimized production image
 # 
 # BUILD IMAGE: python:3.10-slim (includes build tools)
