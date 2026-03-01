@@ -1376,6 +1376,7 @@ def main():
         - Attack pattern analysis
         - Export reports (CSV/JSON)
         - System information
+        """)
         
         st.divider()
         st.info("💡 **Tip:** Use IP Blocking tab to manually block/unblock malicious IPs")
