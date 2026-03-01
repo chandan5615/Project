@@ -925,8 +925,10 @@ def render_ip_blocking():
                         success, message = blocker.block_ip_iptables(ip_to_block)
                     
                     if success:
+                        st.toast(f"✅ {message}", icon="✅")
                         st.success(message)
                     else:
+                        st.toast(f"❌ {message}", icon="❌")
                         st.error(message)
             else:
                 st.warning("Please enter an IP address")
@@ -955,10 +957,12 @@ def render_ip_blocking():
                     success, message = blocker.unblock_ip_globally(ip_to_unblock, firewall_type)
                     
                     if success:
+                        st.toast(f"✅ {message}", icon="✅")
                         st.success(message)
                         # Auto-refresh the blocked IPs list
                         st.rerun()
                     else:
+                        st.toast(f"❌ {message}", icon="❌")
                         st.error(message)
             else:
                 st.warning("Please enter an IP address")
