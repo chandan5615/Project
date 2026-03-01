@@ -44,7 +44,7 @@ Health:    http://YOUR_SERVER_IP:8000/api/health
 **Default Credentials:**
 ```
 Username: admin
-Password: (auto-generated - check: docker logs sentinel-agent | grep "DEFAULT ADMIN")
+Password: (auto-generated - check: docker logs sentinel-agent | grep -A 3 "DEFAULT ADMIN")
 ```
 
 > **SECURITY:** Dashboard is automatically restricted to local network only. Change admin password after first login!
