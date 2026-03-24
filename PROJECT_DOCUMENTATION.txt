@@ -1,62 +1,86 @@
 ================================================================================
-SENTINEL AGENT - PROJECT DOCUMENTATION (SHORT VERSION)
+SENTINEL AGENT v2.3 - PROJECT DOCUMENTATION
 ================================================================================
 
 AI-Powered Security Monitoring and Automated Response System
+Real-time threat detection with intelligent auto-blocking and whitelist protection
+Released: February 2026 | Updated: March 2, 2026
 
 ================================================================================
 1. DEFINITION OF THE PROJECT AND SCOPE
 ================================================================================
 
-Sentinel Agent is an AI-powered SOC assistant designed for real-time attack 
-detection and automated response. The project scope includes SSH and web log 
-monitoring, threat detection, auto-blocking with progressive punishment, and 
-a comprehensive dashboard. The primary objective is to reduce response time 
-and manual effort for common security attacks. Out of scope items include 
-packet-level intrusion detection, custom malware analysis, and cloud-specific 
-features.
+Sentinel Agent v2.3 is an AI-powered Security Operations Center (SOC) assistant
+designed for real-time attack detection and automated response on Linux servers.
+The project scope includes monitoring SSH (auth.log) and web server (access.log)
+logs, detecting common attacks (SQL injection, XSS, path traversal, brute force),
+and automatically blocking malicious IPs with intelligent temporary bans. The system
+features progressive punishment (15 min → 2 hours → 24 hours), auto-unblocking with
+expiry tracking, and whitelist protection to prevent admin lockout. A secure web
+dashboard provides real-time visibility and control. Primary objectives are to
+reduce incident response time from minutes to sub-seconds and eliminate manual
+effort for common security attacks. Out of scope: packet-level intrusion detection,
+custom malware analysis, cloud-specific integrations, and endpoint protection.
 
 ================================================================================
 2. SYSTEM REQUIREMENT SPECIFICATION
 ================================================================================
 
-FUNCTIONAL REQUIREMENTS (SHORT)
-- Monitor SSH and web logs in real time.
-- Detect common attacks and classify severity.
-- Auto-block attackers with whitelist protection and auto-unblock.
-- Provide dashboard and REST API for visibility and control.
+FUNCTIONAL REQUIREMENTS
+- Monitor SSH (auth.log) and web (access.log) logs in real time with watchdog.
+- Detect common attacks (SQL injection, XSS, path traversal, brute force) and 
+  classify severity (LOW, MEDIUM, HIGH, CRITICAL).
+- Auto-block attackers with temporary bans (15 min, 2 hours, 24 hours) using 
+  progressive punishment based on offense count.
+- Auto-unblock expired bans via background cleanup thread (60-second cycles).
+- Whitelist protection: auto-detect and protect admin/localhost/local network IPs.
+- AI analysis (4-agent CrewAI crew) activated only for HIGH/CRITICAL severity.
+- Secure dashboard with bcrypt authentication and session management (24-hour expiry).
+- REST API (20+ endpoints) for external integration and control.
 
-NON-FUNCTIONAL REQUIREMENTS (SHORT)
-- Low latency detection (sub-second). Reliable and secure storage.
-- Role-based access and secure auth (JWT/bcrypt).
-- Works on Ubuntu 20.04+ with Docker and Python 3.10+.
-- High availability with auto-restart and log rotation.
+NON-FUNCTIONAL REQUIREMENTS
+- Performance: Sub-second detection latency, 8-second dashboard refresh.
+- Reliability: Docker containers with auto-restart, daemon cleanup thread.
+- Security: Role-based access (admin/analyst/viewer), JWT/bcrypt authentication,
+  local network-only dashboard binding, iptables firewall integration.
+- Compatibility: Ubuntu 20.04+, Debian 11+, Python 3.10+, Docker 20.10+.
+- Scalability: Handles 1000+ attacks/day with log rotation and database optimization.
+- Availability: Background services, automated deployment (AUTO_INSTALL.sh).
 
 ================================================================================
 3. FEASIBILITY STUDY
 ================================================================================
 
-- Technical: Feasible with Python, Docker, FastAPI, Streamlit, SQLite, Ollama.
-- Operational: Simple one-command install, low admin overhead.
-- Economic: Open-source, low hardware cost, strong ROI vs manual SOC.
-- Scheduling: Incremental rollout possible with minimal downtime.
+- Technical: Proven with Python, Docker, FastAPI, Streamlit, SQLite, Ollama.
+- Operational: One-command install (AUTO_INSTALL.sh), minimal admin overhead.
+- Economic: Open-source stack, low hardware cost (2 cores/4GB RAM), strong ROI.
+- Scheduling: 10-15 minute automated deployment with zero downtime rollout.
 
 ================================================================================
 4. EXISTING SYSTEM WITH DISADVANTAGES
 ================================================================================
 
-- Manual SOC: costly, slow response, high fatigue.
-- Traditional firewalls: no intelligence, manual maintenance.
-- SIEM tools: expensive and complex for small teams.
-- Manual log review: error-prone and hard to scale.
+- Manual SOC Operations: High labor cost, slow incident response (minutes to hours),
+  analyst fatigue, 24/7 staffing required.
+- Traditional Firewalls: Static rules, no behavioral analysis, no automatic 
+  adaptation, permanent bans risk legitimate user lockout.
+- Enterprise SIEM Tools: Expensive licensing ($50K-$500K/year), complex deployment,
+  requires dedicated team, overwhelming alert volume.
+- Manual Log Review: Time-consuming, error-prone pattern matching, no real-time
+  response, difficult to scale across multiple servers.
+- Static IP Blacklists: No temporary bans, no progressive punishment, risk of
+  permanent admin lockout, requires manual unblock intervention.
 
 ================================================================================
 5. PROPOSED SYSTEM WITH ADVANTAGES
 ================================================================================
 
-- Automated real-time blocking with progressive punishment.
-- AI analysis for high severity incidents.
-- Whitelist protection prevents admin lockout.
+- Automated real-time blocking with temporary bans (auto-unblock).
+- Progressive punishment (15 min, 2 hours, 24 hours) for repeat offenders.
+- AI analysis optimized for HIGH severity only (90% resource savings).
+- Whitelist protection auto-detects admin IPs, prevents self-lockout.
+- Secure dashboard with bcrypt authentication and session management.
+- One-command deployment with auto IP detection (no hardcoded addresses).
 - Dashboard and API provide clear visibility and control.
 - Lower operational cost with consistent policy enforcement.
 
@@ -64,11 +88,16 @@ NON-FUNCTIONAL REQUIREMENTS (SHORT)
 6. BRIEFING OF MODULES AND FUNCTIONALITIES
 ================================================================================
 
-- Log Monitoring: auth.log and access.log watch.
-- Threat Detection: pattern and anomaly checks, severity scoring.
-- Response Engine: block/unblock, whitelist, history.
-- Dashboard and API: metrics, control, reporting.
-- Data Layer: SQLite storage for attacks and blocks.
+- Log Monitoring: Real-time auth.log and access.log monitoring.
+- Threat Detection: Pattern matching, anomaly detection, severity scoring.
+- Response Engine: Temporary ban/auto-unblock, whitelist checking, progressive punishment.
+- AI Analysis: 4-agent crew (Security Analyst, Network Specialist, Threat Intel, 
+  Incident Coordinator) - optimized to run only for HIGH severity attacks.
+- Dashboard: Secure login, real-time metrics (8-second refresh), IP management.
+- REST API: 20+ endpoints for external integration, health monitoring.
+- Data Layer: SQLite with blocked_ips (expiry tracking), safe_ips (whitelist), 
+  incidents, threat_intel, actions.
+- Background Cleanup: Daemon thread checks every 60 seconds for expired bans.
 
 DIAGRAM (HIGH-LEVEL MODULE FLOW)
 
@@ -114,45 +143,76 @@ Store in database -> Update dashboard
 
 The project follows Agile development methodology with iterative testing cycles.
 Threat detection employs a multi-layer approach combining signature-based patterns,
-anomaly detection, and AI-powered analysis. Testing includes unit tests for 
-individual modules, integration tests for component interactions, and attack 
-simulation tests to validate real-world scenarios. The system incorporates 
-continuous monitoring with feedback-driven tuning to improve detection accuracy.
+anomaly detection, and AI-powered analysis. AI resource optimization ensures the
+4-agent CrewAI analysis runs only for HIGH severity threats, reducing LLM overhead
+by 90%. Testing includes unit tests for individual modules, integration tests for
+component interactions, and attack simulation tests (test_attacks.py, continuous_attacks.py)
+to validate real-world scenarios. Progressive punishment strategy uses escalating
+ban durations (15 min → 2 hours → 24 hours) with automatic expiry and whitelist
+protection to prevent admin lockout.
 
 ================================================================================
 8. SYSTEM REQUIREMENTS
 ================================================================================
 
 HARDWARE (MINIMUM)
-- CPU: 6 core
-- RAM: 8 GB 
-- Storage: 20 GB.
-- Recommended: 12+ cores, 16 GB RAM for production.
+- CPU: 2 cores (4 cores recommended)
+- RAM: 4 GB (8 GB recommended for AI analysis)
+- Storage: 20 GB free space
+- Network: Static or DHCP IP (auto-detected during installation)
 
-SOFTWARE
-- Ubuntu 20.04+
-- Python 3.10+ 
-- Docker and Docker Compose.
-- Ollama for local LLM (recommended).
-- Network ports: 8000 (API), 8501 (Dashboard).
+HARDWARE (RECOMMENDED FOR PRODUCTION)
+- CPU: 4+ cores
+- RAM: 8-16 GB
+- Storage: 50+ GB with log rotation
+
+SOFTWARE (AUTO-INSTALLED)
+- Ubuntu 20.04+ / Debian 11+
+- Python 3.10+
+- Docker 20.10+ and Docker Compose 2.0+
+- Ollama with llama3:8b model (local LLM)
+- iptables (firewall management)
+
+NETWORK PORTS
+- 8000 (REST API)
+- 8501 (Dashboard - local network only for security)
+- 11434 (Ollama LLM service)
 
 ================================================================================
 9. GANTT CHART (SUMMARY)
 ================================================================================
 
-- Phase 1-2: Core monitoring and detection.
-- Phase 3-4: AI analysis and response automation.
-- Phase 5-6: Dashboard, API, testing, deployment.
-- Phase 7: Maintenance, optimization, documentation.
+DEVELOPMENT PHASES (6-8 WEEKS)
+- Phase 1 (Week 1-2): Core log monitoring (auth.log, access.log), pattern detection,
+  database schema design (attacks, blocked_ips, safe_ips tables).
+- Phase 2 (Week 2-3): Threat detection engine, severity scoring, AI crew integration
+  (4 specialized agents), iptables blocking mechanism.
+- Phase 3 (Week 3-4): Auto-unblock feature, progressive punishment logic, background
+  cleanup thread, whitelist protection (auto-detection of admin IPs).
+- Phase 4 (Week 4-5): Dashboard development (Streamlit), authentication system
+  (bcrypt, sessions), REST API (FastAPI with 20+ endpoints).
+- Phase 5 (Week 5-6): AI optimization (HIGH severity only), Docker containerization,
+  one-command installer (AUTO_INSTALL.sh), auto IP detection.
+- Phase 6 (Week 6-7): Testing (unit, integration, attack simulation), security
+  hardening, documentation, performance tuning.
+- Phase 7 (Week 7-8): Deployment, monitoring, bug fixes, user training, maintenance
+  procedures, version 2.3 release.
 
 ================================================================================
 10. CONCLUSION
 ================================================================================
 
-Sentinel Agent delivers fast, automated security at low cost and is ready for
-deployment on Ubuntu servers. It scales for small teams and enterprise
-environments while reducing manual workload and improving response time.
+Sentinel Agent v2.3 delivers fast, automated security with intelligent temporary
+bans, whitelist protection, and AI-optimized analysis. The system deploys in
+10-15 minutes with one command on any Ubuntu/Debian server and requires minimal
+hardware (2 cores, 4GB RAM). Key innovations include progressive punishment for
+repeat offenders, auto-unblocking to prevent permanent lockouts, and AI crew
+activation only for high-severity threats (90% resource savings). Production-ready
+for both small teams and enterprise environments, Sentinel Agent reduces manual SOC
+workload while maintaining sub-second detection and response times. Secure dashboard
+authentication, comprehensive REST API, and automated IP detection ensure ease of
+deployment and operation without sacrificing security.
 
 ================================================================================
-Document Version: 2.3 - February 27, 2026
+Document Version: 2.3 - March 2, 2026
 ================================================================================
