@@ -7,7 +7,20 @@ Real-time threat detection with intelligent auto-blocking and whitelist protecti
 Released: February 2026 | Updated: March 2, 2026
 
 ================================================================================
-1. DEFINITION OF THE PROJECT AND SCOPE
+1. PROBLEM STATEMENT
+================================================================================
+
+Reduce incident response time from minutes to sub-seconds and eliminate manual
+effort for common security attacks.
+
+- Security teams face alert overload and delayed response during high attack volume.
+- Manual log analysis across SSH and web services is repetitive and error-prone.
+- Traditional static blocking can cause permanent lockouts for legitimate users.
+- Small and mid-size organizations need enterprise-grade protection at low cost.
+- There is a need for continuous, automated monitoring with explainable actions.
+
+================================================================================
+2. DEFINITION OF THE PROJECT AND SCOPE
 ================================================================================
 
 Sentinel Agent v2.3 is an AI-powered Security Operations Center (SOC) assistant
@@ -17,13 +30,10 @@ logs, detecting common attacks (SQL injection, XSS, path traversal, brute force)
 and automatically blocking malicious IPs with intelligent temporary bans. The system
 features progressive punishment (15 min → 2 hours → 24 hours), auto-unblocking with
 expiry tracking, and whitelist protection to prevent admin lockout. A secure web
-dashboard provides real-time visibility and control. Primary objectives are to
-reduce incident response time from minutes to sub-seconds and eliminate manual
-effort for common security attacks. Out of scope: packet-level intrusion detection,
-custom malware analysis, cloud-specific integrations, and endpoint protection.
+dashboard provides real-time visibility and control.
 
 ================================================================================
-2. SYSTEM REQUIREMENT SPECIFICATION
+3. SYSTEM REQUIREMENT SPECIFICATION (HARDWARE AND SOFTWARE REQUIREMENTS)
 ================================================================================
 
 FUNCTIONAL REQUIREMENTS
@@ -47,8 +57,31 @@ NON-FUNCTIONAL REQUIREMENTS
 - Scalability: Handles 1000+ attacks/day with log rotation and database optimization.
 - Availability: Background services, automated deployment (AUTO_INSTALL.sh).
 
+HARDWARE (MINIMUM)
+- CPU: 2 cores (4 cores recommended)
+- RAM: 4 GB (8 GB recommended for AI analysis)
+- Storage: 20 GB free space
+- Network: Static or DHCP IP (auto-detected during installation)
+
+HARDWARE (RECOMMENDED FOR PRODUCTION)
+- CPU: 4+ cores
+- RAM: 8-16 GB
+- Storage: 50+ GB with log rotation
+
+SOFTWARE (AUTO-INSTALLED)
+- Ubuntu 20.04+ / Debian 11+
+- Python 3.10+
+- Docker 20.10+ and Docker Compose 2.0+
+- Ollama with llama3:8b model (local LLM)
+- iptables (firewall management)
+
+NETWORK PORTS
+- 8000 (REST API)
+- 8501 (Dashboard - local network only for security)
+- 11434 (Ollama LLM service)
+
 ================================================================================
-3. FEASIBILITY STUDY
+4. FEASIBILITY STUDY
 ================================================================================
 
 - Technical: Proven with Python, Docker, FastAPI, Streamlit, SQLite, Ollama.
@@ -57,7 +90,7 @@ NON-FUNCTIONAL REQUIREMENTS
 - Scheduling: 10-15 minute automated deployment with zero downtime rollout.
 
 ================================================================================
-4. EXISTING SYSTEM WITH DISADVANTAGES
+5. EXISTING SYSTEM WITH DISADVANTAGES
 ================================================================================
 
 - Manual SOC Operations: High labor cost, slow incident response (minutes to hours),
@@ -72,7 +105,7 @@ NON-FUNCTIONAL REQUIREMENTS
   permanent admin lockout, requires manual unblock intervention.
 
 ================================================================================
-5. PROPOSED SYSTEM WITH ADVANTAGES
+6. PROPOSED SYSTEM WITH ADVANTAGES
 ================================================================================
 
 - Automated real-time blocking with temporary bans (auto-unblock).
@@ -85,7 +118,7 @@ NON-FUNCTIONAL REQUIREMENTS
 - Lower operational cost with consistent policy enforcement.
 
 ================================================================================
-6. BRIEFING OF MODULES AND FUNCTIONALITIES
+7. BRIEFING OF MODULES AND FUNCTIONALITIES
 ================================================================================
 
 - Log Monitoring: Real-time auth.log and access.log monitoring.
@@ -138,7 +171,7 @@ Block IP (iptables)
 Store in database -> Update dashboard
 
 ================================================================================
-7. METHODOLOGY USED
+8. METHODOLOGY USED
 ================================================================================
 
 The project follows Agile development methodology with iterative testing cycles.
@@ -152,34 +185,7 @@ ban durations (15 min → 2 hours → 24 hours) with automatic expiry and whitel
 protection to prevent admin lockout.
 
 ================================================================================
-8. SYSTEM REQUIREMENTS
-================================================================================
-
-HARDWARE (MINIMUM)
-- CPU: 2 cores (4 cores recommended)
-- RAM: 4 GB (8 GB recommended for AI analysis)
-- Storage: 20 GB free space
-- Network: Static or DHCP IP (auto-detected during installation)
-
-HARDWARE (RECOMMENDED FOR PRODUCTION)
-- CPU: 4+ cores
-- RAM: 8-16 GB
-- Storage: 50+ GB with log rotation
-
-SOFTWARE (AUTO-INSTALLED)
-- Ubuntu 20.04+ / Debian 11+
-- Python 3.10+
-- Docker 20.10+ and Docker Compose 2.0+
-- Ollama with llama3:8b model (local LLM)
-- iptables (firewall management)
-
-NETWORK PORTS
-- 8000 (REST API)
-- 8501 (Dashboard - local network only for security)
-- 11434 (Ollama LLM service)
-
-================================================================================
-9. GANTT CHART (SUMMARY)
+9. GANTT CHART
 ================================================================================
 
 DEVELOPMENT PHASES (6-8 WEEKS)
@@ -199,7 +205,16 @@ DEVELOPMENT PHASES (6-8 WEEKS)
   procedures, version 2.3 release.
 
 ================================================================================
-10. CONCLUSION
+10. FUTURE SCOPE
+================================================================================
+
+- Packet-level intrusion detection.
+- Custom malware analysis.
+- Cloud-specific integrations.
+- Endpoint protection.
+
+================================================================================
+11. CONCLUSION
 ================================================================================
 
 Sentinel Agent v2.3 delivers fast, automated security with intelligent temporary
