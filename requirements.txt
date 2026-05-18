@@ -14,13 +14,13 @@ crewai-tools>=0.1.0
 # Removed bcrypt and cryptography to simplify dependencies
 
 # Runtime dependencies
-uvicorn[standard]>=0.20.0
+uvicorn[standard]==0.32.1
 pytest>=7.0.0
 
-# Reporting system (production)
-streamlit>=1.35.0
-starlette<0.46.0
-rich>=13.7.0
-pandas>=2.0.0
-psutil>=5.9.0
-plotly>=5.17.0
+# Reporting system (production) - LOCKED VERSIONS for reproducibility
+streamlit==1.41.5
+starlette==0.45.3
+rich==13.7.0
+pandas==2.2.3
+psutil==6.1.0
+plotly==5.24.1

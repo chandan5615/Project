@@ -1,0 +1,48 @@
+# This is a lock file - use exact versions for reproducible builds
+# Generated for Sentinel Agent v2.2
+# Generated: 2026-05-18
+
+# Core dependencies
+crewai==0.100.1
+litellm==1.57.4
+fastapi==0.115.8
+python-multipart==0.0.6
+ollama==0.3.5
+python-dotenv==1.0.1
+requests==2.32.3
+langchain==0.2.16
+langchain-community==0.2.17
+watchdog==4.0.2
+crewai-tools==0.13.1
+
+# Runtime dependencies
+uvicorn[standard]==0.32.1
+pytest==7.4.4
+
+# Reporting system (production) - CRITICAL VERSIONS
+streamlit==1.41.5
+starlette==0.45.3
+rich==13.7.0
+pandas==2.2.3
+psutil==6.1.0
+plotly==5.24.1
+
+# Transitive dependencies (pinned for stability)
+anyio==4.4.0
+click==8.1.7
+gitpython==3.1.43
+httptools==0.6.1
+itsdangerous==2.1.2
+numpy==1.26.4
+packaging==24.1
+pillow==10.3.0
+protobuf==5.27.2
+pyarrow==17.0.0
+pydeck==0.9.1
+tenacity==8.3.0
+toml==0.10.2
+typing-extensions==4.12.2
+websockets==12.0
+blinker==1.8.2
+cachetools==5.4.0
+altair==5.3.0
