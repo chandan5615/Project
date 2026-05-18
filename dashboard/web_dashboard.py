@@ -1227,11 +1227,6 @@ def render_system_info():
 
 def _show_login_page():
     """Display login page for dashboard authentication."""
-    st.set_page_config(
-        page_title="Sentinel Login",
-        page_icon="🔐",
-        layout="centered"
-    )
     
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
