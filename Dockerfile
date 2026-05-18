@@ -30,18 +30,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and create virtual environment
-COPY requirements-lock.txt requirements.txt ./
+COPY requirements.txt .
 
 # Create virtual environment and install packages
-# Use lock file for reproducible builds, fallback to requirements.txt if lock file not available
 RUN python -m venv /opt/venv && \
     . /opt/venv/bin/activate && \
     pip install --upgrade pip setuptools wheel && \
-    if [ -f requirements-lock.txt ]; then \
-        pip install --no-cache-dir -r requirements-lock.txt; \
-    else \
-        pip install --no-cache-dir -r requirements.txt; \
-    fi
+    pip install --no-cache-dir -r requirements.txt
 
 # ============================================================================
 # STAGE 2: RUNTIME - Production image
