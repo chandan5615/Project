@@ -923,15 +923,16 @@ def render_apache_traffic():
             st.dataframe(top_urls_df, hide_index=True, use_container_width=True)
         
         # Error Requests
-error_requests = stats.get('error_requests', [])
-            if error_requests:
-                st.subheader("Recent Error Requests")
-                error_df = pd.DataFrame(error_requests[:20])
-                if not error_df.empty:
-                    if 'ip' in error_df.columns:
-                        error_df = error_df[['ip', 'timestamp', 'method', 'url', 'status']]
-                        error_df.columns = ['IP', 'Timestamp', 'Method', 'URL', 'Status']
-                        st.dataframe(error_df, hide_index=True, use_container_width=True)
+        error_requests = stats.get('error_requests', [])
+        if error_requests:
+            st.subheader("Recent Error Requests")
+            error_df = pd.DataFrame(error_requests[:20])
+            if not error_df.empty:
+                if 'ip' in error_df.columns:
+                    cols_to_show = [c for c in ['ip', 'timestamp', 'method', 'url', 'status'] if c in error_df.columns]
+                    error_df = error_df[cols_to_show]
+                    error_df.columns = [c.capitalize() for c in cols_to_show]
+                    st.dataframe(error_df, hide_index=True, use_container_width=True)
 
 
 def render_ip_blocking():
@@ -1333,18 +1334,10 @@ def _show_login_page():
                                 st.session_state.auth_token = token
                                 st.success(f"✅ Welcome, {username}!")
                                 st.balloons()
-                                # Use safe rerun that doesn't swallow the exception
-                                try:
-                                    st.rerun()
-                                except (StopIteration, RuntimeError, Exception):
-                                    # st.rerun() raises internal exceptions - always re-raise
-                                    raise
+                                st.rerun()
                             else:
                                 st.error("❌ Invalid username or password")
                                 st.warning("⚠️ Failed login attempt logged")
-                        except (StopIteration, RuntimeError) as e:
-                            # Streamlit rerun exceptions must be re-raised
-                            raise
                         except Exception as e:
                             st.error(f"❌ Authentication error: {e}")
                             st.info("💡 Tip: Check if auth.db exists and default user is created")
@@ -1422,10 +1415,7 @@ def main():
             if st.button("🚪 Logout", use_container_width=True):
                 st.session_state.authenticated = False
                 st.session_state.username = None
-                try:
-                    st.rerun()
-                except (StopIteration, RuntimeError):
-                    raise  # Always re-raise Streamlit's internal exceptions
+                st.rerun()
         
         st.divider()
         
