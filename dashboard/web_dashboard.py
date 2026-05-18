@@ -615,18 +615,18 @@ class DashboardDataManager:
             # Ensure score is 0-100
             score = max(0, min(100, score))
             
-            # Determine status (color-coded, no emoji)
+            # Determine status with emoji indicators
             if score >= 80:
-                status = "SECURE"
+                status = "🟢 SECURE"
             elif score >= 50:
-                status = "CAUTION"
+                status = "🟡 CAUTION"
             else:
-                status = "CRITICAL"
+                status = "🔴 CRITICAL"
             
             return (int(score), status)
         except Exception as e:
             self.logger.error(f"Error calculating security score: {e}")
-            return (100, "SECURE")
+            return (100, "🟢 SECURE")
 
 
 def render_security_state_card(data_manager: DashboardDataManager):
@@ -653,11 +653,15 @@ def render_wall_of_shame(data_manager: DashboardDataManager):
     df = data_manager.get_blocked_ips(limit=20)
     
     if df.empty:
-        st.info("STATUS: No blocked IPs - Network is clean")
+        st.info("ℹ️ STATUS: No blocked IPs - Network is clean")
     else:
         # Format for display
         display_df = df.copy()
-        display_df['last_seen'] = display_df['last_seen'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        # Safely format last_seen - handle None values
+        if 'last_seen' in display_df.columns and not display_df['last_seen'].isna().all():
+            display_df['last_seen'] = display_df['last_seen'].apply(
+                lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if pd.notna(x) else 'N/A'
+            )
         display_df = display_df.rename(columns={
             'source_ip': 'IP Address',
             'threat_type': 'Threat Type',
@@ -666,7 +670,7 @@ def render_wall_of_shame(data_manager: DashboardDataManager):
             'action': 'Action'
         })
         
-        st.dataframe(display_df, width="stretch", hide_index=True)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
 
 
 def render_incident_feed(data_manager: DashboardDataManager):
@@ -676,11 +680,15 @@ def render_incident_feed(data_manager: DashboardDataManager):
     df = data_manager.get_incident_feed(limit=20)
     
     if df.empty:
-        st.info("STATUS: No recent incidents detected")
+        st.info("ℹ️ STATUS: No recent incidents detected - system is running normally")
     else:
         # Format for display
         display_df = df.copy()
-        display_df['timestamp'] = display_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        # Safely format timestamp - handle None values
+        if 'timestamp' in display_df.columns and not display_df['timestamp'].isna().all():
+            display_df['timestamp'] = display_df['timestamp'].apply(
+                lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if pd.notna(x) else 'N/A'
+            )
         display_df = display_df.rename(columns={
             'timestamp': 'Time',
             'source_ip': 'Source IP',
@@ -689,7 +697,7 @@ def render_incident_feed(data_manager: DashboardDataManager):
             'details': 'Details'
         })
         
-        st.dataframe(display_df, width="stretch", hide_index=True)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
 
 
 def render_network_health(data_manager: DashboardDataManager):
@@ -711,15 +719,17 @@ def render_network_health(data_manager: DashboardDataManager):
         col1, col2 = st.columns(2)
         
         with col1:
-            st.metric("Avg Incidents/Min (1h)", f"{stats['avg_per_minute']:.1f}")
+            avg_incidents = stats.get('avg_per_minute', 0) or 0
+            st.metric("Avg Incidents/Min (1h)", f"{float(avg_incidents):.1f}")
         
         with col2:
-            total_1h = sum(counts)
+            total_1h = sum(counts) if counts else 0
             st.metric("Total Incidents (1h)", total_1h)
         
-        st.line_chart(chart_df.set_index('Time'), height=300)
+        if not chart_df.empty:
+            st.line_chart(chart_df.set_index('Time'), height=300)
     else:
-        st.info("No incident data for the last hour")
+        st.info("ℹ️ No incident data available for the last hour - check back later")
 
 
 def render_log_viewer():
@@ -809,8 +819,8 @@ def render_apache_traffic():
             st.session_state.apache_stats = stats
     
     # Display stats if available
-    if 'apache_stats' in st.session_state:
-        stats = st.session_state.apache_stats
+    stats = st.session_state.get('apache_stats')
+    if stats:
         
         # Overview metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -826,9 +836,12 @@ def render_apache_traffic():
             st.metric("Errors (4xx/5xx)", error_count)
         
         with col4:
-            if stats.get('total_requests', 0) > 0:
-                error_rate = (error_count / stats['total_requests']) * 100
+            total_requests = stats.get('total_requests', 0) or 0
+            if total_requests > 0:
+                error_rate = (error_count / total_requests) * 100
                 st.metric("Error Rate", f"{error_rate:.1f}%")
+            else:
+                st.metric("Error Rate", "N/A")
         
         st.divider()
         
@@ -843,7 +856,7 @@ def render_apache_traffic():
                     stats['status_codes'].items(),
                     columns=['Status Code', 'Count']
                 )
-                st.dataframe(status_df, hide_index=True, width="stretch")
+                st.dataframe(status_df, hide_index=True, use_container_width=True)
             
             # HTTP Methods
             st.subheader("HTTP Methods")
@@ -852,7 +865,7 @@ def render_apache_traffic():
                     stats['methods'].items(),
                     columns=['Method', 'Count']
                 )
-                st.dataframe(methods_df, hide_index=True, width="stretch")
+                st.dataframe(methods_df, hide_index=True, use_container_width=True)
         
         with col2:
             # Top IPs
@@ -862,7 +875,7 @@ def render_apache_traffic():
                     stats['top_ips'],
                     columns=['IP Address', 'Requests']
                 )
-                st.dataframe(top_ips_df, hide_index=True, width="stretch")
+                st.dataframe(top_ips_df, hide_index=True, use_container_width=True)
         
         st.divider()
         
@@ -873,16 +886,18 @@ def render_apache_traffic():
                 stats['top_urls'],
                 columns=['URL', 'Requests']
             )
-            st.dataframe(top_urls_df, hide_index=True, width="stretch")
+            st.dataframe(top_urls_df, hide_index=True, use_container_width=True)
         
         # Error Requests
-        if stats.get('error_requests'):
-            st.subheader("Recent Error Requests")
-            error_df = pd.DataFrame(stats['error_requests'][:20])
-            if not error_df.empty:
-                error_df = error_df[['ip', 'timestamp', 'method', 'url', 'status']]
-                error_df.columns = ['IP', 'Timestamp', 'Method', 'URL', 'Status']
-                st.dataframe(error_df, hide_index=True, width="stretch")
+error_requests = stats.get('error_requests', [])
+            if error_requests:
+                st.subheader("Recent Error Requests")
+                error_df = pd.DataFrame(error_requests[:20])
+                if not error_df.empty:
+                    if 'ip' in error_df.columns:
+                        error_df = error_df[['ip', 'timestamp', 'method', 'url', 'status']]
+                        error_df.columns = ['IP', 'Timestamp', 'Method', 'URL', 'Status']
+                        st.dataframe(error_df, hide_index=True, use_container_width=True)
 
 
 def render_ip_blocking():
@@ -917,21 +932,24 @@ def render_ip_blocking():
                 if not ip_pattern.match(ip_to_block):
                     st.error("Invalid IP address format")
                 else:
-                    blocker = IPBlockManager()
-                    
-                    if firewall_type == "UFW":
-                        success, message = blocker.block_ip_ufw(ip_to_block)
-                    else:
-                        success, message = blocker.block_ip_iptables(ip_to_block)
-                    
-                    if success:
-                        st.toast(f"✅ {message}", icon="✅")
-                        st.success(message)
-                    else:
-                        st.toast(f"❌ {message}", icon="❌")
-                        st.error(message)
+                    try:
+                        blocker = IPBlockManager()
+                        
+                        if firewall_type == "UFW":
+                            success, message = blocker.block_ip_ufw(ip_to_block)
+                        else:
+                            success, message = blocker.block_ip_iptables(ip_to_block)
+                        
+                        if success:
+                            st.toast(f"✅ {message}", icon="✅")
+                            st.success(message)
+                        else:
+                            st.toast(f"❌ {message}", icon="❌")
+                            st.error(message)
+                    except Exception as e:
+                        st.error(f"❌ Error blocking IP: {e}")
             else:
-                st.warning("Please enter an IP address")
+                st.warning("⚠️ Please enter an IP address")
     
     with col2:
         st.subheader("Unblock IP (Global Wipe)")
@@ -951,21 +969,24 @@ def render_ip_blocking():
                 if not ip_pattern.match(ip_to_unblock):
                     st.error("Invalid IP address format")
                 else:
-                    blocker = IPBlockManager()
-                    
-                    # GLOBAL UNBLOCK: Remove from firewall + delete all database records
-                    success, message = blocker.unblock_ip_globally(ip_to_unblock, firewall_type)
-                    
-                    if success:
-                        st.toast(f"✅ {message}", icon="✅")
-                        st.success(message)
-                        # Auto-refresh the blocked IPs list
-                        st.rerun()
-                    else:
-                        st.toast(f"❌ {message}", icon="❌")
-                        st.error(message)
+                    try:
+                        blocker = IPBlockManager()
+                        
+                        # GLOBAL UNBLOCK: Remove from firewall + delete all database records
+                        success, message = blocker.unblock_ip_globally(ip_to_unblock, firewall_type)
+                        
+                        if success:
+                            st.toast(f"✅ {message}", icon="✅")
+                            st.success(message)
+                            # Auto-refresh the blocked IPs list
+                            st.rerun()
+                        else:
+                            st.toast(f"❌ {message}", icon="❌")
+                            st.error(message)
+                    except Exception as e:
+                        st.error(f"❌ Error unblocking IP: {e}")
             else:
-                st.warning("Please enter an IP address")
+                st.warning("⚠️ Please enter an IP address")
     
     st.divider()
     
@@ -973,21 +994,29 @@ def render_ip_blocking():
     st.subheader("Currently Blocked IPs")
     
     if st.button("🔄 Refresh Blocked IPs List"):
-        blocker = IPBlockManager()
-        
-        if firewall_type == "UFW":
-            blocked = blocker.get_blocked_ips_ufw()
-        else:
-            blocked = blocker.get_blocked_ips_iptables()
-        
-        st.session_state.blocked_ips = blocked
+        try:
+            blocker = IPBlockManager()
+            
+            if firewall_type == "UFW":
+                blocked = blocker.get_blocked_ips_ufw()
+            else:
+                blocked = blocker.get_blocked_ips_iptables()
+            
+            st.session_state.blocked_ips = blocked
+            if blocked:
+                st.success(f"✅ Loaded {len(blocked)} blocked IP(s)")
+            else:
+                st.info("ℹ️ No currently blocked IPs")
+        except Exception as e:
+            st.error(f"❌ Error refreshing blocked IPs: {e}")
     
     # Display blocked IPs
-    if 'blocked_ips' in st.session_state and st.session_state.blocked_ips:
-        blocked_df = pd.DataFrame(st.session_state.blocked_ips)
-        st.dataframe(blocked_df, hide_index=True, width="stretch")
+    blocked_ips = st.session_state.get('blocked_ips', [])
+    if blocked_ips:
+        blocked_df = pd.DataFrame(blocked_ips)
+        st.dataframe(blocked_df, hide_index=True, use_container_width=True)
     else:
-        st.info("No blocked IPs found or click 'Refresh' to load")
+        st.info("ℹ️ No blocked IPs found - Click 'Refresh' to load current firewall rules")
 
 
 def render_attack_patterns(data_manager: DashboardDataManager):
@@ -1220,7 +1249,11 @@ def render_system_info():
                     st.metric("Available", values[3] if len(values) > 3 else "N/A")
                 
                 if len(values) > 4:
-                    st.progress(int(values[4].rstrip('%')) / 100, text=f"Usage: {values[4]}")
+                    try:
+                        usage_percent = int(values[4].rstrip('%'))
+                        st.progress(usage_percent / 100, text=f"Usage: {values[4]}")
+                    except (ValueError, IndexError) as e:
+                        st.warning(f"Could not parse disk usage: {e}")
     except Exception as e:
         st.info(f"Disk usage not available: {e}")
 
