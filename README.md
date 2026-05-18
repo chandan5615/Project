@@ -131,6 +131,7 @@ Sentinel Agent is a comprehensive security monitoring system that:
 | Document | Purpose |
 |----------|---------|
 | **[START_HERE.md](START_HERE.md)** | Quick start guide and first steps |
+| **[DEPENDENCY_LOCK_GUIDE.md](DEPENDENCY_LOCK_GUIDE.md)** | ⭐ **NEW:** Dependency management and lock file strategy (prevents version conflicts) |
 | **[FEATURES_AUTO_UNBLOCK_WHITELIST.md](FEATURES_AUTO_UNBLOCK_WHITELIST.md)** | Complete feature documentation (auto-unblock, whitelist, progressive punishment) |
 | **[DASHBOARD_SECURITY_GUIDE.md](DASHBOARD_SECURITY_GUIDE.md)** | Dashboard authentication, password management, security best practices |
 | **[TESTING_GUIDE_V2.3.md](TESTING_GUIDE_V2.3.md)** | Testing procedures, attack simulation, verification steps |
@@ -468,12 +469,14 @@ Project/
 │   └── run_tests_in_docker.sh       # Docker test runner
 │
 ├── docker-compose.yml               # Container orchestration
-├── Dockerfile                       # Container build
-├── requirements.txt                 # Python dependencies
+├── Dockerfile                       # Container build (uses lock file)
+├── requirements.txt                 # Python dependencies (exact versions)
+├── requirements-lock.txt            # Complete lock file (all transitive dependencies)
 ├── .env                             # Environment config (auto-generated)
 │
 └── Documentation/
     ├── README.md                    # This file
+    ├── DEPENDENCY_LOCK_GUIDE.md     # Dependency management strategy
     ├── START_HERE.md                # Quick start
     ├── FEATURES_AUTO_UNBLOCK_WHITELIST.md
     ├── DASHBOARD_SECURITY_GUIDE.md
@@ -515,6 +518,71 @@ ports:
   - "8000:8000"                       # API (can be public)
   - "${DASHBOARD_BIND_IP:-127.0.0.1}:8501:8501"  # Dashboard (local only, auto-detected)
 ```
+
+---
+
+## Dependency Management
+
+### **Lock File Strategy**
+
+Sentinel Agent uses a **lock file approach** to ensure reproducible builds across all machines (Windows, Ubuntu, Docker, CI/CD).
+
+#### **Files:**
+
+| File | Purpose |
+|------|---------|
+| `requirements.txt` | Development requirements with exact version pins |
+| `requirements-lock.txt` | Complete lock file (all transitive dependencies) |
+| `Dockerfile` | Uses lock file for reproducible production builds |
+
+#### **How It Works:**
+
+**Development & Local Testing:**
+```bash
+pip install -r requirements.txt
+```
+
+**Docker Production Builds:**
+```bash
+# Docker automatically uses requirements-lock.txt
+docker-compose build --no-cache sentinel-agent
+```
+
+#### **Critical Package Compatibility:**
+
+These versions work together and are locked to prevent conflicts:
+```
+streamlit==1.41.5          ↔ starlette==0.45.3  ✓ Compatible
+fastapi==0.115.8           ↔ starlette==0.45.3  ✓ Compatible
+crewai==0.100.1            (AI agent framework)
+pandas==2.2.3              (data handling)
+```
+
+#### **Why Lock Files?**
+
+**Problem:** Without locks, Docker picks newest compatible versions, which can break things:
+- Streamlit 1.57.0 + Starlette 0.46+ = Import error ✗
+- Streamlit 1.41.5 + Starlette 0.45.3 = Works ✓
+
+**Solution:** Lock file captures exact working state for reproducible builds everywhere.
+
+#### **When to Update Lock File:**
+
+After intentional upgrades or security patches:
+```bash
+# Test changes locally
+pip install -r requirements.txt
+# Verify everything works...
+
+# Capture new state for production
+docker exec sentinel-agent pip freeze > requirements-lock.txt
+
+# Commit and deploy
+git add requirements.txt requirements-lock.txt
+git commit -m "Update dependencies"
+```
+
+**Details:** See [DEPENDENCY_LOCK_GUIDE.md](DEPENDENCY_LOCK_GUIDE.md)
 
 ---
 
