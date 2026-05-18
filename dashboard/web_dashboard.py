@@ -83,6 +83,38 @@ def _detect_primary_ip() -> str:
     except OSError:
         return "127.0.0.1"
 
+
+def get_displayed_credentials() -> str:
+    """Read actual credentials from file, never hardcode them."""
+    creds_paths = [
+        "/app/data/INITIAL_CREDENTIALS.txt",
+        "./data/INITIAL_CREDENTIALS.txt",
+        os.path.join(os.getenv("SENTINEL_DATA_DIR", "./data"), "INITIAL_CREDENTIALS.txt")
+    ]
+    for path in creds_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    content = f.read().strip()
+                    if content:
+                        return content
+            except Exception as e:
+                logging.getLogger(__name__).error(f"Error reading credentials from {path}: {e}")
+    return "⚠️ Credentials file not found. Check /app/data/INITIAL_CREDENTIALS.txt or ./data/INITIAL_CREDENTIALS.txt"
+
+
+def safe_format_time(ts) -> str:
+    """Safely format timestamp with None checks."""
+    if ts is None:
+        return "—"
+    try:
+        if isinstance(ts, str):
+            from datetime import datetime as dt_module
+            ts = dt_module.fromisoformat(ts.replace("Z", "+00:00"))
+        return ts.strftime("%b %d, %Y %H:%M:%S")
+    except Exception:
+        return str(ts)
+
 # Dark theme CSS
 st.markdown("""
 <style>
@@ -726,8 +758,10 @@ def render_network_health(data_manager: DashboardDataManager):
             total_1h = sum(counts) if counts else 0
             st.metric("Total Incidents (1h)", total_1h)
         
-        if not chart_df.empty:
+        if not chart_df.empty and len(chart_df) > 0:
             st.line_chart(chart_df.set_index('Time'), height=300)
+        else:
+            st.warning("⚠️ No data points available for chart")
     else:
         st.info("ℹ️ No incident data available for the last hour - check back later")
 
@@ -1054,20 +1088,21 @@ def render_attack_patterns(data_manager: DashboardDataManager):
         
         with col1:
             st.subheader("Attack Types (7 days)")
-            if not attack_types_df.empty:
+            if not attack_types_df.empty and len(attack_types_df) > 0:
                 st.bar_chart(attack_types_df.set_index('threat_type'))
             else:
-                st.info("No attack data available")
+                st.info("📊 No attack data available for last 7 days")
         
         with col2:
             st.subheader("Attacks by Hour (24h)")
-            if not hourly_df.empty:
+            if not hourly_df.empty and len(hourly_df) > 0:
                 st.line_chart(hourly_df.set_index('hour'))
             else:
-                st.info("No hourly data available")
+                st.info("📈 No hourly data available for last 24 hours")
         
     except Exception as e:
-        st.error(f"Error analyzing attack patterns: {e}")
+        st.error(f"❌ Error analyzing attack patterns: {e}")
+        st.info("Make sure the database contains incident data before viewing this analysis")
 
 
 def render_export_reports(data_manager: DashboardDataManager):
@@ -1285,28 +1320,40 @@ def _show_login_page():
                     st.error("❌ Please enter both username and password")
                 else:
                     # Attempt authentication
-                    try:
-                        success, token = st.session_state.authenticator.authenticate(username, password)
-                        
-                        if success:
-                            st.session_state.authenticated = True
-                            st.session_state.username = username
-                            st.session_state.auth_token = token
-                            st.success(f"✅ Welcome, {username}!")
-                            st.balloons()
-                            st.rerun()
-                        else:
-                            st.error("❌ Invalid username or password")
-                            st.warning("⚠️ Failed login attempt logged")
-                    except Exception as e:
-                        st.error(f"❌ Authentication error: {e}")
-                        st.info("💡 Tip: Check if auth.db exists and default user is created")
+                    if not st.session_state.get("authenticator"):
+                        st.error("❌ Authentication module not initialized")
+                        st.info("💡 Please refresh the page and try again")
+                    else:
+                        try:
+                            success, token = st.session_state.authenticator.authenticate(username, password)
+                            
+                            if success:
+                                st.session_state.authenticated = True
+                                st.session_state.username = username
+                                st.session_state.auth_token = token
+                                st.success(f"✅ Welcome, {username}!")
+                                st.balloons()
+                                # Use safe rerun that doesn't swallow the exception
+                                try:
+                                    st.rerun()
+                                except (StopIteration, RuntimeError, Exception):
+                                    # st.rerun() raises internal exceptions - always re-raise
+                                    raise
+                            else:
+                                st.error("❌ Invalid username or password")
+                                st.warning("⚠️ Failed login attempt logged")
+                        except (StopIteration, RuntimeError) as e:
+                            # Streamlit rerun exceptions must be re-raised
+                            raise
+                        except Exception as e:
+                            st.error(f"❌ Authentication error: {e}")
+                            st.info("💡 Tip: Check if auth.db exists and default user is created")
             
             if help_btn:
-                st.info("""
-                **Default Credentials:**
-                - Username: `admin`
-                - Password: `sentinel2026`
+                creds_display = get_displayed_credentials()
+                st.info(f"""
+                **Initial Credentials:**
+                {creds_display}
                 
                 **For password reset:**
                 - Contact your system administrator
@@ -1322,14 +1369,28 @@ def main():
     """Main dashboard application"""
     
     # ============================================================
-    # 🔐 AUTHENTICATION CHECK
+    # 🔐 AUTHENTICATION CHECK & SESSION STATE INITIALIZATION
     # ============================================================
-    # Initialize authentication if not exists
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-    if "username" not in st.session_state:
-        st.session_state.username = None
-    if "auth_initialized" not in st.session_state:
+    # Initialize session state with safe defaults to prevent race conditions
+    session_defaults = {
+        "authenticated": False,
+        "username": None,
+        "auth_token": None,
+        "auth_initialized": False,
+        "authenticator": None,
+        "db_path": DEFAULT_DB_PATH,
+        "apache_stats": None,
+        "blocked_ips": [],
+        "last_refresh": None,
+        "selected_tab": "overview"
+    }
+    
+    for key, value in session_defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+    
+    # Initialize authentication if not already done
+    if not st.session_state.auth_initialized:
         try:
             from auth import DashboardAuthenticator
             st.session_state.authenticator = DashboardAuthenticator()
@@ -1349,9 +1410,7 @@ def main():
     # 📊 MAIN DASHBOARD (Only shown if authenticated)
     # ============================================================
     
-    # Initialize session state with default database path
-    if "db_path" not in st.session_state:
-        st.session_state.db_path = DEFAULT_DB_PATH
+    # Database path is already initialized in session defaults above
     
     # Sidebar configuration
     with st.sidebar:
@@ -1359,11 +1418,14 @@ def main():
         
         # Show logged in user
         if st.session_state.get("username"):
-            st.success(f"👤 Logged in as: **{st.session_state.username}**")
+            st.success(f"👤 Logged in as: **{st.session_state.get('username')}**")
             if st.button("🚪 Logout", use_container_width=True):
                 st.session_state.authenticated = False
                 st.session_state.username = None
-                st.rerun()
+                try:
+                    st.rerun()
+                except (StopIteration, RuntimeError):
+                    raise  # Always re-raise Streamlit's internal exceptions
         
         st.divider()
         

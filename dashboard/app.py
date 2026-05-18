@@ -25,8 +25,13 @@ http://192.168.31.91:8000     (local network, if running standalone)
 
 AUTHENTICATION:
 ---------------
-Username: sentinel (configurable via DASHBOARD_USER)
-Password: sentinel (configurable via DASHBOARD_PASS)
+Default credentials are generated on first run and saved to:
+  /app/data/INITIAL_CREDENTIALS.txt (Docker)
+  ./data/INITIAL_CREDENTIALS.txt (local)
+
+Configurable via environment variables:
+  DASHBOARD_USER: Username (default: generated)
+  DASHBOARD_PASS: Password (default: generated, never 'admin')
 
 ENDPOINTS:
 ----------
