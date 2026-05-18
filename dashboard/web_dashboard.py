@@ -275,19 +275,20 @@ class IPBlockManager:
             return ['sudo'] + base_cmd
         return base_cmd
     
-    def get_blocked_ips_ufw(self) -> List[Dict]:
-        """Get list of blocked IPs from UFW"""
+    def get_blocked_ips_ufw(self):
+        """Get list of blocked IPs from UFW. Returns (list, error_message)"""
         try:
             cmd = self._build_cmd(['ufw', 'status', 'numbered'])
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             
             if result.returncode != 0:
-                return []
+                error_msg = f"UFW failed: {result.stderr.strip() or result.stdout.strip() or 'Unknown error'}"
+                self.logger.error(error_msg)
+                return [], error_msg
             
             blocked_ips = []
             for line in result.stdout.split('\n'):
-                # Look for DENY rules with IP addresses
-                if 'DENY' in line:
+                if 'DENY' in line and re.search(r'\d+\.\d+\.\d+\.\d+', line):
                     ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
                     if ip_match:
                         blocked_ips.append({
@@ -296,23 +297,30 @@ class IPBlockManager:
                             'firewall': 'ufw'
                         })
             
-            return blocked_ips
+            return blocked_ips, ""
+        except subprocess.TimeoutExpired:
+            error_msg = "UFW command timed out (>5s)"
+            self.logger.error(error_msg)
+            return [], error_msg
         except Exception as e:
-            self.logger.error(f"Error getting UFW rules: {e}")
-            return []
+            error_msg = f"UFW error: {str(e)}"
+            self.logger.error(error_msg)
+            return [], error_msg
     
-    def get_blocked_ips_iptables(self) -> List[Dict]:
-        """Get list of blocked IPs from iptables"""
+    def get_blocked_ips_iptables(self):
+        """Get list of blocked IPs from iptables. Returns (list, error_message)"""
         try:
             cmd = self._build_cmd(['iptables', '-L', 'INPUT', '-n', '-v'])
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             
             if result.returncode != 0:
-                return []
+                error_msg = f"iptables failed: {result.stderr.strip() or result.stdout.strip() or 'Unknown error'}"
+                self.logger.error(error_msg)
+                return [], error_msg
             
             blocked_ips = []
             for line in result.stdout.split('\n'):
-                if 'DROP' in line or 'REJECT' in line:
+                if ('DROP' in line or 'REJECT' in line) and re.search(r'\d+\.\d+\.\d+\.\d+', line):
                     ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
                     if ip_match:
                         blocked_ips.append({
@@ -321,10 +329,15 @@ class IPBlockManager:
                             'firewall': 'iptables'
                         })
             
-            return blocked_ips
+            return blocked_ips, ""
+        except subprocess.TimeoutExpired:
+            error_msg = "iptables command timed out (>5s)"
+            self.logger.error(error_msg)
+            return [], error_msg
         except Exception as e:
-            self.logger.error(f"Error getting iptables rules: {e}")
-            return []
+            error_msg = f"iptables error: {str(e)}"
+            self.logger.error(error_msg)
+            return [], error_msg
     
     def block_ip_ufw(self, ip: str) -> Tuple[bool, str]:
         """Block an IP using UFW"""
@@ -1033,17 +1046,22 @@ def render_ip_blocking():
             blocker = IPBlockManager()
             
             if firewall_type == "UFW":
-                blocked = blocker.get_blocked_ips_ufw()
+                blocked, error = blocker.get_blocked_ips_ufw()
             else:
-                blocked = blocker.get_blocked_ips_iptables()
+                blocked, error = blocker.get_blocked_ips_iptables()
             
-            st.session_state.blocked_ips = blocked
-            if blocked:
-                st.success(f"✅ Loaded {len(blocked)} blocked IP(s)")
+            if error:
+                st.warning(f"⚠️ {error}")
+                st.session_state.blocked_ips = []
             else:
-                st.info("ℹ️ No currently blocked IPs")
+                st.session_state.blocked_ips = blocked
+                if blocked:
+                    st.success(f"✅ Loaded {len(blocked)} blocked IP(s) from {firewall_type}")
+                else:
+                    st.info(f"ℹ️ No currently blocked IPs in {firewall_type}")
         except Exception as e:
-            st.error(f"❌ Error refreshing blocked IPs: {e}")
+            st.error(f"❌ Critical error: {e}")
+            st.session_state.blocked_ips = []
     
     # Display blocked IPs
     blocked_ips = st.session_state.get('blocked_ips', [])
@@ -1051,7 +1069,7 @@ def render_ip_blocking():
         blocked_df = pd.DataFrame(blocked_ips)
         st.dataframe(blocked_df, hide_index=True, use_container_width=True)
     else:
-        st.info("ℹ️ No blocked IPs found - Click 'Refresh' to load current firewall rules")
+        st.info(f"ℹ️ No blocked IPs found - Select {firewall_type} and click Refresh to load current rules")
 
 
 def render_attack_patterns(data_manager: DashboardDataManager):
@@ -1131,6 +1149,7 @@ def render_export_reports(data_manager: DashboardDataManager):
         }
         
         if st.button("📥 Export Incidents to CSV", type="primary"):
+            conn = None
             try:
                 conn = data_manager.get_connection()
                 
@@ -1144,7 +1163,6 @@ def render_export_reports(data_manager: DashboardDataManager):
                     query = "SELECT * FROM incidents ORDER BY timestamp DESC"
                 
                 df = pd.read_sql_query(query, conn)
-                conn.close()
                 
                 if not df.empty:
                     csv = df.to_csv(index=False)
@@ -1160,19 +1178,21 @@ def render_export_reports(data_manager: DashboardDataManager):
                 
             except Exception as e:
                 st.error(f"Error exporting data: {e}")
+            finally:
+                if conn:
+                    conn.close()
     
     with col2:
         st.subheader("Threat Intelligence Report")
         
         if st.button("📥 Export Threat Intel to JSON", type="primary"):
+            conn = None
             try:
                 conn = data_manager.get_connection()
                 
                 # Get threat intel
                 threat_query = "SELECT * FROM threat_intel ORDER BY last_checked DESC"
                 threat_df = pd.read_sql_query(threat_query, conn)
-                
-                conn.close()
                 
                 if not threat_df.empty:
                     json_data = threat_df.to_json(orient='records', indent=2)
@@ -1188,12 +1208,16 @@ def render_export_reports(data_manager: DashboardDataManager):
                 
             except Exception as e:
                 st.error(f"Error exporting data: {e}")
+            finally:
+                if conn:
+                    conn.close()
     
     st.divider()
     
     # Database statistics
     st.subheader("Database Statistics")
     
+    conn = None
     try:
         conn = data_manager.get_connection()
         cursor = conn.cursor()
@@ -1211,8 +1235,6 @@ def render_export_reports(data_manager: DashboardDataManager):
         # Get database file size
         db_size = os.path.getsize(data_manager.db_path) / (1024 * 1024)  # MB
         
-        conn.close()
-        
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -1229,6 +1251,9 @@ def render_export_reports(data_manager: DashboardDataManager):
         
     except Exception as e:
         st.error(f"Error getting database statistics: {e}")
+    finally:
+        if conn:
+            conn.close()
 
 
 def render_system_info():
