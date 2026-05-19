@@ -8,10 +8,13 @@ import time
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict
 import logging
 import sys
 import os
+from collections import defaultdict
+import time as time_module
+from datetime import datetime
 
 # Add defense module to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -41,6 +44,12 @@ class WebLogHandler(FileSystemEventHandler):
         self.last_position = 0
         self._last_inode = None  # Track file inode for rotation detection
         self.attack_detector = AttackDetector()
+        
+        # Rate tracking for DDoS detection
+        self._ip_request_times = defaultdict(list)  # ip -> list of timestamps
+        self._ddos_threshold = int(os.getenv("DDOS_THRESHOLD", "50"))   # requests
+        self._ddos_window = int(os.getenv("DDOS_WINDOW", "10"))         # seconds
+        self._port_scan_threshold = int(os.getenv("PORT_SCAN_THRESHOLD", "20"))
         
         # Initialize last position if file exists
         if self.log_path.exists():
@@ -83,12 +92,27 @@ class WebLogHandler(FileSystemEventHandler):
                     if not line:
                         continue
                     
-                    # Detect attacks using attack detector
-                    attack_info = self.attack_detector.detect_attack(line, source="web")
-                    if attack_info:
-                        ip = self._extract_ip(line)
-                        if ip:
-                            logger.info(f"🚨 {attack_info['description']} from IP: {ip}")
+                    ip = self._extract_ip(line)
+                    if ip:
+                        # Check rate-based attacks first (DDoS)
+                        rate_attack = self._check_rate_based_attacks(ip, line)
+                        
+                        # Check pattern-based attacks
+                        pattern_attack = self.attack_detector.detect_attack(line, source="web")
+                        
+                        # Use highest severity attack
+                        attack_info = None
+                        if rate_attack and pattern_attack:
+                            severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+                            if severity_order.get(rate_attack["severity"], 0) >= severity_order.get(pattern_attack["severity"], 0):
+                                attack_info = rate_attack
+                            else:
+                                attack_info = pattern_attack
+                        else:
+                            attack_info = rate_attack or pattern_attack
+                        
+                        if attack_info:
+                            logger.debug(f"Attack detected: {attack_info['description']} from IP: {ip}")
                             self.callback(ip, line, attack_info)
                             
         except PermissionError:
@@ -126,6 +150,50 @@ class WebLogHandler(FileSystemEventHandler):
                         return ip
                 except ValueError:
                     continue
+        
+        return None
+    
+    def _check_rate_based_attacks(self, ip: str, log_line: str) -> Optional[Dict]:
+        """Detect DDoS and rate-based attacks by tracking request frequency."""
+        now = time_module.time()
+        window = self._ddos_window
+        threshold = self._ddos_threshold
+        
+        # Add current request timestamp
+        self._ip_request_times[ip].append(now)
+        
+        # Keep only requests within the window
+        self._ip_request_times[ip] = [
+            t for t in self._ip_request_times[ip]
+            if now - t <= window
+        ]
+        
+        request_count = len(self._ip_request_times[ip])
+        
+        # DDoS detection: too many requests in window
+        if request_count >= threshold:
+            return {
+                "attack_type": "ddos",
+                "severity": "critical",
+                "description": f"DDoS attack detected -- {request_count} requests in {window}s",
+                "pattern_matched": f"{request_count}_requests_in_{window}s",
+                "timestamp": datetime.now().isoformat(),
+                "source": "web",
+                "request_count": request_count,
+                "time_window": window
+            }
+        
+        # High rate warning: 20+ requests in window
+        if request_count >= 20:
+            return {
+                "attack_type": "high_request_rate",
+                "severity": "medium",
+                "description": f"High request rate -- {request_count} requests in {window}s",
+                "pattern_matched": f"{request_count}_requests_in_{window}s",
+                "timestamp": datetime.now().isoformat(),
+                "source": "web",
+                "request_count": request_count
+            }
         
         return None
 

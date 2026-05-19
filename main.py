@@ -292,7 +292,8 @@ class SentinelAgent:
         )
         
         # Display concise alert
-        logger.info(f"[ATTACK] {attack_info.get('attack_type', 'unknown').upper()} | IP: {ip_address} | Source: {source.upper()} | Severity: {attack_info.get('severity', 'unknown').upper()}")
+        display_name = AttackDetector.get_display_name(attack_info.get('attack_type', 'unknown'))
+        logger.info(f"[ATTACK] {display_name} | IP: {ip_address} | Source: {source.upper()} | Severity: {attack_info.get('severity', 'unknown').upper()}")
 
         # Persist incident to SQLite
         try:

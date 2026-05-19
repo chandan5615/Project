@@ -12,9 +12,39 @@ import json
 class AttackDetector:
     """Detects various types of attacks from log patterns."""
     
+    DISPLAY_NAMES = {
+        "sql_injection":      "SQL Injection",
+        "command_injection":  "Command Injection",
+        "xss_stored":         "Stored XSS",
+        "xss_reflected":      "Reflected XSS",
+        "brute_force":        "Brute Force",
+        "ssh_brute_force":    "SSH Brute Force",
+        "credential_stuffing":"Credential Stuffing",
+        "session_hijacking":  "Session Hijacking",
+        "idor":               "IDOR",
+        "directory_traversal":"Directory Traversal",
+        "csrf":               "CSRF",
+        "clickjacking":       "Clickjacking",
+        "ddos":               "DDoS Attack",
+        "dos":                "DoS Attack",
+        "high_request_rate":  "High Request Rate",
+        "mitm":               "Man-in-the-Middle",
+        "ssrf":               "SSRF",
+        "scanner":            "Automated Scanner",
+        "unknown":            "Unknown Attack",
+    }
+    
     def __init__(self):
         """Initialize attack detection patterns."""
         self.patterns = self._initialize_patterns()
+    
+    @classmethod
+    def get_display_name(cls, attack_type: str) -> str:
+        """Get human-readable display name for attack type."""
+        return cls.DISPLAY_NAMES.get(
+            attack_type.lower(),
+            attack_type.replace("_", " ").title()
+        )
     
     def _initialize_patterns(self) -> Dict[str, Dict]:
         """Initialize attack detection patterns."""
@@ -112,11 +142,13 @@ class AttackDetector:
             },
             "idor": {
                 "patterns": [
-                    r"/user/\d+",
-                    r"/admin/\d+",
-                    r"/api/\d+",
-                    r"id=\d+",
-                    r"user_id=\d+",
+                    r"/user/\d+/(?:edit|delete|admin|password|settings)",
+                    r"/admin/user/\d+",
+                    r"/api/v\d+/(?:user|account|profile)/\d+",
+                    r"(?:user_id|account_id|customer_id)=(?!1$)\d{2,}",
+                    r"/(?:invoice|order|ticket|document)/\d+",
+                    r"object_id=\d+",
+                    r"record=\d+&(?:delete|edit|modify)",
                 ],
                 "severity": "medium",
                 "description": "IDOR (Insecure Direct Object Reference) attempt detected"
@@ -154,14 +186,54 @@ class AttackDetector:
                 "severity": "low",
                 "description": "Clickjacking vulnerability detected"
             },
-            "dos": {
+            "ddos": {
                 "patterns": [
-                    r"connection.*reset",
-                    r"timeout",
-                    r"too.*many.*requests",
+                    r"(GET|POST|HEAD)\s+/\s+HTTP.*\s+[45]\d{2}",
+                    r"flood",
+                    r"slowloris",
+                    r"syn.*flood",
+                    r"udp.*flood",
+                    r"amplification.*attack",
+                    r"too many connections",
+                    r"rate.*limit.*exceeded",
+                    r"429",
+                ],
+                "severity": "critical",
+                "description": "DDoS/DoS attack detected"
+            },
+            "scanner": {
+                "patterns": [
+                    r"nikto",
+                    r"nmap",
+                    r"masscan",
+                    r"sqlmap",
+                    r"nessus",
+                    r"openvas",
+                    r"dirbuster",
+                    r"gobuster",
+                    r"wfuzz",
+                    r"burpsuite",
+                    r"acunetix",
+                    r"w3af",
+                    r"metasploit",
+                    r"python-requests/\d",
+                    r"zgrab",
+                    r"nuclei",
                 ],
                 "severity": "high",
-                "description": "DoS attack detected"
+                "description": "Automated scanner detected"
+            },
+            "ssh_brute_force": {
+                "patterns": [
+                    r"Failed password for",
+                    r"Failed password for invalid user",
+                    r"Invalid user .+ from",
+                    r"authentication failure.*ssh",
+                    r"PAM \d+ more authentication failure",
+                    r"Connection closed by .* \[preauth\]",
+                ],
+                "severity": "high",
+                "description": "SSH brute force attack detected"
             },
             "mitm": {
                 "patterns": [
@@ -204,7 +276,7 @@ class AttackDetector:
         
         for attack_type, config in self.patterns.items():
             # Skip auth-specific attacks for web logs and vice versa
-            if source == "web" and attack_type == "brute_force":
+            if source == "web" and attack_type in ["brute_force", "ssh_brute_force"]:
                 continue
             if source == "auth" and attack_type in ["xss_stored", "xss_reflected", "csrf", "clickjacking"]:
                 continue

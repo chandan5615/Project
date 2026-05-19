@@ -44,6 +44,7 @@ import socket
 import subprocess
 import re
 from collections import Counter, defaultdict
+from defense.attack_detector import AttackDetector
 
 # Configure page
 st.set_page_config(
@@ -763,6 +764,16 @@ def render_wall_of_shame(data_manager: DashboardDataManager):
             display_df['last_seen'] = display_df['last_seen'].apply(
                 lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if pd.notna(x) else 'N/A'
             )
+        
+        # Transform threat types to display names
+        if 'threat_types' in display_df.columns:
+            display_df['threat_types'] = display_df['threat_types'].apply(
+                lambda x: ', '.join(
+                    AttackDetector.get_display_name(t.strip())
+                    for t in str(x).split(',')
+                ) if x else 'Unknown'
+            )
+        
         display_df = display_df.rename(columns={
             'source_ip': 'IP Address',
             'threat_types': 'Threat Types',
@@ -790,6 +801,13 @@ def render_incident_feed(data_manager: DashboardDataManager):
             display_df['timestamp'] = display_df['timestamp'].apply(
                 lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if pd.notna(x) else 'N/A'
             )
+        
+        # Transform threat type to display name
+        if 'threat_type' in display_df.columns:
+            display_df['threat_type'] = display_df['threat_type'].apply(
+                lambda x: AttackDetector.get_display_name(str(x)) if x else 'Unknown'
+            )
+        
         display_df = display_df.rename(columns={
             'timestamp': 'Time',
             'source_ip': 'Source IP',
