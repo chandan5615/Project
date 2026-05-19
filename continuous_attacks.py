@@ -15,7 +15,7 @@ import argparse
 from datetime import datetime, timedelta
 
 # Configuration
-TARGET = "http://192.168.31.91"
+TARGET = "http://10.87.146.89"
 
 # Attack patterns
 ATTACKS = {
@@ -123,8 +123,8 @@ def main():
     print(f"  Interval:   {args.interval} seconds")
     print(f"  Duration:   {args.duration} minutes")
     print(f"  Burst size: {args.burst} attacks")
-    print(f"\n{Colors.BOLD}Dashboard:{Colors.ENDC} http://192.168.31.91:8501")
-    print(f"{Colors.BOLD}API:{Colors.ENDC}       http://192.168.31.91:8000/api/attacks\n")
+    print(f"\n{Colors.BOLD}Dashboard:{Colors.ENDC} http://10.87.146.89:8501")
+    print(f"{Colors.BOLD}API:{Colors.ENDC}       http://10.87.146.89:8000/api/attacks\n")
     
     print_status("Testing connection...", Colors.CYAN)
     try:

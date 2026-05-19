@@ -51,8 +51,8 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     fi
     
     # Check server IP (manual configuration)
-    if check_ollama "http://192.168.31.91:11434"; then
-        OLLAMA_URL="http://192.168.31.91:11434"
+    if check_ollama "http://10.87.146.89:11434"; then
+        OLLAMA_URL="http://10.87.146.89:11434"
         OLLAMA_FOUND=true
         echo "[SUCCESS] Found Ollama on server IP at ${OLLAMA_URL}"
         break

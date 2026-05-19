@@ -6,7 +6,7 @@ echo Forcing Complete Rebuild (No Cache)
 echo ==========================================
 echo.
 
-set SERVER=ubuntu@192.168.31.91
+set SERVER=ubuntu@10.87.146.89
 set PROJECT_DIR=~/Project
 
 echo [1/6] Uploading Dockerfile...

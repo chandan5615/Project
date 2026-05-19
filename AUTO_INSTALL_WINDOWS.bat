@@ -115,7 +115,7 @@ set /p "USE_REMOTE=Do you want to deploy to a remote Ubuntu server? (Y/N): "
 if /i "%USE_REMOTE%"=="Y" (
     echo.
     echo Enter your Ubuntu server details:
-    set /p "SERVER_IP=Server IP address (e.g., 192.168.31.91): "
+    set /p "SERVER_IP=Server IP address (e.g., 10.87.146.89): "
     set /p "SERVER_USER=Username (default: ubuntu): "
     if "!SERVER_USER!"=="" set "SERVER_USER=ubuntu"
     

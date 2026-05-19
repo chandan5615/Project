@@ -26,7 +26,7 @@
 Your Sentinel Agent is already updated and running!
 
 **Access it now:**
-- Dashboard: http://192.168.31.91:8501
+- Dashboard: http://10.87.146.89:8501
 - Login: sentinel / sentinel
 
 **Test it:**
@@ -83,7 +83,7 @@ Run attacks and watch logs:
 
 ```bash
 # On Ubuntu
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 docker-compose logs -f sentinel-agent | grep -E "(HIGH|MEDIUM|severity)"
 ```
 
@@ -105,7 +105,7 @@ docker-compose ps
 python continuous_attacks.py --interval 5 --duration 1
 
 # 3. Watch dashboard
-# Open: http://192.168.31.91:8501
+# Open: http://10.87.146.89:8501
 
 # 4. Check logs updating
 # Dashboard → Logs section (refreshes every 8 seconds)

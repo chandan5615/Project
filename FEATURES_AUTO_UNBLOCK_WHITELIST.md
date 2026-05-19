@@ -128,7 +128,7 @@ if data_engine.is_whitelisted(ip_address):
 ```
 [SECURE] Initializing Whitelist Protection...
   [OK] 127.0.0.1 (already whitelisted)
-  [OK] 192.168.31.91 (added to whitelist)
+  [OK] 10.87.146.89 (added to whitelist)
   [OK] 192.168.31.0/24 (added to whitelist)
 [OK] Auto-unblock cleanup thread started (checks every 60 seconds)
 ```
@@ -270,8 +270,8 @@ IP 203.0.113.45 blocked 3 times = offense_count = 3
 
 ### Example 3: Admin IP Protected
 ```
-14:30:00 | [ERROR] Attack detected: 192.168.31.91 (config mistake)
-14:30:01 | [WHITE] WHITELIST PROTECTION: IP 192.168.31.91 is whitelisted - SKIPPING BLOCK
+14:30:00 | [ERROR] Attack detected: 10.87.146.89 (config mistake)
+14:30:01 | [WHITE] WHITELIST PROTECTION: IP 10.87.146.89 is whitelisted - SKIPPING BLOCK
 14:30:02 | ℹ️  No action taken - risk of admin lockout prevented
 ```
 
@@ -281,7 +281,7 @@ SENTINEL AGENT v2.2 - Security Monitoring Active
 =========================================================
 [SECURE] Initializing Whitelist Protection...
   [OK] 127.0.0.1 (already whitelisted)
-  [OK] 192.168.31.91 (added to whitelist)
+  [OK] 10.87.146.89 (added to whitelist)
   [OK] 192.168.31.0/24 (added to whitelist)
 [OK] Auto-unblock cleanup thread started (checks every 60 seconds)
 
@@ -342,7 +342,7 @@ print(f'Offense count: {db.get_offense_count(\"203.0.113.10\")}')
 
 ### Docker Rebuild
 ```bash
-ssh ubuntu@192.168.31.91 "cd ~/Project && docker-compose down && \
+ssh ubuntu@10.87.146.89 "cd ~/Project && docker-compose down && \
   docker-compose build --no-cache && docker-compose up -d"
 ```
 

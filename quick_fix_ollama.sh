@@ -6,7 +6,7 @@ echo "Quick Fix - Updating entrypoint in container"
 echo "=========================================="
 echo ""
 
-SERVER="ubuntu@192.168.31.91"
+SERVER="ubuntu@10.87.146.89"
 PROJECT_DIR="~/Project"
 
 echo "[1/4] Uploading updated docker-entrypoint.sh to server..."

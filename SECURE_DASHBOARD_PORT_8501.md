@@ -18,7 +18,7 @@ ports:
 ```
 0.0.0.0:8501 → Binds to ALL network interfaces
 ├─ [OK] Localhost (127.0.0.1)
-├─ [OK] Local network (192.168.31.91)
+├─ [OK] Local network (10.87.146.89)
 ├─ [ERROR] Public internet (if server has public IP)
 └─ [ERROR] ANY IP that can reach your server!
 
@@ -43,12 +43,12 @@ ports:
 **Access methods:**
 ```bash
 # Method A: SSH into server, then browse locally
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 firefox http://localhost:8501  # Or lynx/links
 
 # Method B: SSH tunnel from your PC (BEST)
 # On your Windows PC:
-ssh -L 8501:localhost:8501 ubuntu@192.168.31.91
+ssh -L 8501:localhost:8501 ubuntu@10.87.146.89
 # Then browse: http://localhost:8501 on your PC
 # Traffic is encrypted through SSH!
 ```
@@ -72,12 +72,12 @@ ssh -L 8501:localhost:8501 ubuntu@192.168.31.91
 **Modify docker-compose.yml:**
 ```yaml
 ports:
-  - "192.168.31.91:8501:8501"  # [OK] LOCAL IP ONLY
+  - "10.87.146.89:8501:8501"  # [OK] LOCAL IP ONLY
 ```
 
 **Access:**
 ```
-[OK] From any LAN device: http://192.168.31.91:8501
+[OK] From any LAN device: http://10.87.146.89:8501
 [ERROR] From internet: Connection refused
 ```
 
@@ -131,7 +131,7 @@ sudo iptables -I INPUT -p tcp --dport 8501 -j DROP
 
 **Step 1: Update docker-compose.yml**
 ```bash
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 cd ~/Project
 
 # Edit docker-compose.yml
@@ -142,7 +142,7 @@ nano docker-compose.yml
 - "${DASHBOARD_BIND_IP:-0.0.0.0}:8501:8501"
 
 # TO:
-- "192.168.31.91:8501:8501"
+- "10.87.146.89:8501:8501"
 
 # Save: Ctrl+O, Enter, Ctrl+X
 ```
@@ -156,12 +156,12 @@ docker-compose up -d
 **Step 3: Verify it's locked down**
 ```bash
 # From server (should work):
-curl http://192.168.31.91:8501
+curl http://10.87.146.89:8501
 # Expected: HTML response or "Streamlit app"
 
 # Check what's listening:
 sudo netstat -tulpn | grep 8501
-# Expected: 192.168.31.91:8501 (NOT 0.0.0.0:8501)
+# Expected: 10.87.146.89:8501 (NOT 0.0.0.0:8501)
 ```
 
 **Step 4: Test from external network (if you have public IP)**
@@ -179,7 +179,7 @@ curl http://YOUR_PUBLIC_IP:8501
 |--------------|--------------|------------|-----------------|----------------|
 | `0.0.0.0:8501` | [OK] Yes | [OK] Yes | [WARNING] **YES** | [ERROR] **VULNERABLE** |
 | `127.0.0.1:8501` | [OK] Yes | [ERROR] No | [ERROR] No | [OK] **MAXIMUM** |
-| `192.168.31.91:8501` | [OK] Yes | [OK] Yes | [ERROR] No | [OK] **GOOD** |
+| `10.87.146.89:8501` | [OK] Yes | [OK] Yes | [ERROR] No | [OK] **GOOD** |
 | `0.0.0.0 + iptables` | [OK] Yes | [OK] Yes (filtered) | [ERROR] No | [OK] **GOOD** |
 
 ---
@@ -188,13 +188,13 @@ curl http://YOUR_PUBLIC_IP:8501
 
 **Check what IP Docker is bound to:**
 ```bash
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 docker port sentinel-agent 8501
 # Current output (vulnerable):
 # 0.0.0.0:8501 -> 8501  [ERROR] BAD!
 
 # After fix (secure):
-# 192.168.31.91:8501 -> 8501  [OK] GOOD!
+# 10.87.146.89:8501 -> 8501  [OK] GOOD!
 ```
 
 **Check with netstat:**
@@ -208,13 +208,13 @@ sudo netstat -tulpn | grep 8501
 # tcp  0  0  127.0.0.1:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  [OK]
 
 # Secure output (LAN only):
-# tcp  0  0  192.168.31.91:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  [OK]
+# tcp  0  0  10.87.146.89:8501  0.0.0.0:*  LISTEN  12345/docker-proxy  [OK]
 ```
 
 **Check from external network:**
 ```bash
 # From your Windows PC (or any LAN device):
-nmap -p 8501 192.168.31.91
+nmap -p 8501 10.87.146.89
 
 # Secure output:
 # 8501/tcp open  streamlit-app
@@ -234,15 +234,15 @@ nmap -p 8501 YOUR_PUBLIC_IP
 
 **Test 1: Local access still works**
 ```bash
-ssh ubuntu@192.168.31.91
-curl http://192.168.31.91:8501
+ssh ubuntu@10.87.146.89
+curl http://10.87.146.89:8501
 # Expected: HTTP 200 response [OK]
 ```
 
 **Test 2: LAN access works (from your Windows PC)**
 ```powershell
 # On Windows:
-curl http://192.168.31.91:8501
+curl http://10.87.146.89:8501
 # Expected: HTTP response or browser loads page [OK]
 ```
 
@@ -264,7 +264,7 @@ Best practice: Use BOTH network restriction AND login
 ```yaml
 # docker-compose.yml
 ports:
-  - "192.168.31.91:8501:8501"  # Network restriction [OK]
+  - "10.87.146.89:8501:8501"  # Network restriction [OK]
 ```
 
 **PLUS** authentication in web_dashboard.py (already implemented) [OK]
@@ -322,10 +322,10 @@ sudo apt install knockd
 
 # Usage:
 # From your PC, knock to open port:
-knock 192.168.31.91 7000 8000 9000
-# Now access: http://192.168.31.91:8501
+knock 10.87.146.89 7000 8000 9000
+# Now access: http://10.87.146.89:8501
 # When done, knock to close:
-knock 192.168.31.91 9000 8000 7000
+knock 10.87.146.89 9000 8000 7000
 ```
 
 ---
@@ -339,7 +339,7 @@ knock 192.168.31.91 9000 8000 7000
 ```yaml
 ports:
   - "0.0.0.0:8000:8000"        # [OK] Public website (if desired)
-  - "192.168.31.91:8501:8501"  # [OK] Private dashboard (LAN only)
+  - "10.87.146.89:8501:8501"  # [OK] Private dashboard (LAN only)
 ```
 
 ### **Q: Can I use environment variable to switch binding?**
@@ -348,11 +348,11 @@ ports:
 
 ```bash
 # In .env file or docker-compose.yml
-DASHBOARD_BIND_IP=192.168.31.91
+DASHBOARD_BIND_IP=10.87.146.89
 
 # Then in docker-compose.yml:
 ports:
-  - "${DASHBOARD_BIND_IP:-192.168.31.91}:8501:8501"
+  - "${DASHBOARD_BIND_IP:-10.87.146.89}:8501:8501"
 ```
 
 ### **Q: How do I access from multiple local networks?**
@@ -405,7 +405,7 @@ Before going to production:
 **Best Solution**: 
 ```yaml
 # docker-compose.yml line 95:
-- "192.168.31.91:8501:8501"  # [OK] LOCAL ONLY
+- "10.87.146.89:8501:8501"  # [OK] LOCAL ONLY
 ```
 
 **Combined with**:
@@ -415,7 +415,7 @@ Before going to production:
 
 **Access From**:
 - [OK] Server itself: `http://localhost:8501`
-- [OK] Your PC on LAN: `http://192.168.31.91:8501`
+- [OK] Your PC on LAN: `http://10.87.146.89:8501`
 - [ERROR] Internet: Connection refused [OK] SECURE!
 
 **This is the RIGHT security approach!** [SECURE]

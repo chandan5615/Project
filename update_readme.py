@@ -218,7 +218,7 @@ sudo ./AUTO_INSTALL.sh
 
 # Option B: Manually create .env:
 cat > .env << EOF
-DASHBOARD_BIND_IP=192.168.31.91  # Your server IP
+DASHBOARD_BIND_IP=10.87.146.89  # Your server IP
 OLLAMA_BASE_URL=http://host.docker.internal:11434
 OLLAMA_MODEL=llama3:8b
 LOG_LEVEL=INFO
@@ -395,7 +395,7 @@ Project/
 
 ```bash
 # Dashboard Binding (AUTO-DETECTED)
-DASHBOARD_BIND_IP=192.168.31.91      # Auto-detected on install
+DASHBOARD_BIND_IP=10.87.146.89      # Auto-detected on install
 
 # Ollama LLM
 OLLAMA_BASE_URL=http://host.docker.internal:11434

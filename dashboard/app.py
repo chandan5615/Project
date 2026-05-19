@@ -21,7 +21,7 @@ DASHBOARD_HOST=0.0.0.0 PORT=8000 python3 dashboard/app.py
 ACCESS:
 -------
 http://localhost:8000         (local only)
-http://192.168.31.91:8000     (local network, if running standalone)
+http://10.87.146.89:8000     (local network, if running standalone)
 
 AUTHENTICATION:
 ---------------

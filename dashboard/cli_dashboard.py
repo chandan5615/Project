@@ -11,7 +11,7 @@ python3 dashboard/cli_dashboard.py
 docker exec -it sentinel-agent python3 dashboard/cli_dashboard.py
 
 # Run remotely via SSH
-ssh ubuntu@192.168.31.91 "cd ~/Project && python3 dashboard/cli_dashboard.py"
+ssh ubuntu@10.87.146.89 "cd ~/Project && python3 dashboard/cli_dashboard.py"
 
 # Run with custom database
 SENTINEL_DB_PATH=/path/to/db.sqlite python3 dashboard/cli_dashboard.py

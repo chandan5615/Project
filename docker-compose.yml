@@ -91,7 +91,7 @@ services:
     # CHANGE TRACKING (2026-02-25): Dashboard port restricted to local network only
     # Port mappings - 8000 public, 8501 LOCAL ONLY for security
     # NOTE: DASHBOARD_BIND_IP is auto-detected by start_sentinel.sh script
-    # Or set manually: export DASHBOARD_BIND_IP=192.168.31.91
+    # Or set manually: export DASHBOARD_BIND_IP=10.87.146.89
     ports:
       - "8000:8000"  # API server - Can be public if needed
       - "${DASHBOARD_BIND_IP:-127.0.0.1}:8501:8501"  # Dashboard - AUTO-DETECTED LOCAL IP (see start_sentinel.sh)

@@ -33,7 +33,7 @@ def _get_target_url():
         return env_target
     
     # Try default server IP
-    default_server = "192.168.31.91"
+    default_server = "10.87.146.89"
     try:
         # Try to connect to the server to verify it's reachable
         socket.create_connection((default_server, 8000), timeout=2)
@@ -307,8 +307,8 @@ def main():
     print(f"\n{Colors.BOLD}Next Steps:{Colors.ENDC}")
     print(f"  1. Check Sentinel Agent logs: tail -f /app/logs/sentinel.log")
     print(f"  2. View Apache logs: sudo tail -f /var/log/apache2/access.log")
-    print(f"  3. Check attack database: curl http://192.168.31.91:8000/api/attacks")
-    print(f"  4. Open dashboard: http://192.168.31.91:8501")
+    print(f"  3. Check attack database: curl http://10.87.146.89:8000/api/attacks")
+    print(f"  4. Open dashboard: http://10.87.146.89:8501")
     
     print_header("Testing Complete!")
     

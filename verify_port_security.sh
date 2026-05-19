@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 echo "Test 1: Checking Docker port binding..."
 PORT_BINDING=$(docker port sentinel-agent 8501 2>/dev/null | grep -v "0.0.0.0" | head -1)
 
-if echo "$PORT_BINDING" | grep -q "192.168.31.91\|127.0.0.1"; then
+if echo "$PORT_BINDING" | grep -q "10.87.146.89\|127.0.0.1"; then
     echo -e "${GREEN}✅ PASS${NC}: Dashboard bound to local address: $PORT_BINDING"
     SECURE_BINDING=true
 elif echo "$PORT_BINDING" | grep -q "0.0.0.0"; then
@@ -35,7 +35,7 @@ echo ""
 echo "Test 2: Checking netstat output..."
 NETSTAT_OUTPUT=$(sudo netstat -tulpn 2>/dev/null | grep ":8501" | head -1)
 
-if echo "$NETSTAT_OUTPUT" | grep -q "192.168.31.91:8501\|127.0.0.1:8501"; then
+if echo "$NETSTAT_OUTPUT" | grep -q "10.87.146.89:8501\|127.0.0.1:8501"; then
     echo -e "${GREEN}✅ PASS${NC}: Port listening on local address only"
     echo "   $NETSTAT_OUTPUT"
 elif echo "$NETSTAT_OUTPUT" | grep -q "0.0.0.0:8501"; then
@@ -62,7 +62,7 @@ echo ""
 
 # Test 4: Check from LAN IP
 echo "Test 4: Testing LAN access (should work)..."
-LAN_ACCESS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 http://192.168.31.91:8501 2>/dev/null || echo "000")
+LAN_ACCESS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 http://10.87.146.89:8501 2>/dev/null || echo "000")
 
 if [ "$LAN_ACCESS" = "200" ] || [ "$LAN_ACCESS" = "302" ]; then
     echo -e "${GREEN}✅ PASS${NC}: Dashboard accessible from LAN IP (HTTP $LAN_ACCESS)"
@@ -152,7 +152,7 @@ else
     echo "🔧 RECOMMENDED FIXES:"
     echo "   1. Edit docker-compose.yml, change line 95:"
     echo "      FROM: 0.0.0.0:8501:8501"
-    echo "      TO:   192.168.31.91:8501:8501"
+    echo "      TO:   10.87.146.89:8501:8501"
     echo "   2. Rebuild container: docker-compose down && docker-compose up -d"
     echo "   3. Run this script again to verify"
 fi

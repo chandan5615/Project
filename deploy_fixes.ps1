@@ -7,7 +7,7 @@
 Write-Host "🚀 Deploying Sentinel Agent Fixes to Ubuntu Server" -ForegroundColor Cyan
 Write-Host ""
 
-$SERVER = "ubuntu@192.168.31.91"
+$SERVER = "ubuntu@10.87.146.89"
 $PROJECT_PATH = "~/Project"
 
 # Files to copy
@@ -43,9 +43,9 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ Deployment complete!" -ForegroundColor Green
     Write-Host ""
     Write-Host "📊 Services:" -ForegroundColor Cyan
-    Write-Host "  - API:       http://192.168.31.91:8000" -ForegroundColor White
-    Write-Host "  - Dashboard: http://192.168.31.91:8501" -ForegroundColor White
-    Write-Host "  - Health:    http://192.168.31.91:8000/api/health" -ForegroundColor White
+    Write-Host "  - API:       http://10.87.146.89:8000" -ForegroundColor White
+    Write-Host "  - Dashboard: http://10.87.146.89:8501" -ForegroundColor White
+    Write-Host "  - Health:    http://10.87.146.89:8000/api/health" -ForegroundColor White
     Write-Host ""
     Write-Host "📝 View logs:" -ForegroundColor Cyan
     Write-Host "  ssh $SERVER 'cd $PROJECT_PATH && docker-compose logs -f sentinel-agent'" -ForegroundColor Gray
