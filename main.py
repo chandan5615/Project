@@ -156,6 +156,12 @@ def _resolve_log_path(preferred_path: Optional[str], default_path: str, docker_f
     return path
 
 
+def _ordinal(n: int) -> str:
+    """Convert integer to ordinal string (1→1st, 2→2nd, 3→3rd, 4→4th, etc.)."""
+    suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10 if n % 100 not in (11, 12, 13) else 0, "th")
+    return f"{n}{suffix}"
+
+
 class SentinelAgent:
     """Main Sentinel Agent orchestrator with multi-vector ingestion."""
     
@@ -211,15 +217,7 @@ class SentinelAgent:
         perf_metrics = get_metrics()
         anomaly_scorer = get_anomaly_scorer()
         
-        # FEATURE 4: Check whitelist before processing
-        if list_mgr.is_ip_whitelisted(ip_address):
-            logger.info(f"IP {ip_address} is whitelisted - skipping analysis")
-            return
-        
-        # Record detection start for metrics
-        detection_start_time = perf_metrics.get_current_timestamp()
-        
-        # Detect attack type if not provided
+        # Detect attack type if not provided (BEFORE WHITELIST/HARD BAN CHECK)
         attack_info = (
             attack_info
             or self.attack_detector.detect_attack(log_line, source=source)
@@ -230,6 +228,40 @@ class SentinelAgent:
                 "source": source,
             }
         )
+        
+        # FEATURE 4: Check whitelist before processing
+        if list_mgr.is_ip_whitelisted(ip_address):
+            logger.info(f"IP {ip_address} is whitelisted - skipping analysis")
+            return
+        
+        # Check if IP is already under a hard ban (24hr) — skip full processing
+        data_eng = get_engine()
+        existing_block = data_eng.get_block_info(ip_address)
+        if existing_block and existing_block.get('ban_duration_minutes', 0) >= 1440:
+            offense_count = existing_block.get('offense_count', '?')
+            banned_until = existing_block.get('banned_until', 'unknown')
+            logger.info(
+                f"[REPEAT] {ip_address} | Already under 24hr hard ban | "
+                f"Offense #{offense_count} | Expires: {banned_until} | "
+                f"Attack: {attack_info.get('attack_type', 'unknown')} — skipping"
+            )
+            # Still log the incident to DB for audit trail but skip all other processing
+            try:
+                data_engine.insert_incident(
+                    source_ip=ip_address,
+                    attack_type=attack_info.get('attack_type', 'unknown'),
+                    raw_log=log_line,
+                    severity=attack_info.get('severity', 'medium'),
+                    threat_type=attack_info.get('attack_type', 'unknown'),
+                    action="already_blocked",
+                    details="IP already under hard ban — skipped reprocessing"
+                )
+            except Exception as e:
+                logger.error(f"Error logging repeat incident: {e}")
+            return
+        
+        # Record detection start for metrics
+        detection_start_time = perf_metrics.get_current_timestamp()
         
         # FEATURE 2: Check threat intelligence
         threat_result = threat_intel.check_ip_reputation(ip_address)
@@ -731,24 +763,23 @@ class SentinelAgent:
                 logger.error(f"Cleanup thread error: {e}")
     
     def _unblock_ip(self, ip: str):
-        """
-        Remove an IP from iptables blocking.
-        
-        Args:
-            ip: IP address to unblock
-        """
+        """Remove ALL iptables rules for an IP (handles duplicate -I inserts)."""
+        removed = 0
         try:
-            # Remove from iptables INPUT chain
-            command = ["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"]
-            result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+            for _ in range(20):  # Remove up to 20 duplicate rules safely
+                command = ["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"]
+                result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    removed += 1
+                else:
+                    break
             
-            if result.returncode == 0:
-                logger.info(f"[OK] Firewall rule removed for {ip}")
+            if removed > 0:
+                logger.info(f"[UNBLOCKED] {ip} | Removed {removed} iptables rule(s)")
             else:
-                # Rule might not exist - that's okay
-                logger.debug(f"Could not remove firewall rule for {ip}: {result.stderr}")
+                logger.debug(f"[UNBLOCK] No iptables rules found for {ip} — may already be clear")
         except Exception as e:
-            logger.error(f"Error removing firewall rule for {ip}: {e}")
+            logger.error(f"[UNBLOCK-ERROR] Failed to remove iptables rules for {ip}: {e}")
     
     # =========================================================================
     # FEATURE: Progressive Punishment - Calculate Ban Duration
@@ -767,7 +798,7 @@ class SentinelAgent:
             offense_label = "2nd offense → 2 hr ban"
         else:
             ban_minutes = 1440
-            offense_label = f"{offense_count + 1}th offense → 24 hr hard ban"
+            offense_label = f"{_ordinal(offense_count + 1)} offense → 24 hr hard ban"
         
         # CRITICAL severity always gets 24hr ban
         if severity.upper() == "CRITICAL":

@@ -276,6 +276,34 @@ class DataEngine:
         row = cur.fetchone()
         return row['offense_count'] if row else 0
     
+    def get_block_info(self, ip: str) -> Optional[dict]:
+        """Get current block record for an IP if it exists and is active."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT ip, blocked_at, banned_until, offense_count, ban_duration_minutes, reason, status
+                FROM blocked_ips
+                WHERE ip = ? AND status = 'active'
+                ORDER BY id DESC LIMIT 1
+            """, (ip,))
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                return {
+                    'ip': row[0],
+                    'blocked_at': row[1],
+                    'banned_until': row[2],
+                    'offense_count': row[3],
+                    'ban_duration_minutes': row[4],
+                    'reason': row[5],
+                    'status': row[6]
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error getting block info for {ip}: {e}")
+            return None
+    
     def unblock_ip_globally(self, ip: str) -> Dict[str, Any]:
         """
         GLOBAL IP CLEARANCE: Completely remove an IP from the system.

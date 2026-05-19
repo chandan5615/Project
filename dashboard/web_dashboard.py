@@ -419,68 +419,85 @@ class IPBlockManager:
             return False, f"Error blocking IP: {str(e)}"
 
     def unblock_ip_iptables(self, ip: str) -> Tuple[bool, str]:
-        """Unblock an IP using iptables"""
-        try:
-            cmd = self._build_cmd(['iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'])
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-
-            if result.returncode == 0:
-                return True, f"Successfully unblocked {ip} with iptables"
-            else:
-                return False, f"Failed to unblock {ip}: {result.stderr}"
-        except FileNotFoundError:
-            return False, "iptables is not installed on this system."
-        except Exception as e:
-            return False, f"Error unblocking IP: {str(e)}"
+        """Unblock an IP using iptables — tries both -I and -A variants."""
+        removed = False
+        last_error = ""
+        
+        # Try removing the INSERT rule first (used by main.py agent)
+        for attempt in range(10):  # Remove up to 10 duplicate rules
+            try:
+                cmd = self._build_cmd(['iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'])
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    removed = True
+                else:
+                    break  # No more rules to remove
+            except FileNotFoundError:
+                return False, "iptables is not installed on this system"
+            except Exception as e:
+                last_error = str(e)
+                break
+        
+        if removed:
+            return True, f"Successfully unblocked {ip} — all iptables rules removed"
+        else:
+            # Check if the IP was actually in iptables at all
+            try:
+                check_cmd = self._build_cmd(['iptables', '-L', 'INPUT', '-n'])
+                check_result = subprocess.run(check_cmd, capture_output=True, text=True, timeout=5)
+                if ip not in check_result.stdout:
+                    return True, f"{ip} was not in iptables — already unblocked"
+            except Exception:
+                pass
+            return False, f"Could not remove iptables rule for {ip}: {last_error}"
 
     def unblock_ip_globally(self, ip: str, firewall_type: str = "iptables") -> Tuple[bool, str]:
-        """
-        GLOBAL IP CLEARANCE: Completely unblock and remove an IP from the system.
-
-        This performs:
-        - Firewall removal (UFW or iptables)
-        - Database deletion of ALL incidents for this IP
-        - Removal from blocked_ips table
-
-        Args:
-            ip: IP address to globally unblock
-            firewall_type: "UFW" or "iptables"
-
-        Returns:
-            (success: bool, message: str)
-        """
         try:
-            # Step 1: Remove from firewall
+            # Step 1: Remove ALL iptables rules for this IP (loop until none left)
+            rules_removed = 0
+            for _ in range(20):  # Safety limit
+                try:
+                    cmd = self._build_cmd(['iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'])
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        rules_removed += 1
+                    else:
+                        break  # No more rules
+                except Exception:
+                    break
+            
+            fw_message = f"Removed {rules_removed} iptables rule(s) for {ip}"
+            
+            # Step 2: Also try UFW if selected
             if firewall_type == "UFW":
-                fw_success, fw_message = self.unblock_ip_ufw(ip)
-            else:
-                fw_success, fw_message = self.unblock_ip_iptables(ip)
-
-            # Step 2: Global database wipe
+                ufw_success, ufw_msg = self.unblock_ip_ufw(ip)
+                fw_message += f" | UFW: {ufw_msg}"
+            
+            # Step 3: Database cleanup
             from data_engine import get_engine
             data_eng = get_engine()
             db_result = data_eng.unblock_ip_globally(ip)
-
-            # Step 3: Build response message
+            
+            # Step 4: Build response
             if db_result.get("success"):
                 total_deleted = db_result.get("total_deleted", 0)
                 incidents_deleted = db_result.get("incidents_deleted", 0)
                 blocks_deleted = db_result.get("blocks_deleted", 0)
-
+                
                 message = (
-                    f"[OK] GLOBALLY UNBLOCKED {ip}:\n"
-                    f"• Firewall: {fw_message}\n"
-                    f"• Deleted {incidents_deleted} incident(s)\n"
-                    f"• Deleted {blocks_deleted} block record(s)\n"
-                    f"• Total records removed: {total_deleted}"
+                    f"GLOBALLY UNBLOCKED {ip}: "
+                    f"Firewall: {fw_message} | "
+                    f"Deleted {incidents_deleted} incident(s) | "
+                    f"Deleted {blocks_deleted} block record(s) | "
+                    f"Total records removed: {total_deleted}"
                 )
                 return True, message
             else:
                 error = db_result.get("error", "Unknown error")
-                return False, f"[ERROR] Firewall cleared but database cleanup failed: {error}"
-
+                return False, f"Firewall cleared ({fw_message}) but database cleanup failed: {error}"
+                
         except Exception as e:
-            return False, f"[ERROR] Error during global unblock: {str(e)}"
+            return False, f"Error during global unblock of {ip}: {str(e)}"
 
 
 class DashboardDataManager:
