@@ -241,6 +241,7 @@ class IPBlockManager:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self._needs_sudo = self._check_needs_sudo()
+        self.available_firewall = self._detect_firewall()
 
     def _check_needs_sudo(self) -> bool:
         """Check if sudo is needed (not in Docker, not running as root)"""
@@ -269,6 +270,35 @@ class IPBlockManager:
         except Exception as e:
             self.logger.info(f"Cannot check for sudo ({e}) - running without sudo")
             return False # sudo doesn't exist or can't be checked
+
+    def _detect_firewall(self) -> str:
+        """Detect which firewall tool is available on this system."""
+        # Check iptables first (always available in Docker)
+        try:
+            result = subprocess.run(
+                ['which', 'iptables'],
+                capture_output=True, timeout=2
+            )
+            if result.returncode == 0:
+                self.logger.info("Firewall detected: iptables")
+                return "iptables"
+        except Exception:
+            pass
+        
+        # Check UFW second
+        try:
+            result = subprocess.run(
+                ['which', 'ufw'],
+                capture_output=True, timeout=2
+            )
+            if result.returncode == 0:
+                self.logger.info("Firewall detected: ufw")
+                return "ufw"
+        except Exception:
+            pass
+        
+        self.logger.warning("No firewall tool found (iptables or ufw)")
+        return "none"
 
     def _build_cmd(self, base_cmd: List[str]) -> List[str]:
         """Build command with or without sudo prefix"""
@@ -350,6 +380,8 @@ class IPBlockManager:
                 return True, f"Successfully blocked {ip} with UFW"
             else:
                 return False, f"Failed to block {ip}: {result.stderr}"
+        except FileNotFoundError:
+            return False, "UFW is not installed on this system. Switch to iptables."
         except Exception as e:
             return False, f"Error blocking IP: {str(e)}"
 
@@ -363,6 +395,8 @@ class IPBlockManager:
                 return True, f"Successfully unblocked {ip} with UFW"
             else:
                 return False, f"Failed to unblock {ip}: {result.stderr}"
+        except FileNotFoundError:
+            return False, "UFW is not installed on this system. Switch to iptables."
         except Exception as e:
             return False, f"Error unblocking IP: {str(e)}"
 
@@ -379,6 +413,8 @@ class IPBlockManager:
                 return True, f"Successfully blocked {ip} with iptables"
             else:
                 return False, f"Failed to block {ip}: {result.stderr}"
+        except FileNotFoundError:
+            return False, "iptables is not installed on this system."
         except Exception as e:
             return False, f"Error blocking IP: {str(e)}"
 
@@ -392,6 +428,8 @@ class IPBlockManager:
                 return True, f"Successfully unblocked {ip} with iptables"
             else:
                 return False, f"Failed to unblock {ip}: {result.stderr}"
+        except FileNotFoundError:
+            return False, "iptables is not installed on this system."
         except Exception as e:
             return False, f"Error unblocking IP: {str(e)}"
 
@@ -952,13 +990,41 @@ def render_apache_traffic():
 def render_ip_blocking():
     """Render IP blocking/unblocking interface"""
     st.subheader("IP BLOCKING CONTROLS")
+    
+    # Show persistent result message from previous action
+    if st.session_state.get("block_result_message"):
+        msg = st.session_state.block_result_message
+        msg_type = st.session_state.block_result_type
+        if msg_type == "success":
+            st.success(msg)
+        elif msg_type == "error":
+            st.error(msg)
+        else:
+            st.info(msg)
+        # Clear after showing once
+        if st.button("Dismiss", key="dismiss_result"):
+            st.session_state.block_result_message = None
+            st.session_state.block_result_type = None
+            st.rerun()
+    
+    st.divider()
 
-    # Firewall selection
-    firewall_type = st.radio(
-        "Select Firewall Type",
-        ["UFW", "iptables"],
-        horizontal=True
-    )
+    # Detect available firewall
+    blocker = IPBlockManager()
+    available = blocker.available_firewall
+    
+    if available == "none":
+        st.error("[ERROR] No firewall tool found on this system. Install iptables or UFW.")
+        return
+    elif available == "iptables":
+        st.info("[INFO] UFW not available in this environment. Using iptables.")
+        firewall_type = "iptables"
+    else:
+        firewall_type = st.radio(
+            "Select Firewall Type",
+            ["UFW", "iptables"],
+            horizontal=True
+        )
 
     st.divider()
 
@@ -970,35 +1036,32 @@ def render_ip_blocking():
 
         ip_to_block = st.text_input(
             "IP Address to Block",
-            placeholder="e.g., 192.168.1.100",
+            placeholder="e.g., 203.0.113.1",
             key="block_ip_input"
         )
 
         if st.button("[BLOCK] Block IP", type="primary", key="block_btn"):
-            if ip_to_block:
-                # Validate IP format
+            if not ip_to_block:
+                st.warning("[WARNING] Please enter an IP address")
+            else:
                 ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
                 if not ip_pattern.match(ip_to_block):
-                    st.error("Invalid IP address format")
+                    st.session_state.block_result_message = f"[ERROR] Invalid IP format: '{ip_to_block}'. Example: 203.0.113.45"
+                    st.session_state.block_result_type = "error"
                 else:
                     try:
                         blocker = IPBlockManager()
-
                         if firewall_type == "UFW":
                             success, message = blocker.block_ip_ufw(ip_to_block)
                         else:
                             success, message = blocker.block_ip_iptables(ip_to_block)
-
-                        if success:
-                            st.toast(f"[OK] {message}", icon="[OK]")
-                            st.success(message)
-                        else:
-                            st.toast(f"[ERROR] {message}", icon="[ERROR]")
-                            st.error(message)
+                        
+                        st.session_state.block_result_message = message
+                        st.session_state.block_result_type = "success" if success else "error"
                     except Exception as e:
-                        st.error(f"[ERROR] Error blocking IP: {e}")
-            else:
-                st.warning("[WARNING] Please enter an IP address")
+                        st.session_state.block_result_message = f"[ERROR] {e}"
+                        st.session_state.block_result_type = "error"
+                st.rerun()
 
     with col2:
         st.subheader("Unblock IP (Global Wipe)")
@@ -1007,35 +1070,28 @@ def render_ip_blocking():
 
         ip_to_unblock = st.text_input(
             "IP Address to Unblock",
-            placeholder="e.g., 192.168.1.100",
+            placeholder="e.g., 203.0.113.1",
             key="unblock_ip_input"
         )
 
         if st.button("[UNBLOCK] Globally Unblock IP", type="secondary", key="unblock_btn"):
-            if ip_to_unblock:
-                # Validate IP format
+            if not ip_to_unblock:
+                st.warning("[WARNING] Please enter an IP address")
+            else:
                 ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
                 if not ip_pattern.match(ip_to_unblock):
-                    st.error("Invalid IP address format")
+                    st.session_state.block_result_message = f"[ERROR] Invalid IP format: '{ip_to_unblock}'. Example: 203.0.113.45"
+                    st.session_state.block_result_type = "error"
                 else:
                     try:
                         blocker = IPBlockManager()
-
-                        # GLOBAL UNBLOCK: Remove from firewall + delete all database records
                         success, message = blocker.unblock_ip_globally(ip_to_unblock, firewall_type)
-
-                        if success:
-                            st.toast(f"[OK] {message}", icon="[OK]")
-                            st.success(message)
-                            # Auto-refresh the blocked IPs list
-                            st.rerun()
-                        else:
-                            st.toast(f"[ERROR] {message}", icon="[ERROR]")
-                            st.error(message)
+                        st.session_state.block_result_message = message
+                        st.session_state.block_result_type = "success" if success else "error"
                     except Exception as e:
-                        st.error(f"[ERROR] Error unblocking IP: {e}")
-            else:
-                st.warning("[WARNING] Please enter an IP address")
+                        st.session_state.block_result_message = f"[ERROR] {e}"
+                        st.session_state.block_result_type = "error"
+                st.rerun()
 
     st.divider()
 
@@ -1532,7 +1588,9 @@ def main():
         "export_csv_count": 0,
         "export_json": None,
         "export_json_name": None,
-        "export_json_count": 0
+        "export_json_count": 0,
+        "block_result_message": None,
+        "block_result_type": None
     }
 
     for key, value in session_defaults.items():
