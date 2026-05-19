@@ -260,7 +260,7 @@ class SentinelAgent:
         )
         
         # Display concise alert
-        logger.info(f"🚨 Attack detected: {attack_info.get('attack_type', 'unknown').upper()} from {ip_address} ({source.upper()})")
+        logger.info(f"[ATTACK] {attack_info.get('attack_type', 'unknown').upper()} | IP: {ip_address} | Source: {source.upper()} | Severity: {attack_info.get('severity', 'unknown').upper()}")
 
         # Persist incident to SQLite
         try:
@@ -302,9 +302,9 @@ class SentinelAgent:
         use_ai_analysis = (severity == "HIGH")
         
         if use_ai_analysis:
-            logger.info(f"⚡ HIGH severity - AI analysis activated for {ip_address} ({attack_type})")
+            logger.info(f"[AI] Activating AI crew | IP: {ip_address} | Attack: {attack_type} | Severity: HIGH")
         else:
-            logger.info(f"📝 {severity} severity - Auto-blocked: {ip_address} ({attack_type})")
+            logger.info(f"[AUTO] {severity} severity | IP: {ip_address} | Attack: {attack_type} | Action: auto-block (no AI)")
         
         final_report = None
         ai_response_time = 0
@@ -334,7 +334,7 @@ class SentinelAgent:
                     verbose=crew_verbose
                 )
                 
-                logger.info(f"🤖 Starting AI analysis for {ip_address} ({attack_info.get('attack_type', 'unknown')})")
+                logger.info(f"[AI] Crew started | IP: {ip_address} | Attack: {attack_info.get('attack_type', 'unknown')}")
 
                 # Record analysis kickoff action
                 if incident_id:
@@ -349,7 +349,7 @@ class SentinelAgent:
                 try:
                     result = run_with_timeout(crew.kickoff, timeout)
                 except TimeoutError as e:
-                    logger.warning(f"⚠️  AI timeout after {timeout}s - Auto-blocked: {ip_address} ({attack_type})")
+                    logger.warning(f"[AI-TIMEOUT] Analysis timed out after {timeout}s | IP: {ip_address} | Fallback: auto-block applied")
                     if incident_id:
                         data_engine.insert_action(incident_id, "analysis_timeout", f"Timeout after {timeout}s", False)
                     
@@ -368,7 +368,7 @@ class SentinelAgent:
                     ai_response_time = perf_metrics.get_current_timestamp() - detection_start_time
                     final_report_to_use = final_report
                 except Exception as e:
-                    logger.error(f"❌ AI error: {str(e)[:100]} - Auto-blocked: {ip_address}")
+                    logger.error(f"[AI-ERROR] Analysis failed | IP: {ip_address} | Error: {str(e)[:100]} | Fallback: auto-block applied")
                     if incident_id:
                         data_engine.insert_action(incident_id, "analysis_error", str(e), False)
                     result = None
@@ -440,7 +440,7 @@ class SentinelAgent:
             if isinstance(final_report, dict) and final_report.get("action_required", False):
                 self._handle_remediation(final_report, ip_address, incident_id)
             elif isinstance(final_report, dict):
-                logger.info(f"ℹ️  Monitoring: {ip_address} - No immediate action")
+                logger.info(f"[MONITOR] No action required | IP: {ip_address} | Status: monitoring")
                 if incident_id:
                     try:
                         data_engine.insert_action(incident_id, "monitoring", "No action required - monitoring", True)
@@ -515,66 +515,41 @@ class SentinelAgent:
         return report
     
     def _handle_remediation(self, report: Dict[str, Any], ip_address: str, incident_id: Optional[int] = None):
-        """
-        Handle remediation actions with human-in-the-loop approval.
+        """Handle remediation actions - auto-approved in Docker environment."""
         
-        Args:
-            report: The security report
-            ip_address: IP address to block
-            incident_id: Optional DB incident id for logging actions
-        """
-        # =====================================================================
-        # FEATURE: Whitelist Protection (Admin God-Mode)
-        # =====================================================================
+        # Whitelist protection
         data_eng = get_engine()
         if data_eng.is_whitelisted(ip_address):
-            logger.warning(f"⚪ WHITELIST PROTECTION: IP {ip_address} is whitelisted - SKIPPING BLOCK")
+            logger.info(f"[WHITELIST] Skipping block for {ip_address} — IP is whitelisted")
             if incident_id:
                 try:
-                    data_engine.insert_action(incident_id, "whitelist_skip", f"IP is whitelisted", False)
+                    data_engine.insert_action(incident_id, "whitelist_skip", "IP is whitelisted", False)
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
             return
         
         firewall_rule = report.get("firewall_rule")
-        
         if not firewall_rule:
-            logger.warning("No firewall rule found in report")
+            logger.warning(f"[WARNING] No firewall rule in report for {ip_address} — skipping block")
             return
         
-        logger.warning("REMEDIATION REQUIRED")
-        logger.warning(f"IP Address: {ip_address}")
-        logger.warning(f"Severity: {report.get('severity', 'unknown')}")
-        logger.warning(f"Threat Level: {report.get('threat_level', 'unknown')}")
-        logger.warning("Proposed Firewall Rule:")
-        logger.warning(f"  {firewall_rule}")
-
-        # Log approval request and persist proposed action
-        logger.warning(OutputFormatter.subheader("SECURITY ACTION REQUIRES APPROVAL"))
-        logger.warning(f"  Target IP Address    : {ip_address}")
-        logger.warning(f"  Firewall Command     : {firewall_rule}")
-        logger.warning("\n  This action will block the IP address using iptables rules.")
-        logger.warning(f"\n{OutputFormatter.SEPARATOR_MAIN}\n")
-
+        severity = report.get("severity", "medium")
+        threat_level = report.get("threat_level", "unknown")
+        
+        # Single clean log line instead of the multi-line banner
+        logger.info(f"[ACTION] Auto-approved block | IP: {ip_address} | Severity: {severity} | Threat: {threat_level} | Rule: {firewall_rule}")
+        
         if incident_id:
             try:
                 data_engine.insert_action(incident_id, "proposed_firewall", firewall_rule, False)
             except Exception as e:
                 logger.error(f"Error inserting action: {e}")
-
-        # Auto-approve HIGH severity attacks in automated environment (Docker)
-        logger.info("[AUTO-APPROVED] High severity threat - Firewall block executing immediately")
         
-        # =====================================================================
-        # FEATURE: Block IP with Progressive Punishment
-        # =====================================================================
-        severity = report.get("severity", "medium")
+        # Calculate and apply progressive ban
         ban_duration = self._calculate_ban_duration(ip_address, severity)
-        
-        # Record block in database
         data_eng.block_ip(ip_address, ban_duration, reason=report.get("reason", "Security incident"))
         
-        # Execute the firewall rule
+        # Execute firewall rule
         self._execute_firewall_rule(firewall_rule, ip_address, incident_id)
     
     def _parse_firewall_rule(self, rule: str, ip_address: str) -> Optional[list]:
@@ -612,36 +587,17 @@ class SentinelAgent:
         return parts
 
     def _execute_firewall_rule(self, rule: str, ip_address: str, incident_id: Optional[int] = None):
-        """
-        Execute firewall rule with additional human confirmation.
+        """Execute and verify iptables firewall rule."""
         
-        Args:
-            rule: The iptables command to execute
-            ip_address: IP address being blocked
-            incident_id: Optional DB incident id for logging actions
-        """
-        # Parse and validate the iptables command (safety check)
         command = self._parse_firewall_rule(rule, ip_address)
         if not command:
-            logger.error(OutputFormatter.error_message(
-                "INVALID FIREWALL RULE",
-                "The firewall rule format is invalid. Operation cancelled."
-            ))
+            logger.error(f"[FIREWALL-FAIL] Invalid rule format for {ip_address} | Rule: {rule}")
             return
         
-        # Auto-execute in Docker (no interactive prompt needed)
-        logger.info("Executing firewall rule immediately...")
-        
         try:
-            logger.info("Firewall rule executing")
-            logger.info(f"  Command: {rule}\n")
-
             perf_metrics = get_metrics()
-            
-            # Record response start time for metrics
             response_start = perf_metrics.get_current_timestamp()
             
-            # Execute the command
             result = subprocess.run(
                 command,
                 capture_output=True,
@@ -651,25 +607,17 @@ class SentinelAgent:
             )
             
             response_time = perf_metrics.get_current_timestamp() - response_start
-            success = False
-
-            if result.returncode == 0:
-                logger.info(OutputFormatter.success_message(
-                    "FIREWALL RULE SUCCESSFULLY APPLIED",
-                    [
-                        f"Blocked IP Address: {ip_address}",
-                        f"Rule Command: {rule}",
-                        "Status: Active and Verified"
-                    ]
-                ))
-                success = True
-            else:
-                logger.error(OutputFormatter.error_message(
-                    "FIREWALL RULE EXECUTION FAILED",
-                    f"Error output: {result.stderr}"
-                ))
+            success = result.returncode == 0
             
-            # FEATURE 7: Record response metrics
+            if success:
+                logger.info(f"[FIREWALL] Rule applied | IP: {ip_address} blocked | Command: {rule} | Status: OK")
+            else:
+                logger.critical(
+                    f"[FIREWALL-FAIL] Could not block {ip_address} | "
+                    f"Error: {result.stderr.strip()} | "
+                    f"Manual fix: iptables -I INPUT -s {ip_address} -j DROP"
+                )
+            
             if incident_id:
                 perf_metrics.record_response(
                     incident_id=incident_id,
@@ -677,63 +625,57 @@ class SentinelAgent:
                     execution_time_ms=response_time,
                     success=success
                 )
-                
-            if incident_id:
                 try:
                     data_engine.insert_action(incident_id, "firewall_execute", rule, success)
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
                     
         except subprocess.TimeoutExpired:
-            logger.error(OutputFormatter.error_message(
-                "COMMAND EXECUTION TIMEOUT",
-                "The firewall command timed out after 10 seconds."
-            ))
-            
-            # Record failed response
-            if incident_id:
-                perf_metrics.record_response(
-                    incident_id=incident_id,
-                    action_type="firewall_block",
-                    execution_time_ms=-1,
-                    success=False
-                )
-            
+            logger.critical(
+                f"[FIREWALL-FAIL] Command timed out for {ip_address} | "
+                f"Manual fix: iptables -I INPUT -s {ip_address} -j DROP"
+            )
             if incident_id:
                 try:
                     data_engine.insert_action(incident_id, "firewall_execute", "timeout", False)
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
+                    
         except FileNotFoundError:
-            logger.error(OutputFormatter.error_message(
-                "IPTABLES NOT FOUND",
-                "Ensure you are on a Linux system with iptables installed and available in PATH."
-            ))
+            logger.critical(
+                f"[FIREWALL-FAIL] iptables not found | "
+                f"Install iptables or add NET_ADMIN capability to Docker container | "
+                f"Manual fix: iptables -I INPUT -s {ip_address} -j DROP"
+            )
             if incident_id:
                 try:
                     data_engine.insert_action(incident_id, "firewall_execute", "iptables_not_found", False)
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
+                    
         except PermissionError:
-            logger.error(OutputFormatter.error_message(
-                "PERMISSION DENIED",
-                "This operation requires sudo privileges. Please run with: sudo python main.py"
-            ))
+            logger.critical(
+                f"[FIREWALL-FAIL] Permission denied blocking {ip_address} | "
+                f"Add NET_ADMIN to docker-compose.yml: cap_add: [NET_ADMIN] | "
+                f"Manual fix: sudo iptables -I INPUT -s {ip_address} -j DROP"
+            )
             if incident_id:
                 try:
                     data_engine.insert_action(incident_id, "firewall_execute", "permission_denied", False)
                 except Exception as e:
                     logger.error(f"Error inserting action: {e}")
+                    
         except Exception as e:
-            logger.error(OutputFormatter.error_message(
-                "UNEXPECTED ERROR",
-                f"Error executing firewall rule: {str(e)}"
-            ))
+            logger.critical(
+                f"[FIREWALL-FAIL] Unexpected error blocking {ip_address} | "
+                f"Error: {str(e)} | "
+                f"Manual fix: iptables -I INPUT -s {ip_address} -j DROP"
+            )
             if incident_id:
                 try:
                     data_engine.insert_action(incident_id, "firewall_execute", f"exception: {str(e)}", False)
-                except Exception as e:
-                    logger.error(f"Error inserting action: {e}")
+                except Exception as e2:
+                    logger.error(f"Error inserting action: {e2}")
     
     def _get_timestamp(self) -> str:
         """Get current timestamp as string."""
@@ -767,7 +709,7 @@ class SentinelAgent:
                 expired_ips = data_eng.get_expired_ips()
                 
                 if expired_ips:
-                    logger.info(f"[INFO] Found {len(expired_ips)} expired IP blocks - auto-unblocking...")
+                    logger.info(f"[CLEANUP] Found {len(expired_ips)} expired blocks — auto-unblocking")
                     
                     for ip_record in expired_ips:
                         ip = ip_record['ip']
@@ -779,12 +721,9 @@ class SentinelAgent:
                             result = data_eng.unblock_ip_globally(ip)
                             
                             if result.get("success"):
-                                logger.info(
-                                    f"[OK] Auto-unblocked {ip} (ban expired) - "
-                                    f"Cleared {result.get('total_deleted', 0)} records"
-                                )
+                                logger.info(f"[UNBLOCKED] {ip} | Reason: ban expired | Records cleared: {result.get('total_deleted', 0)}")
                             else:
-                                logger.warning(f"[WARNING] Firewall cleared for {ip} but database cleanup had issues")
+                                logger.warning(f"[UNBLOCK-WARN] Firewall cleared for {ip} but DB cleanup had issues — check manually")
                         except Exception as e:
                             logger.error(f"[ERROR] Failed to globally unblock {ip}: {e}")
                 
@@ -816,37 +755,26 @@ class SentinelAgent:
     # =========================================================================
     
     def _calculate_ban_duration(self, ip: str, severity: str) -> int:
-        """
-        Calculate ban duration based on offense count (Progressive Punishment).
-        
-        Args:
-            ip: IP address
-            severity: Attack severity
-            
-        Returns:
-            Ban duration in minutes
-        """
+        """Calculate ban duration based on offense count (Progressive Punishment)."""
         data_eng = get_engine()
         offense_count = data_eng.get_offense_count(ip)
         
-        # Progressive punishment logic
         if offense_count == 0:
-            # 1st offense: 15 minutes
             ban_minutes = 15
-            logger.info(f"⚖️  1st offense → 15 minute ban for {ip}")
+            offense_label = "1st offense → 15 min ban"
         elif offense_count == 1:
-            # 2nd offense: 2 hours
             ban_minutes = 120
-            logger.info(f"⚖️  2nd offense → 2 hour ban for {ip}")
+            offense_label = "2nd offense → 2 hr ban"
         else:
-            # 3rd+ offense: 24 hours (hard ban)
             ban_minutes = 1440
-            logger.info(f"⚖️  {offense_count + 1}th offense → 24 hour HARD BAN for {ip}")
+            offense_label = f"{offense_count + 1}th offense → 24 hr hard ban"
         
-        # Override for CRITICAL severity - always hard ban
+        # CRITICAL severity always gets 24hr ban
         if severity.upper() == "CRITICAL":
             ban_minutes = 1440
-            logger.info(f"⚠️  CRITICAL severity → 24 hour HARD BAN for {ip}")
+            offense_label += " | CRITICAL override → 24 hr hard ban"
+        
+        logger.info(f"[BAN] {ip} | {offense_label} | Duration: {ban_minutes} min")
         
         return ban_minutes
     
