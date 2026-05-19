@@ -1525,7 +1525,7 @@ def main():
         "db_path": DEFAULT_DB_PATH,
         "apache_stats": None,
         "blocked_ips": [],
-        "last_refresh": None,
+        "last_refresh": 0,
         "selected_tab": "overview",
         "export_csv": None,
         "export_csv_name": None,
@@ -1708,8 +1708,8 @@ def main():
     st.caption(f"Dashboard auto-refreshes every {refresh_interval} seconds")
     
     now = time.time()
-    last = st.session_state.get("last_refresh", 0)
-    elapsed = now - last
+    last = st.session_state.get("last_refresh") or 0
+    elapsed = now - float(last)
     remaining = max(0, int(refresh_interval - elapsed))
     
     st.caption(f"Next refresh in {remaining}s")
