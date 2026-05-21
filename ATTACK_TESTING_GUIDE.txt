@@ -54,7 +54,7 @@ FROM UBUNTU SERVER (SSH Required):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🌐 Dashboard (Browser):
-   http://192.168.31.91:8501
+   http://10.87.146.89:8501
    Login: sentinel / sentinel
    
    Features:
@@ -66,13 +66,13 @@ FROM UBUNTU SERVER (SSH Required):
    ✓ IP blocking
 
 📡 API Endpoints:
-   http://192.168.31.91:8000/api/health
-   http://192.168.31.91:8000/api/attacks
-   http://192.168.31.91:8000/api/stats
-   http://192.168.31.91:8000/api/traffic
+   http://10.87.146.89:8000/api/health
+   http://10.87.146.89:8000/api/attacks
+   http://10.87.146.89:8000/api/stats
+   http://10.87.146.89:8000/api/traffic
 
 🔍 Container Logs:
-   ssh ubuntu@192.168.31.91
+   ssh ubuntu@10.87.146.89
    cd ~/Project
    docker-compose logs -f sentinel-agent
    
@@ -105,7 +105,7 @@ python continuous_attacks.py --interval 5 --duration 5
 python continuous_attacks.py --interval 3 --burst 3 --duration 30
 
 # SSH attacks (on Ubuntu):
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 cd ~/Project
 python3 test_attacks.py --auth-count 50
 
@@ -114,17 +114,17 @@ python3 test_attacks.py --auth-count 50
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ❌ "Connection refused":
-   → Check Apache is running: ssh ubuntu@192.168.31.91 "sudo systemctl status apache2"
-   → Restart: ssh ubuntu@192.168.31.91 "sudo systemctl restart apache2"
+   → Check Apache is running: ssh ubuntu@10.87.146.89 "sudo systemctl status apache2"
+   → Restart: ssh ubuntu@10.87.146.89 "sudo systemctl restart apache2"
 
 ❌ "No attacks detected":
    → Check logs are being monitored: docker-compose logs sentinel-agent | grep "ACTIVE"
    → Verify log files exist: ls -la /var/log/auth.log /var/log/apache2/access.log
-   → Check sensor activity: curl http://192.168.31.91:8000/api/stats
+   → Check sensor activity: curl http://10.87.146.89:8000/api/stats
 
 ❌ "Dashboard not updating":
    → Refresh browser (F5)
-   → Check API: curl http://192.168.31.91:8000/api/attacks
+   → Check API: curl http://10.87.146.89:8000/api/attacks
    → Restart dashboard: docker-compose restart sentinel-agent
 
 
@@ -156,7 +156,7 @@ Run this command RIGHT NOW:
 
 Then open dashboard:
 
-    http://192.168.31.91:8501
+    http://10.87.146.89:8501
 
 Watch the attacks appear in real-time! 🎯
 

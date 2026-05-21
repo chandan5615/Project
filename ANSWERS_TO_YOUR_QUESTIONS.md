@@ -19,7 +19,7 @@ Your IP **IS blocked**, but you need to test from the right place:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  YOUR ATTACK: 192.168.31.183 → 192.168.31.91:8000           │
+│  YOUR ATTACK: 192.168.31.183 → 10.87.146.89:8000           │
 │  ├─ GoldenEye DDoS detected [OK]                            │
 │  ├─ Blocked with: iptables -I INPUT -s 192.168.31.183 -j DROP │
 │  ├─ Ban duration: 24 hours (CRITICAL severity)              │
@@ -32,7 +32,7 @@ Your IP **IS blocked**, but you need to test from the right place:
 **Mistake #1**: Testing from localhost
 ```bash
 # [ERROR] WRONG - Testing from THE SERVER itself
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 curl http://localhost:8000
 
 # [OK] This works because:
@@ -51,7 +51,7 @@ curl http://localhost:8000
 
 **Test 1: Check if your IP is blocked in firewall**
 ```bash
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 sudo iptables -L INPUT -n -v | grep 192.168.31.183
 
 # Expected output:
@@ -61,17 +61,17 @@ sudo iptables -L INPUT -n -v | grep 192.168.31.183
 **Test 2: Try to access FROM your blocked machine**
 ```powershell
 # ON YOUR WINDOWS MACHINE (192.168.31.183):
-curl http://192.168.31.91:8000
+curl http://10.87.146.89:8000
 # Expected: Connection timeout / refused
 
 # OR in browser from 192.168.31.183:
-# Navigate to http://192.168.31.91:8000
+# Navigate to http://10.87.146.89:8000
 # Expected: "This site can't be reached" or timeout
 ```
 
 **Test 3: Check the database**
 ```bash
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
   "SELECT ip, banned_until, status FROM blocked_ips WHERE ip='192.168.31.183';"
 
@@ -85,7 +85,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
 BEFORE BLOCK:
 ┌─────────────────┐         ┌─────────────────┐
 │ Your PC         │  HTTP   │ Server          │
-│ 192.168.31.183 │────────>│ 192.168.31.91  │
+│ 192.168.31.183 │────────>│ 10.87.146.89  │
 │ (Windows)       │<────────│ Port: 8000      │
 └─────────────────┘  200 OK └─────────────────┘
      [OK] Connected
@@ -93,7 +93,7 @@ BEFORE BLOCK:
 AFTER BLOCK:
 ┌─────────────────┐         ┌─────────────────┐
 │ Your PC         │  HTTP   │ Server          │
-│ 192.168.31.183 │────X───>│ 192.168.31.91  │
+│ 192.168.31.183 │────X───>│ 10.87.146.89  │
 │ (Windows)       │ DROPPED │ iptables DROP   │
 └─────────────────┘ Firewall└─────────────────┘
      [ERROR] Connection timeout
@@ -173,7 +173,7 @@ SELECT * FROM safe_ips;
 -- Expected output:
 id|ip|reason|added_at|auto_detected
 1|127.0.0.1|Localhost IPv4|2026-02-25T10:00:00|1
-2|192.168.31.91|Auto-detected admin/local IP|2026-02-25T10:00:00|1
+2|10.87.146.89|Auto-detected admin/local IP|2026-02-25T10:00:00|1
 3|192.168.31.0/24|Local network protection|2026-02-25T10:00:00|1
 ```
 
@@ -262,7 +262,7 @@ threat_result = threat_intel.check_ip_reputation(ip_address)
 ```
 Current Setup:
 ┌────────────────────────────────────────────┐
-│ http://192.168.31.91:8501                 │
+│ http://10.87.146.89:8501                 │
 │ ├─ [ERROR] No username/password required       │
 │ ├─ [ERROR] Anyone on network can access        │
 │ ├─ [ERROR] Can view all incidents              │
@@ -288,7 +288,7 @@ I'll create a secure version of the dashboard with login.
 ```
 Secure Setup:
 ┌────────────────────────────────────────────┐
-│ http://192.168.31.91:8501                 │
+│ http://10.87.146.89:8501                 │
 │ ├─ [OK] Login page with username/password   │
 │ ├─ [OK] Sessions expire after inactivity    │
 │ ├─ [OK] Failed login attempts logged        │
@@ -351,7 +351,7 @@ Run these to verify everything is working:
 
 ```bash
 # 1. Check your IP is blocked
-ssh ubuntu@192.168.31.91
+ssh ubuntu@10.87.146.89
 sudo iptables -L INPUT -n -v | grep 192.168.31.183
 
 # 2. Check incidents table
@@ -368,7 +368,7 @@ docker exec sentinel-agent sqlite3 /app/data/sentinel_intel.db \
 
 # 5. Try connection FROM your blocked machine
 # On Windows PowerShell (192.168.31.183):
-curl http://192.168.31.91:8000
+curl http://10.87.146.89:8000
 # Should timeout/fail
 ```
 
