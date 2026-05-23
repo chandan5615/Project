@@ -58,13 +58,13 @@ NON-FUNCTIONAL REQUIREMENTS
 - Availability: Background services, automated deployment (AUTO_INSTALL.sh).
 
 HARDWARE (MINIMUM)
-- CPU: 2 cores (4 cores recommended)
+- CPU: 4 cores (4 cores recommended)
 - RAM: 4 GB (8 GB recommended for AI analysis)
 - Storage: 20 GB free space
 - Network: Static or DHCP IP (auto-detected during installation)
 
 HARDWARE (RECOMMENDED FOR PRODUCTION)
-- CPU: 4+ cores
+- CPU: 8+ cores
 - RAM: 8-16 GB
 - Storage: 50+ GB with log rotation
 
